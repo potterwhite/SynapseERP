@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synapse-framework"
+dynamic = ["version"]
+authors = [
+  { name = "PotterWhite" },
+  { email = "themanuknowwhom@outlook.com" },
+]
+description = "A modular, pluggable framework for building ERP systems with Django."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "django>=4.0",
+    "djangorestframework>=3.14",
+    "pandas",
+    "openpyxl",
+    "toml",
+    "requests",
+    "numpy",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.urls]
+"Homepage" = "https://github.com/potterwhite/Synapse-Framework"
+
+[tool.setuptools.dynamic]
+version = {attr = "synapse.__version__"}

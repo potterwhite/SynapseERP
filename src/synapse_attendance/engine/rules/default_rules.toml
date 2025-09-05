@@ -1,0 +1,38 @@
+# Synapse Framework - Default Attendance Rules
+# This is a generic, fallback configuration for the attendance analyzer.
+
+[late_policy]
+enabled = true
+[late_policy.grace_period]
+enabled = true
+threshold_minutes = 5
+[late_policy.normal_late]
+enabled = true
+lower_bound_minutes = 5
+upper_bound_minutes = 30
+[late_policy.severe_late]
+enabled = false # Disabled by default for safety in a generic context.
+threshold_minutes = 60
+
+[early_quit_policy]
+enabled = true
+
+[overtime_policy]
+enabled = true
+start_after_minutes = 60
+rounding_rule = "none" # Use raw hours, no complex rounding.
+rounding_threshold = 0.9
+
+[attendance_policy]
+punches_per_unit = 2
+
+[reporting]
+# Define the columns that the analyzer will produce in its output DataFrames.
+detailed_columns = [
+  "姓名", "attendance_days", "total_overtime_hours", "late_count", 
+  "total_late_minutes", "early_quit_count", "total_early_quit_minutes", 
+  "missing_punch_count", "absent_days"
+]
+public_columns = [
+  "姓名", "attendance_days", "total_overtime_hours"
+]

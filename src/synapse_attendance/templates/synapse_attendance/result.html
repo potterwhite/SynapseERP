@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result - Synapse</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .report-container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background-color: #f2f2f2; font-weight: 600; }
+        .table tr:nth-child(even) { background-color: #f9f9f9; }
+        .table tr:hover { background-color: #f1f1f1; }
+        .back-link { display: inline-block; margin-top: 30px; background-color: #7f8c8d; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none; transition: background-color 0.3s; }
+        .back-link:hover { background-color: #6c7a7b; }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <h1>Analysis Result</h1>
+        <p><strong>File Analyzed:</strong> <i>{{ filename }}</i></p>
+
+        <h2>Public Report</h2>
+        <div>
+            {{ public_html|safe }}
+        </div>
+
+        <h2 style="margin-top: 40px;">Detailed Report</h2>
+        <div>
+            {{ detailed_html|safe }}
+        </div>
+
+        <a href="{% url 'synapse_attendance:analyze' %}" class="back-link">&larr; Analyze Another File</a>
+    </div>
+</body>
+</html>
