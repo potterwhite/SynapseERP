@@ -1,19 +1,38 @@
 {% load i18n %}
 <!DOCTYPE html>
+<!--
+Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+All rights reserved.
+
+This source code is licensed under the MIT license found in the
+LICENSE file in the root directory of this source tree.
+
+T-HEAD-GR-V1.1.1-20250906 (FIXED: Corrected template syntax for streamlined UI)
+-->
 <html lang="{{ request.LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Synapse Dashboard" %}</title>
     <style>
-        /* ... (all your existing CSS styles are correct and remain here) ... */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #333; }
-        .dashboard-container { width: 100%; max-width: 1100px; margin: 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05); overflow: hidden; position: relative; }
-        header { padding: 20px 30px; border-bottom: 1px solid #e8e8e8; }
-        header h1 { margin: 0; color: #1a1a1a; font-size: 24px; }
+        .notification-panel {
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            color: #495057;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .notification-panel h1, .notification-panel h2, .notification-panel h3 { color: #343a40; margin-top: 0; border-bottom: 1px solid #e9ecef; padding-bottom: 8px; margin-bottom: 15px; }
+        .notification-panel p { margin-top: 0; margin-bottom: 1rem; }
+        .notification-panel ul, .notification-panel ol { padding-left: 20px; margin-bottom: 1rem; }
+        .notification-panel code { background-color: #e9ecef; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; color: #333; padding: 20px; box-sizing: border-box; }
+        .dashboard-container { width: 100%; max-width: 1100px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05); overflow: hidden; position: relative; }
         .main-content-area { padding: 30px; min-height: 300px; }
-        .welcome-message { text-align: center; padding: 40px; color: #888; }
-        .welcome-message h2 { margin: 0 0 10px; font-size: 28px; font-weight: 600; }
         footer { background-color: #f9f9f9; padding: 20px 30px; text-align: right; border-top: 1px solid #e8e8e8; position: relative; }
         .toolbox-button { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 500; transition: background-color 0.3s; }
         .toolbox-button:hover { background-color: #0056b3; }
@@ -23,48 +42,44 @@
         .toolbox-dropdown a:hover { background-color: #f4f4f4; }
         .toolbox-dropdown a strong { display: block; font-size: 15px; color: #222; margin-bottom: 2px; }
         .toolbox-dropdown a small { font-size: 13px; color: #777; }
-        .language-switcher { position: absolute; top: 22px; right: 30px; z-index: 101; display: flex; align-items: center; color: #555; }
+        .language-switcher { position: absolute; top: 0; bottom: 0; left: 30px; display: flex; align-items: center; color: #555; }
         .language-switcher label { margin-right: 8px; font-size: 14px; font-weight: 500; }
         .language-switcher select { padding: 6px 30px 6px 12px; border-radius: 6px; border: 1px solid #ccc; background-color: #ffffff; color: #333; font-family: inherit; font-size: 14px; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right .8em top 50%; background-size: .65em auto; }
-        .language-switcher select:hover { border-color: #888; }
     </style>
 </head>
 <body>
-
     <div class="dashboard-container">
 
-        <div class="language-switcher">
-            <form action="{% url 'set_language' %}" method="post">
-                {% csrf_token %}
-                <!-- THE CRUCIAL FIX: The 'next' input is REMOVED to let Django handle the redirect intelligently. -->
-                <label for="language-select">{% trans "Language" %}:</label>
-                <select name="language" id="language-select" onchange="this.form.submit()">
-                    {% get_language_info_list for LANGUAGES as languages %}
-                    {% for language in languages %}
-                        <option value="{{ language.code }}" {% if language.code == request.LANGUAGE_CODE %}selected{% endif %}>
-                            {{ language.name_local }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
-
-        <header>
-            <h1>{% trans "Synapse Dashboard" %}</h1>
-        </header>
-
         <main class="main-content-area">
+
+            {% if notification_html %}
+            <div class="notification-panel">
+                {{ notification_html|safe }}
+            </div>
+            {% endif %}
+
             {% if main_content_html %}
                 {{ main_content_html|safe }}
-            {% else %}
-                <div class="welcome-message">
-                    <h2>{% trans "Welcome to Synapse" %}</h2>
-                    <p>{% trans 'Use the "More Tools" button in the corner to access available modules.' %}</p>
-                </div>
             {% endif %}
+
         </main>
 
         <footer>
+            <div class="language-switcher">
+                <form action="{% url 'set_language' %}" method="post">
+                    {% csrf_token %}
+                    <label for="language-select">{% trans "Language" %}:</label>
+                    <select name="language" id="language-select" onchange="this.form.submit()">
+                        {% get_language_info_list for LANGUAGES as languages %}
+                        {% for language in languages %}
+                            <option value="{{ language.code }}" {% if language.code == request.LANGUAGE_CODE %}selected{% endif %}>
+                                {{ language.name_local }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+
             <div id="toolbox" class="toolbox-container" style="display: inline-block;">
                 <button class="toolbox-button">{% trans "More Tools" %}</button>
                 <div class="toolbox-dropdown">
