@@ -7,12 +7,15 @@
 # T-HEAD-GR-V0.1.0-20250905
 
 from django.urls import path
-from .views import AnalysisView
 
-# Define the app_name for URL namespacing.
-# This allows us to use 'attendance:analyze' in templates.
-app_name = 'synapse_attendance'
+# Import both the class-based view and the new function-based view
+from .views import AnalysisView, download_report_view
+
+app_name = "synapse_attendance"
 
 urlpatterns = [
-    path('analyze/', AnalysisView.as_view(), name='analyze'),
+    # The existing URL for uploading and viewing the analysis
+    path("analyze/", AnalysisView.as_view(), name="analyze"),
+    # The new URL for handling download requests
+    path("download/", download_report_view, name="download_report"),
 ]

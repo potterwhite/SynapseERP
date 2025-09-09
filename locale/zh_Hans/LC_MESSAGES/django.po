@@ -1,0 +1,205 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-08 15:36+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: src/synapse_attendance/engine/analyzer.py:28
+msgid "Name"
+msgstr "姓名"
+
+#: src/synapse_attendance/engine/analyzer.py:29
+msgid "Attendance Days"
+msgstr "出勤天数"
+
+#: src/synapse_attendance/engine/analyzer.py:30
+msgid "Total Overtime (h)"
+msgstr "总加班时长(小时)"
+
+#: src/synapse_attendance/engine/analyzer.py:31
+msgid "Late Count"
+msgstr "迟到次数"
+
+#: src/synapse_attendance/engine/analyzer.py:32
+msgid "Early Quit Count"
+msgstr "早退次数"
+
+#: src/synapse_attendance/engine/analyzer.py:33
+msgid "Absent Days"
+msgstr "缺勤天数"
+
+#: src/synapse_attendance/engine/analyzer.py:34
+msgid "Total Late (min)"
+msgstr "总迟到时长(分钟)"
+
+#: src/synapse_attendance/engine/analyzer.py:35
+msgid "Total Early Quit (min)"
+msgstr "总早退时长(分钟)"
+
+#: src/synapse_attendance/engine/analyzer.py:36
+msgid "Missing Punch Count"
+msgstr "未打卡次数"
+
+#: src/synapse_attendance/engine/analyzer.py:37
+msgid "Missing Punch Details"
+msgstr "未打卡详细信息"
+
+#: src/synapse_attendance/engine/analyzer.py:38
+msgid "Manual Review Details"
+msgstr "人工核验详情"
+
+#: src/synapse_attendance/engine/analyzer.py:39
+msgid "Attendance Report"
+msgstr "出勤报告"
+
+#: src/synapse_attendance/engine/analyzer.py:40
+#: src/synapse_attendance/views.py:173
+msgid "Public"
+msgstr "公开版本"
+
+#: src/synapse_attendance/engine/analyzer.py:41
+#: src/synapse_attendance/views.py:173
+msgid "Detailed"
+msgstr "详细版本"
+
+#: src/synapse_attendance/engine/analyzer.py:42
+#: src/synapse_attendance/views.py:149
+msgid "Report"
+msgstr "报告"
+
+#: src/synapse_attendance/engine/analyzer.py:43
+msgid "Missing Punch"
+msgstr "未打卡"
+
+#: src/synapse_attendance/engine/analyzer.py:44
+msgid "Manual Review Needed"
+msgstr "需要人工核验"
+
+#: src/synapse_attendance/engine/analyzer.py:45
+msgid "Unrecognized Status at"
+msgstr "未知状态在"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:7
+#: src/synapse_attendance/templates/synapse_attendance/result.html:64
+msgid "Analysis Result"
+msgstr "分析结果"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:65
+msgid "File Analyzed:"
+msgstr "分析后的文件:"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:68
+msgid "Public Report"
+msgstr "公开版本报告"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:70
+#: src/synapse_attendance/templates/synapse_attendance/result.html:80
+msgid "Download"
+msgstr "下载"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:78
+msgid "Detailed Report"
+msgstr "详细版本报告"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:87
+#: src/synapse_attendance/templates/synapse_attendance/upload.html:39
+msgid "Back to Dashboard"
+msgstr "退后到仪表盘"
+
+#: src/synapse_attendance/templates/synapse_attendance/result.html:88
+msgid "Analyze Another File"
+msgstr "分析另一个文件"
+
+#: src/synapse_attendance/templates/synapse_attendance/upload.html:7
+#: src/synapse_attendance/templates/synapse_attendance/upload.html:23
+msgid "Synapse Attendance Analyzer"
+msgstr "Synapse考勤分析工具"
+
+#: src/synapse_attendance/templates/synapse_attendance/upload.html:24
+msgid "Upload your attendance Excel file to get a detailed analysis report."
+msgstr "上传您的考勤Excel文件以获取详细的分析报告。"
+
+#: src/synapse_attendance/templates/synapse_attendance/upload.html:30
+msgid "Analyze File"
+msgstr "分析文件"
+
+#: src/synapse_attendance/templates/synapse_attendance/upload.html:35
+msgid "Error:"
+msgstr "错误："
+
+#: src/synapse_attendance/views.py:48
+msgid "No file was uploaded. Please select a file."
+msgstr "没有文件上传。请选择一个文件。"
+
+#: src/synapse_attendance/views.py:58
+msgid ""
+"Failed to load data. The file might be corrupted or in the wrong format."
+msgstr "无法加载数据。该文件可能损坏或以错误的格式损坏。"
+
+
+#: src/synapse_attendance/views.py:106
+#, python-format
+msgid "An error occurred during analysis: %(error)s"
+msgstr "分析过程中发生错误: %(error)s"
+
+#: src/synapse_attendance/views.py:146
+msgid "Error generating report."
+msgstr "错误生成报告。"
+
+#: src/synapse_attendance/views.py:175
+msgid "AttendanceAnalyzedResult"
+msgstr "考勤分析结果"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:7
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:115
+msgid "Synapse Dashboard"
+msgstr "Synapse仪表板"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:102
+msgid "Language"
+msgstr "语言"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:123
+msgid "Welcome to Synapse"
+msgstr "欢迎来到Synapse"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:124
+msgid "Use the \"More Tools\" button in the corner to access available modules."
+msgstr "使用角落中的“更多工具”按钮访问可用的模块。"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:131
+msgid "More Tools"
+msgstr "更多工具"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:139
+msgid "No tools configured."
+msgstr "没有配置工具。"
+
+#: tests/test_project/settings.py:203
+msgid "Attendance Analyzer"
+msgstr "考勤分析仪"
+
+#: tests/test_project/settings.py:205
+msgid "Analyze employee punch card data."
+msgstr "分析员工打卡数据。"
+
+#: tests/test_project/settings.py:234
+msgid "English"
+msgstr "英语"
+
+#: tests/test_project/settings.py:235
+msgid "Simplified Chinese"
+msgstr "简体中文"
