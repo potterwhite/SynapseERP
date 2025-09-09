@@ -203,3 +203,97 @@ msgstr "英语"
 #: tests/test_project/settings.py:235
 msgid "Simplified Chinese"
 msgstr "简体中文"
+
+
+#: src/synapse_bom_analyzer/engine/writer.py:40
+#: src/synapse_bom_analyzer/engine/writer.py:50
+#: src/synapse_bom_analyzer/engine/writer.py:79
+#: src/synapse_bom_analyzer/views.py:72
+msgid "Quantity Breakdown"
+msgstr "数量明细"
+
+#: src/synapse_bom_analyzer/engine/writer.py:41
+#: src/synapse_bom_analyzer/engine/writer.py:51
+msgid "Total Quantity"
+msgstr "总数"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:17
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:65
+msgid "BOM Analysis Result"
+msgstr "物料清单分析结果"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:66
+msgid "Files Analyzed:"
+msgstr "分析的文件："
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:78
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:103
+msgid "Show more"
+msgstr "显示更多"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:84
+msgid "Aggregated BOM Report"
+msgstr "汇总的物料清单报告"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:86
+msgid "Download Report"
+msgstr "下载报告"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:110
+msgid "Analyze More Files"
+msgstr "分析更多文件"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:126
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:181
+msgid "Show"
+msgstr "展示"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:126
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:181
+msgid "more"
+msgstr "更多的"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:126
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:181
+msgid "remaining"
+msgstr "其余的"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:16
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:88
+msgid "Synapse BOM Analyzer"
+msgstr "Synapse物料清单分析工具"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:89
+msgid ""
+"Upload one or more BOM Excel files. The tool will aggregate all materials "
+"and provide a consolidated list for download."
+msgstr "上传一个或多个物料清单 Excel文件。该工具将汇总所有材料，并提供合并列表以供下载。"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:97
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:138
+msgid "Drag & drop files here or click to select"
+msgstr "在这里拖放文件或单击以选择"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:106
+msgid "Analyze Files"
+msgstr "分析文件"
+
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:142
+msgid "file(s) selected"
+msgstr "选定的文件"
+
+#: src/synapse_bom_analyzer/views.py:37
+msgid "No files were selected. Please choose one or more files to upload."
+msgstr "没有选择文件。请选择一个或多个文件要上传。"
+
+#: src/synapse_bom_analyzer/views.py:51
+msgid ""
+"Could not find any valid BOM data in the uploaded files. Please check the "
+"file format."
+msgstr "在上传的文件中找不到任何有效的物料清单数据。请检查文件格式。"
+
+#: src/synapse_bom_analyzer/views.py:59
+msgid ""
+"No valid material entries were found after filtering. Please check file "
+"content."
+msgstr "过滤后未发现有效的材料条目。请检查文件内容。"

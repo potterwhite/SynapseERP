@@ -6,99 +6,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Synapse Dashboard" %}</title>
     <style>
-        /* --- Reset and Base Styles --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f0f2f5; margin: 0; display: flex;
-            justify-content: center; align-items: center; min-height: 100vh; color: #333;
-        }
-        .dashboard-container {
-            width: 100%; max-width: 1100px; margin: 20px; background-color: #ffffff;
-            border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05); overflow: hidden;
-            position: relative; /* Needed for absolute positioning of the language switcher */
-        }
+        /* ... (all your existing CSS styles are correct and remain here) ... */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #333; }
+        .dashboard-container { width: 100%; max-width: 1100px; margin: 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05); overflow: hidden; position: relative; }
         header { padding: 20px 30px; border-bottom: 1px solid #e8e8e8; }
         header h1 { margin: 0; color: #1a1a1a; font-size: 24px; }
         .main-content-area { padding: 30px; min-height: 300px; }
         .welcome-message { text-align: center; padding: 40px; color: #888; }
         .welcome-message h2 { margin: 0 0 10px; font-size: 28px; font-weight: 600; }
-        footer {
-            background-color: #f9f9f9; padding: 20px 30px; text-align: right;
-            border-top: 1px solid #e8e8e8; position: relative;
-        }
-
-        /* --- Toolbox Styles --- */
-        .toolbox-button {
-            display: inline-block; padding: 10px 20px; background-color: #007bff;
-            color: white; border: none; border-radius: 6px; cursor: pointer;
-            font-size: 15px; font-weight: 500; transition: background-color 0.3s;
-        }
+        footer { background-color: #f9f9f9; padding: 20px 30px; text-align: right; border-top: 1px solid #e8e8e8; position: relative; }
+        .toolbox-button { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 500; transition: background-color 0.3s; }
         .toolbox-button:hover { background-color: #0056b3; }
-
-        .toolbox-dropdown {
-            opacity: 0; visibility: hidden; transform: translateY(10px);
-            transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-            position: absolute; bottom: 65px; right: 30px; background-color: white;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15); border-radius: 8px;
-            width: 320px; padding: 10px; z-index: 100; text-align: left;
-        }
-        .toolbox-container.is-active .toolbox-dropdown {
-            opacity: 1; visibility: visible; transform: translateY(0);
-        }
-        .toolbox-dropdown a {
-            display: block; padding: 12px 15px; color: #333; text-decoration: none;
-            border-radius: 6px; transition: background-color 0.2s;
-        }
+        .toolbox-dropdown { opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; position: absolute; bottom: 65px; right: 30px; background-color: white; box-shadow: 0 6px 20px rgba(0,0,0,0.15); border-radius: 8px; width: 320px; padding: 10px; z-index: 100; text-align: left; }
+        .toolbox-container.is-active .toolbox-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .toolbox-dropdown a { display: block; padding: 12px 15px; color: #333; text-decoration: none; border-radius: 6px; transition: background-color 0.2s; }
         .toolbox-dropdown a:hover { background-color: #f4f4f4; }
         .toolbox-dropdown a strong { display: block; font-size: 15px; color: #222; margin-bottom: 2px; }
         .toolbox-dropdown a small { font-size: 13px; color: #777; }
-
-        /* --- Language Switcher Styles --- */
-        .language-switcher {
-            position: absolute;
-            top: 22px;
-            right: 30px;
-            z-index: 101;
-            display: flex;
-            align-items: center;
-            color: #555;
-        }
-        .language-switcher label {
-            margin-right: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .language-switcher select {
-            padding: 6px 30px 6px 12px; /* Added padding for custom arrow */
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            background-color: #ffffff; /* Ensure it's not transparent */
-            color: #333; /* Ensure text is visible */
-            font-family: inherit;
-            font-size: 14px;
-            cursor: pointer;
-            /* Reset browser default appearance */
-            -webkit-appearance: none;
-            appearance: none;
-            /* Custom dropdown arrow */
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right .8em top 50%;
-            background-size: .65em auto;
-        }
-        .language-switcher select:hover {
-            border-color: #888;
-        }
+        .language-switcher { position: absolute; top: 22px; right: 30px; z-index: 101; display: flex; align-items: center; color: #555; }
+        .language-switcher label { margin-right: 8px; font-size: 14px; font-weight: 500; }
+        .language-switcher select { padding: 6px 30px 6px 12px; border-radius: 6px; border: 1px solid #ccc; background-color: #ffffff; color: #333; font-family: inherit; font-size: 14px; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right .8em top 50%; background-size: .65em auto; }
+        .language-switcher select:hover { border-color: #888; }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
-        
+
         <div class="language-switcher">
             <form action="{% url 'set_language' %}" method="post">
                 {% csrf_token %}
-                <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                <!-- THE CRUCIAL FIX: The 'next' input is REMOVED to let Django handle the redirect intelligently. -->
                 <label for="language-select">{% trans "Language" %}:</label>
                 <select name="language" id="language-select" onchange="this.form.submit()">
                     {% get_language_info_list for LANGUAGES as languages %}
@@ -147,12 +85,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const toolboxContainer = document.getElementById('toolbox');
             const toolboxButton = toolboxContainer.querySelector('.toolbox-button');
-
             toolboxButton.addEventListener('click', function(event) {
                 event.stopPropagation();
                 toolboxContainer.classList.toggle('is-active');
             });
-
             document.addEventListener('click', function(event) {
                 if (!toolboxContainer.contains(event.target)) {
                     toolboxContainer.classList.remove('is-active');

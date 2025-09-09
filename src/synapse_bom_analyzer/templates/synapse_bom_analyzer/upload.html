@@ -1,0 +1,238 @@
+<!--
+# Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+# All rights reserved#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# T-HEAD-GR-V0.1.0-20250905 (Template for the BOM Analyzer - Final UI with text wrapping fix)
+-->
+
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ request.LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Synapse BOM Analyzer" %}</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 20px; background-color: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        .upload-container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        .file-drop-zone {
+            position: relative; border: 2px dashed #ccc; border-radius: 6px; padding: 20px;
+            text-align: center; color: #aaa; cursor: pointer; transition: border-color 0.3s, background-color 0.3s;
+        }
+        .file-drop-zone.is-dragover { border-color: #007bff; background-color: #f0f8ff; }
+        .file-drop-zone p { margin: 0; font-size: 16px; }
+        #file-input { opacity: 0; position: absolute; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
+
+        #file-list-container {
+            margin-top: 15px; text-align: left; max-height: 240px;
+            overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 5px;
+        }
+
+        /* --- MODIFIED: Styles for flexbox alignment and text wrapping --- */
+        .file-list-item {
+            display: flex;
+            align-items: flex-start; /* Align items to the top */
+            font-size: 14px; color: #555; padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0; background-color: #fff;
+        }
+        .file-list-item:last-child { border-bottom: none; }
+        .file-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            padding-top: 2px; /* Small tweak for better visual alignment with text */
+        }
+        .file-name {
+            /* Allow the filename to wrap onto multiple lines */
+            white-space: normal;
+            word-break: break-all; /* Break long words to prevent overflow */
+
+            /* --- NEW RULES TO FIX THE WRAPPING ISSUE --- */
+            flex-grow: 1;         /* Allows this element to grow and take up available space */
+            min-width: 0;         /* Crucial fix: Prevents min-content sizing issues in flexbox */
+            text-align: left;     /* Ensure text is aligned to the left, next to the icon */
+        }
+
+        /* SVG Icon definitions (No changes here) */
+        .icon-excel {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-file-type-xls' width='24' height='24' viewBox='0 0 24 24' stroke-width='1.5' stroke='%2328a745' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M14 3v4a1 1 0 0 0 1 1h4' /%3E%3Cpath d='M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4' /%3E%3Cpath d='M4 15l4 6' /%3E%3Cpath d='M4 21l4 -6' /%3E%3Cpath d='M17 20.25c0 .414 .336 .75 .75 .75h1.25a1 1 0 0 0 1 -1v-1a1 1 0 0 0 -1 -1h-1a1 1 0 0 1 -1 -1v-1a1 1 0 0 1 1 -1h1.25a.75 .75 0 0 1 .75 .75' /%3E%3Cpath d='M11 15v6h3' /%3E%3C/svg%3E");
+        }
+        .icon-file {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-file' width='24' height='24' viewBox='0 0 24 24' stroke-width='1.5' stroke='%23868e96' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M14 3v4a1 1 0 0 0 1 1h4' /%3E%3Cpath d='M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z' /%3E%3C/svg%3E");
+        }
+
+        .file-controls { text-align: center; }
+        #show-more-button {
+            background: none; border: 1px solid #ddd; color: #333;
+            padding: 5px 10px; font-size: 12px; margin-top: 10px; cursor: pointer;
+            border-radius: 4px; display: none;
+        }
+        #show-more-button:hover { background-color: #f5f5f5; }
+
+        button[type="submit"] { background-color: #3498db; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; margin-top: 20px; }
+        button[type="submit"]:hover { background-color: #2980b9; }
+        button[type="submit"]:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .error-message { color: #e74c3c; background-color: #fbeae5; border: 1px solid #e74c3c; padding: 15px; border-radius: 4px; margin-top: 20px; }
+        .home-link { display: inline-block; margin-top: 20px; color: #7f8c8d; text-decoration: none; font-size: 14px; }
+        .home-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>{% trans "Synapse BOM Analyzer" %}</h1>
+        <p>{% trans "Upload one or more BOM Excel files. The tool will aggregate all materials and provide a consolidated list for download." %}</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div id="file-drop-zone" class="file-drop-zone">
+                <input type="file" id="file-input" name="bom_files" accept=".xlsx, .xls" required multiple>
+                <div id="file-feedback-container">
+                    <p>{% trans "Drag & drop files here or click to select" %}</p>
+                </div>
+            </div>
+
+            <div id="file-list-container" style="display: none; border-top: none; margin-top: 0; border-radius: 0 0 4px 4px;"></div>
+            <div class="file-controls">
+                <button type="button" id="show-more-button">{% trans "Show more" %}</button>
+            </div>
+
+            <button id="submit-button" type="submit" disabled>{% trans "Analyze Files" %}</button>
+        </form>
+
+        {% if error_message %}
+            <div class="error-message">
+                <strong>{% trans "Error:" %}</strong> {{ error_message }}
+            </div>
+        {% endif %}
+
+        <a href="{% url 'synapse_dashboard:dashboard' %}" class="home-link">&larr; {% trans "Back to Dashboard" %}</a>
+    </div>
+
+    <!-- The JavaScript part remains exactly the same -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // All element references and constants are the same
+            const dropZone = document.getElementById('file-drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const submitButton = document.getElementById('submit-button');
+            const feedbackContainer = document.getElementById('file-feedback-container');
+            const fileListContainer = document.getElementById('file-list-container');
+            const showMoreButton = document.getElementById('show-more-button');
+            const INITIAL_DISPLAY_COUNT = 5;
+            const LOAD_MORE_COUNT = 10;
+            let displayedFileCount = 0;
+
+            function updateFileListUI() {
+                const files = fileInput.files;
+                fileListContainer.innerHTML = '';
+                fileListContainer.style.display = 'none';
+                showMoreButton.style.display = 'none';
+                feedbackContainer.style.display = 'block';
+                feedbackContainer.innerHTML = `<p>{% trans "Drag & drop files here or click to select" %}</p>`;
+                submitButton.disabled = true;
+                if (files.length === 0) return;
+
+                feedbackContainer.innerHTML = `<p>${files.length} {% trans "file(s) selected" %}</p>`;
+                fileListContainer.style.display = 'block';
+                submitButton.disabled = false;
+
+                Array.from(files).forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-list-item';
+                    const icon = document.createElement('div');
+                    icon.className = 'file-icon';
+                    if (/\.(xlsx|xls)$/i.test(file.name)) {
+                        icon.classList.add('icon-excel');
+                    } else {
+                        icon.classList.add('icon-file');
+                    }
+                    const fileName = document.createElement('span');
+                    fileName.className = 'file-name';
+                    fileName.textContent = file.name;
+                    fileItem.appendChild(icon);
+                    fileItem.appendChild(fileName);
+
+                    // --- MODIFIED HIDING LOGIC ---
+                    // Instead of display: none, we now toggle a class.
+                    if (index >= INITIAL_DISPLAY_COUNT) {
+                        fileItem.classList.add('is-hidden'); // Add a class to hide
+                    }
+                    // --- END MODIFICATION ---
+
+                    fileListContainer.appendChild(fileItem);
+                });
+
+                displayedFileCount = Math.min(files.length, INITIAL_DISPLAY_COUNT);
+                updateShowMoreButton();
+            }
+
+            function updateShowMoreButton() {
+                const totalFiles = fileInput.files.length;
+                if (displayedFileCount < totalFiles) {
+                    const remaining = totalFiles - displayedFileCount;
+                    const toShow = Math.min(remaining, LOAD_MORE_COUNT);
+                    showMoreButton.textContent = `{% trans "Show" %} ${toShow} {% trans "more" %} (${remaining} {% trans "remaining" %})`;
+                    showMoreButton.style.display = 'block';
+                } else {
+                    showMoreButton.style.display = 'none';
+                }
+            }
+
+            // --- ADD THIS NEW CSS RULE DYNAMICALLY ---
+            // This is cleaner than putting it in the <style> tag.
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .file-list-item.is-hidden {
+                    visibility: hidden;
+                    opacity: 0;
+                    max-height: 0;
+                    padding-top: 0;
+                    padding-bottom: 0;
+                    border: none;
+                    margin: 0;
+                    overflow: hidden;
+                    transition: all 0.3s ease-out;
+                }
+            `;
+            document.head.appendChild(style);
+            // --- END OF NEW CSS RULE ---
+
+            // --- Event Listeners ---
+            dropZone.addEventListener('click', () => fileInput.click());
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); });
+            });
+            ['dragenter', 'dragover'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.add('is-dragover')));
+            ['dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.remove('is-dragover')));
+
+            dropZone.addEventListener('drop', e => {
+                fileInput.files = e.dataTransfer.files;
+                updateFileListUI();
+            });
+
+            fileInput.addEventListener('change', updateFileListUI);
+
+            showMoreButton.addEventListener('click', () => {
+                const allFileItems = fileListContainer.querySelectorAll('.file-list-item.is-hidden');
+                const limit = Math.min(allFileItems.length, LOAD_MORE_COUNT);
+
+                // --- MODIFIED SHOWING LOGIC ---
+                for (let i = 0; i < limit; i++) {
+                    allFileItems[i].classList.remove('is-hidden'); // Remove the class to show
+                }
+                // --- END MODIFICATION ---
+
+                displayedFileCount += limit;
+                updateShowMoreButton();
+            });
+        });
+    </script>
+</body>
+</html>
