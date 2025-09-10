@@ -1,0 +1,19 @@
+# Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+# All rights reserved.
+
+[Unit]
+Description=Gunicorn daemon for SynapseERP
+Requires=synapse.socket
+After=network.target
+
+[Service]
+User=__USER__
+Group=www-data
+WorkingDirectory=__PROJECT_PATH__
+ExecStart=__PROJECT_PATH__/.venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          synapse_project.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

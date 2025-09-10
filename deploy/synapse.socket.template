@@ -1,0 +1,14 @@
+# Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+# All rights reserved.
+
+[Unit]
+Description=Gunicorn socket for SynapseERP
+
+[Socket]
+ListenStream=/run/synapse.sock
+SocketUser=__USER__
+SocketGroup=www-data
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

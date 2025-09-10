@@ -1,38 +1,140 @@
-# Synapse Framework - Default Attendance Rules
-# This is a generic, fallback configuration for the attendance analyzer.
+# ==============================================================================
+# Synapse Framework - Default Attendance Rules (v0.8.0)
+# ==============================================================================
+# This file provides a generic, feature-complete configuration for the 
+# attendance analyzer. It is intended to work out-of-the-box for common use
+# cases and serves as a template for customization.
+# ==============================================================================
 
-[late_policy]
-enabled = true
-[late_policy.grace_period]
-enabled = true
-threshold_minutes = 5
-[late_policy.normal_late]
-enabled = true
-lower_bound_minutes = 5
-upper_bound_minutes = 30
-[late_policy.severe_late]
-enabled = false # Disabled by default for safety in a generic context.
-threshold_minutes = 60
+# ==============================================================================
+# SECTION 1: Data Source Configuration
+# ------------------------------------------------------------------------------
+# Defines how the analyzer should find and interpret the source Excel file.
+# ==============================================================================
+[data_source]
+# The name of the Excel sheet containing the punch data.
+sheet_name = "打卡详情"
 
-[early_quit_policy]
-enabled = true
+# A list of keywords that MUST exist in the header row for dynamic discovery.
+header_keywords = ["姓名", "日期", "打卡类型"]
 
-[overtime_policy]
-enabled = true
-start_after_minutes = 60
-rounding_rule = "none" # Use raw hours, no complex rounding.
-rounding_threshold = 0.9
+# A list of column names required for the analysis to proceed.
+required_columns = [
+  "姓名", "日期", "应打卡时间", "实际打卡时间", 
+  "打卡状态", "打卡类型", "假勤申请"
+]
 
+
+# ==============================================================================
+# SECTION 2: Core Attendance Policy
+# ------------------------------------------------------------------------------
+# Defines the fundamental rules for what constitutes an attendance unit.
+# ==============================================================================
 [attendance_policy]
+# The number of punches expected in a complete work unit (e.g., a half-day).
 punches_per_unit = 2
 
+# [OVERRIDING RULE] A list of keywords in the "leave application" column
+# that mark the entire day as a business trip (and thus, fully attended).
+business_trip_keywords = ["出差"]
+
+# --- Punch Record Classifications ---
+# The analyzer classifies punch records based on the text in the "punch status" column.
+# The text must start with one of the prefixes listed below.
+
+# [CLEANSING FILTER] Records starting with these prefixes are ignored completely.
+ignored_prefixes = ["失效"]
+
+# [VALID] Records starting with these prefixes are considered valid punches.
+valid_punch_prefixes = ["正常", "迟到", "早退"]
+
+# [MISSING] Records starting with these prefixes indicate an official absence for that punch.
+missing_punch_prefixes = ["缺卡"]
+
+# [MANUAL REVIEW] Records starting with these prefixes are flagged for manual review.
+manual_review_prefixes = ["无需打卡"]
+
+
+# ==============================================================================
+# SECTION 3: Lateness Policy
+# ==============================================================================
+[late_policy]
+enabled = true
+
+[late_policy.grace_period]
+# If lateness is within this threshold, it is recorded but not counted as a formal "late" incident.
+enabled = true
+threshold_minutes = 2 
+
+[late_policy.normal_late]
+# The range for a normal lateness incident.
+enabled = true
+lower_bound_minutes = 2
+upper_bound_minutes = 30
+
+[late_policy.severe_late]
+# If lateness exceeds this, it is considered severe. 
+# Disabled by default in the generic ruleset for safety.
+enabled = false
+threshold_minutes = 60
+
+
+# ==============================================================================
+# SECTION 4: Early Quit Policy
+# ==============================================================================
+[early_quit_policy]
+enabled = true
+# For simplicity in this default profile, any early quit is counted.
+
+
+# ==============================================================================
+# SECTION 5: Overtime Policy
+# ==============================================================================
+[overtime_policy]
+enabled = true
+
+# Overtime calculation only starts after this many minutes past the scheduled off-duty time.
+start_after_minutes = 30
+
+# Defines how total overtime hours are calculated from minutes.
+# "floor_with_threshold": Rounds down, but if decimal > threshold, it's a full hour.
+# "floor_half_hour": Rounds down to the nearest 0.5 hour.
+# "none": Raw hours, rounded to two decimal places (default).
+rounding_rule = "none"
+
+# Threshold for the "floor_with_threshold" rule (e.g., 0.9 means 2.9h -> 3h, 2.89h -> 2h).
+rounding_threshold = 0.9
+
+
+# ==============================================================================
+# SECTION 6: Reporting Configuration
+# ------------------------------------------------------------------------------
+# Controls which columns appear in the final summary reports, their display names, and their order.
+# 'key' is the internal DataFrame column name.
+# 'display_name' is the user-facing, translatable header. These strings are defined
+# in analyzer.py for Django's `makemessages` to discover them.
+# ==============================================================================
 [reporting]
-# Define the columns that the analyzer will produce in its output DataFrames.
-detailed_columns = [
-  "姓名", "attendance_days", "total_overtime_hours", "late_count", 
-  "total_late_minutes", "early_quit_count", "total_early_quit_minutes", 
-  "missing_punch_count", "absent_days"
-]
+# --- Public Report Columns (for general viewing) ---
 public_columns = [
-  "姓名", "attendance_days", "total_overtime_hours"
+  { key = "姓名",                       display_name = "Name" },
+  { key = "attendance_days",          display_name = "Attendance Days" },
+  { key = "total_overtime_hours",     display_name = "Total Overtime (h)" },
+  { key = "late_count",               display_name = "Late Count" },
+  { key = "early_quit_count",         display_name = "Early Quit Count" },
+]
+
+# --- Detailed Report Columns (for HR/managerial review) ---
+detailed_columns = [
+  { key = "姓名",                       display_name = "Name" },
+  { key = "attendance_days",          display_name = "Attendance Days" },
+  { key = "absent_days",                display_name = "Absent Days" },
+  { key = "total_overtime_hours",     display_name = "Total Overtime (h)" },
+  { key = "late_count",               display_name = "Late Count" },
+  { key = "total_late_minutes",       display_name = "Total Late (min)" },
+  { key = "early_quit_count",         display_name = "Early Quit Count" },
+  { key = "total_early_quit_minutes", display_name = "Total Early Quit (min)" },
+  { key = "missing_punch_count",      display_name = "Missing Punch Count" },
+  { key = "missing_punch_review_details", display_name = "Missing Punch Details" },
+  { key = "manual_review_details",    display_name = "Manual Review Details" },
 ]
