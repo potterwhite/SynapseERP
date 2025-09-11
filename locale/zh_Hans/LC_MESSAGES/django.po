@@ -1,22 +1,22 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Simplified Chinese translations for Synapse Framework
+# Copyright (C) 2025 PotterWhite (themanuknowwhom@outlook.com)
+# This file is distributed under the same license as the Synapse Framework package.
+# PotterWhite <themanuknowwhom@outlook.com>, 2025.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Synapse Framework 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-08 15:36+0800\n"
+"POT-Creation-Date: 2025-09-11 07:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Last-Translator: PotterWhite <themanuknowwhom@outlook.com>\n"
+"Language-Team: Chinese (Simplified) <zh_Hans@li.org>\n"
+"Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
 #: src/synapse_attendance/engine/analyzer.py:28
 msgid "Name"
 msgstr "姓名"
@@ -116,6 +116,8 @@ msgstr "详细版本报告"
 
 #: src/synapse_attendance/templates/synapse_attendance/result.html:87
 #: src/synapse_attendance/templates/synapse_attendance/upload.html:39
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/result.html:109
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:115
 msgid "Back to Dashboard"
 msgstr "退后到仪表盘"
 
@@ -137,6 +139,7 @@ msgid "Analyze File"
 msgstr "分析文件"
 
 #: src/synapse_attendance/templates/synapse_attendance/upload.html:35
+#: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:111
 msgid "Error:"
 msgstr "错误："
 
@@ -149,8 +152,7 @@ msgid ""
 "Failed to load data. The file might be corrupted or in the wrong format."
 msgstr "无法加载数据。该文件可能损坏或以错误的格式损坏。"
 
-
-#: src/synapse_attendance/views.py:106
+#: src/synapse_attendance/views.py:106 src/synapse_bom_analyzer/views.py:106
 #, python-format
 msgid "An error occurred during analysis: %(error)s"
 msgstr "分析过程中发生错误: %(error)s"
@@ -159,61 +161,15 @@ msgstr "分析过程中发生错误: %(error)s"
 msgid "Error generating report."
 msgstr "错误生成报告。"
 
-#: src/synapse_attendance/views.py:175
-msgid "AttendanceAnalyzedResult"
-msgstr "考勤分析结果"
-
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:7
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:115
-msgid "Synapse Dashboard"
-msgstr "Synapse仪表板"
-
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:102
-msgid "Language"
-msgstr "语言"
-
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:123
-msgid "Welcome to Synapse"
-msgstr "欢迎来到Synapse"
-
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:124
-msgid "Use the \"More Tools\" button in the corner to access available modules."
-msgstr "使用角落中的“更多工具”按钮访问可用的模块。"
-
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:131
-msgid "More Tools"
-msgstr "更多工具"
-
-#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:139
-msgid "No tools configured."
-msgstr "没有配置工具。"
-
-#: tests/test_project/settings.py:203
-msgid "Attendance Analyzer"
-msgstr "考勤分析仪"
-
-#: tests/test_project/settings.py:205
-msgid "Analyze employee punch card data."
-msgstr "分析员工打卡数据。"
-
-#: tests/test_project/settings.py:234
-msgid "English"
-msgstr "英语"
-
-#: tests/test_project/settings.py:235
-msgid "Simplified Chinese"
-msgstr "简体中文"
-
-
-#: src/synapse_bom_analyzer/engine/writer.py:40
-#: src/synapse_bom_analyzer/engine/writer.py:50
-#: src/synapse_bom_analyzer/engine/writer.py:79
+#: src/synapse_bom_analyzer/engine/writer.py:32
+#: src/synapse_bom_analyzer/engine/writer.py:42
+#: src/synapse_bom_analyzer/engine/writer.py:90
 #: src/synapse_bom_analyzer/views.py:72
 msgid "Quantity Breakdown"
 msgstr "数量明细"
 
-#: src/synapse_bom_analyzer/engine/writer.py:41
-#: src/synapse_bom_analyzer/engine/writer.py:51
+#: src/synapse_bom_analyzer/engine/writer.py:33
+#: src/synapse_bom_analyzer/engine/writer.py:43
 msgid "Total Quantity"
 msgstr "总数"
 
@@ -267,7 +223,9 @@ msgstr "Synapse物料清单分析工具"
 msgid ""
 "Upload one or more BOM Excel files. The tool will aggregate all materials "
 "and provide a consolidated list for download."
-msgstr "上传一个或多个物料清单 Excel文件。该工具将汇总所有材料，并提供合并列表以供下载。"
+msgstr ""
+"上传一个或多个物料清单 Excel文件。该工具将汇总所有材料，并提供合并列表以供下"
+"载。"
 
 #: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:97
 #: src/synapse_bom_analyzer/templates/synapse_bom_analyzer/upload.html:138
@@ -297,3 +255,83 @@ msgid ""
 "No valid material entries were found after filtering. Please check file "
 "content."
 msgstr "过滤后未发现有效的材料条目。请检查文件内容。"
+
+#: src/synapse_dashboard/models.py:23
+msgid "Content"
+msgstr "内容"
+
+#: src/synapse_dashboard/models.py:24
+msgid "The notification content in Markdown format."
+msgstr "该提醒内容以Markdown格式呈现"
+
+#: src/synapse_dashboard/models.py:27
+msgid "Created At"
+msgstr "创建于"
+
+#: src/synapse_dashboard/models.py:29
+msgid "The date and time this notification was created."
+msgstr "这条提醒被创建的日期和时间"
+
+#: src/synapse_dashboard/models.py:32
+msgid "Updated At"
+msgstr "更新于"
+
+#: src/synapse_dashboard/models.py:34
+msgid "The date and time this notification was last updated."
+msgstr "这条提醒被更新的日期和时间"
+
+#: src/synapse_dashboard/models.py:38
+msgid "Notification"
+msgstr "提醒"
+
+#: src/synapse_dashboard/models.py:39
+msgid "Notifications"
+msgstr "提醒"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:16
+msgid "Synapse Dashboard"
+msgstr "Synapse仪表板"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:71
+msgid "Language"
+msgstr "语言"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:84
+msgid "More Tools"
+msgstr "更多工具"
+
+#: src/synapse_dashboard/templates/synapse_dashboard/dashboard.html:92
+msgid "No tools configured."
+msgstr "没有配置工具。"
+
+#: synapse_project/settings.py:109
+msgid "Attendance Analyzer"
+msgstr "考勤分析工具"
+
+#: synapse_project/settings.py:111
+msgid "Analyze employee punch card data."
+msgstr "分析员工打卡数据。"
+
+#: synapse_project/settings.py:117
+msgid "BOM Analyzer"
+msgstr "物料清单分析工具"
+
+#: synapse_project/settings.py:119
+msgid "Aggregate materials from multiple BOM files."
+msgstr "从多个物料清单文件中汇总物料信息"
+
+#~ msgid "English"
+#~ msgstr "英语"
+
+#~ msgid "Simplified Chinese"
+#~ msgstr "简体中文"
+
+#~ msgid "AttendanceAnalyzedResult"
+#~ msgstr "考勤分析结果"
+
+#~ msgid "Welcome to Synapse"
+#~ msgstr "欢迎来到Synapse"
+
+#~ msgid ""
+#~ "Use the \"More Tools\" button in the corner to access available modules."
+#~ msgstr "使用角落中的“更多工具”按钮访问可用的模块。"

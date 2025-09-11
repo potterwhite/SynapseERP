@@ -24,3 +24,4 @@ msgstr "浏览"
 
 msgid "No file selected."
 msgstr "尚未有任何文件被选中"
+

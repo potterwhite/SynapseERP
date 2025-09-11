@@ -1,7 +1,7 @@
 # ==============================================================================
 # Synapse Framework - Default Attendance Rules (v0.8.0)
 # ==============================================================================
-# This file provides a generic, feature-complete configuration for the 
+# This file provides a generic, feature-complete configuration for the
 # attendance analyzer. It is intended to work out-of-the-box for common use
 # cases and serves as a template for customization.
 # ==============================================================================
@@ -20,7 +20,7 @@ header_keywords = ["姓名", "日期", "打卡类型"]
 
 # A list of column names required for the analysis to proceed.
 required_columns = [
-  "姓名", "日期", "应打卡时间", "实际打卡时间", 
+  "姓名", "日期", "应打卡时间", "实际打卡时间",
   "打卡状态", "打卡类型", "假勤申请"
 ]
 
@@ -52,7 +52,7 @@ valid_punch_prefixes = ["正常", "迟到", "早退"]
 missing_punch_prefixes = ["缺卡"]
 
 # [MANUAL REVIEW] Records starting with these prefixes are flagged for manual review.
-manual_review_prefixes = ["无需打卡"]
+manual_review_prefixes = []
 
 
 # ==============================================================================
@@ -64,7 +64,7 @@ enabled = true
 [late_policy.grace_period]
 # If lateness is within this threshold, it is recorded but not counted as a formal "late" incident.
 enabled = true
-threshold_minutes = 2 
+threshold_minutes = 2
 
 [late_policy.normal_late]
 # The range for a normal lateness incident.
@@ -73,10 +73,10 @@ lower_bound_minutes = 2
 upper_bound_minutes = 30
 
 [late_policy.severe_late]
-# If lateness exceeds this, it is considered severe. 
+# If lateness exceeds this, it is considered severe.
 # Disabled by default in the generic ruleset for safety.
 enabled = false
-threshold_minutes = 60
+threshold_minutes = 90
 
 
 # ==============================================================================
@@ -94,7 +94,7 @@ enabled = true
 enabled = true
 
 # Overtime calculation only starts after this many minutes past the scheduled off-duty time.
-start_after_minutes = 30
+start_after_minutes = 0
 
 # Defines how total overtime hours are calculated from minutes.
 # "floor_with_threshold": Rounds down, but if decimal > threshold, it's a full hour.
@@ -103,7 +103,7 @@ start_after_minutes = 30
 rounding_rule = "none"
 
 # Threshold for the "floor_with_threshold" rule (e.g., 0.9 means 2.9h -> 3h, 2.89h -> 2h).
-rounding_threshold = 0.9
+rounding_threshold = 0
 
 
 # ==============================================================================

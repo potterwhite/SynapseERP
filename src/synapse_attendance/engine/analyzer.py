@@ -417,21 +417,52 @@ class AttendanceAnalyzer:
     # ==========================================================================
 
     def _load_rules(self, local_path: str, remote_url: str) -> Dict:
-        """Loads rules, prioritizing remote, then local, then default."""
-        try:
-            if remote_url:
+        """
+        Loads rules using a three-tier priority system with detailed logging:
+        1. Remote URL (from environment variable or direct parameter).
+        2. Local custom rules file ('local_rules.toml').
+        3. Default rules file ('default_rules.toml').
+        """
+        logger.debug("Initiating rule loading sequence...")
+        rules_dir = Path(__file__).resolve().parent / "rules"
+        local_rules_path = rules_dir / "local_rules.toml"
+        default_rules_path = rules_dir / "default_rules.toml"
+
+        # Priority 1: Use remote URL if provided.
+        logger.debug("Step 1: Checking for remote rule URL.")
+        if remote_url:
+            logger.debug("Remote URL found: %s. Attempting to fetch.", remote_url)
+            try:
                 response = requests.get(remote_url, timeout=5)
                 response.raise_for_status()
+                logger.info("SUCCESS: Loaded rules from remote URL: %s", remote_url)
                 return toml.loads(response.text)
-            rules_path = (
-                local_path
-                or Path(__file__).resolve().parent / "rules/default_rules.toml"
-            )
-            with open(rules_path, "r", encoding="utf-8") as f:
+            except Exception as e:
+                logger.error("FAILED to load remote rules from %s: %s. Falling back.", remote_url, e)
+        else:
+            logger.debug("Remote URL not provided. Proceeding to next step.")
+
+        # Priority 2: Use local custom rules file if it exists.
+        logger.debug("Step 2: Checking for local override file at '%s'.", local_rules_path)
+        if local_rules_path.exists():
+            try:
+                with open(local_rules_path, "r", encoding="utf-8") as f:
+                    logger.info("SUCCESS: Loaded rules from local override file: %s", local_rules_path)
+                    return toml.load(f)
+            except Exception as e:
+                logger.error("FAILED to load local rules from %s: %s. Falling back.", local_rules_path, e)
+        else:
+            logger.debug("Local override file not found. Proceeding to next step.")
+
+        # Priority 3: Use default rules as a fallback.
+        logger.debug("Step 3: Falling back to default rules file at '%s'.", default_rules_path)
+        try:
+            with open(default_rules_path, "r", encoding="utf-8") as f:
+                logger.info("SUCCESS: Loaded rules from default file: %s", default_rules_path)
                 return toml.load(f)
         except Exception as e:
-            logger.error("CRITICAL FAILURE loading rules: %s", e, exc_info=True)
-            return {}
+            logger.error("CRITICAL FAILURE: Could not load default rules file at %s: %s", default_rules_path, e)
+            return {} # Return empty dict on critical failure.
 
     def _helper_read_excel(self, file_path_or_obj) -> pd.DataFrame | None:
         """Finds header and reads the Excel sheet into a DataFrame."""
