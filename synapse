@@ -16,7 +16,7 @@
 #   frontend/       Vue 3 SPA (added in Phase 0, Step 0.3)
 #
 # Usage:
-#   ./run.sh <command>
+#   ./synapse <command>
 # ==============================================================================
 
 set -e
@@ -52,7 +52,7 @@ fn_log() {
 
 fn_activate_venv() {
     if [ ! -d "$VENV_DIR" ]; then
-        fn_log "❌ Virtual environment not found. Run './run.sh prepare' first." "red"
+        fn_log "❌ Virtual environment not found. Run './synapse prepare' first." "red"
         exit 1
     fi
     source "${VENV_DIR}/bin/activate"
@@ -121,7 +121,7 @@ fn_prepare_env() {
         fn_frontend_install
     fi
 
-    fn_log "🎉 Preparation complete! Run './run.sh run' to start the backend." "green"
+    fn_log "🎉 Preparation complete! Run './synapse run' to start the backend." "green"
 }
 
 fn_run_backend() {
@@ -131,7 +131,7 @@ fn_run_backend() {
 
 fn_run_frontend() {
     if [ ! -d "$FRONTEND_DIR" ]; then
-        fn_log "❌ frontend/ directory not found. Run './run.sh frontend:init' first." "red"
+        fn_log "❌ frontend/ directory not found. Run './synapse frontend:init' first." "red"
         exit 1
     fi
     fn_log "🚀 Starting Vue development server ..." "blue"
@@ -176,7 +176,7 @@ fn_clean() {
     find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
     find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
-    fn_log "✅ Project cleaned. Run './run.sh prepare' to start over." "green"
+    fn_log "✅ Project cleaned. Run './synapse prepare' to start over." "green"
 }
 
 # --- Frontend Helpers ---
@@ -216,7 +216,7 @@ fn_frontend_init() {
     npm install -D @types/node
 
     cd "$REPO_ROOT"
-    fn_log "✅ Frontend initialized. Run './run.sh frontend:run' to start the dev server." "green"
+    fn_log "✅ Frontend initialized. Run './synapse frontend:run' to start the dev server." "green"
 }
 
 fn_frontend_build() {
@@ -282,7 +282,7 @@ fn_deploy() {
         fn_log "❌ gettext (msgfmt) not found. Run: sudo apt install gettext" "red"; exit 1
     fi
     if [ "$EUID" -ne 0 ]; then
-        fn_log "❌ This command requires sudo. Run: sudo ./run.sh deploy" "red"; exit 1
+        fn_log "❌ This command requires sudo. Run: sudo ./synapse deploy" "red"; exit 1
     fi
 
     local default_server_name
@@ -421,7 +421,7 @@ fn_update_production_env() {
 
 fn_show_help() {
     echo ""
-    echo "Usage: ./run.sh <command>"
+    echo "Usage: ./synapse <command>"
     echo ""
     echo "━━━ Setup ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  prepare             One-time setup: create .venv, install deps, migrate DB"
