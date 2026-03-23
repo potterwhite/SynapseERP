@@ -283,6 +283,11 @@ staticfiles/
 synapse.service
 synapse_nginx.conf
 
+# --- IDE and AI tool directories ---
+# These are local editor/tooling configs, not part of the project source.
+.vscode/
+.claude/
+
 
 
 
