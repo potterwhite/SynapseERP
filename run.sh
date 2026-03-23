@@ -116,7 +116,6 @@ fn_prepare_env() {
         fn_django compilemessages
     fi
 
-    # 5. Frontend setup (only if frontend/ exists)
     if [ -d "$FRONTEND_DIR" ]; then
         fn_log "   - Installing frontend dependencies..." "yellow"
         fn_frontend_install
@@ -136,7 +135,7 @@ fn_run_frontend() {
         exit 1
     fi
     fn_log "🚀 Starting Vue development server ..." "blue"
-    cd "$FRONTEND_DIR" && pnpm dev
+    cd "$FRONTEND_DIR" && npm run dev
 }
 
 fn_run_all() {
@@ -146,7 +145,7 @@ fn_run_all() {
     # Run both in background; trap Ctrl-C to kill both
     fn_django runserver 0.0.0.0:8000 &
     BACKEND_PID=$!
-    (cd "$FRONTEND_DIR" && pnpm dev) &
+    (cd "$FRONTEND_DIR" && npm run dev) &
     FRONTEND_PID=$!
     trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit 0" INT TERM
     wait
@@ -182,33 +181,21 @@ fn_clean() {
 
 # --- Frontend Helpers ---
 
-fn_require_pnpm() {
-    # corepack: Node.js built-in tool (Node >= 16.9) that manages pnpm/yarn versions
-    # without needing root. We enable it here so 'pnpm' becomes available.
-    if ! command -v pnpm &>/dev/null; then
-        fn_log "   - Enabling pnpm via corepack (Node.js built-in)..." "yellow"
-        corepack enable
-        corepack prepare pnpm@latest --activate
-    fi
-}
-
 fn_frontend_install() {
-    fn_require_pnpm
-    cd "$FRONTEND_DIR" && pnpm install
+    cd "$FRONTEND_DIR" && npm install
     cd "$REPO_ROOT"
 }
 
 fn_frontend_init() {
-    fn_require_pnpm
     fn_log "🏗️  Initializing Vue 3 frontend project..." "blue"
 
-    # 'pnpm create vite' scaffolds a new Vite project from an official template.
+    # 'npm create vite@latest' scaffolds a new Vite project from an official template.
     # '--template vue-ts' = Vue 3 + TypeScript starter.
     cd "$REPO_ROOT"
-    pnpm create vite frontend --template vue-ts
+    npm create vite@latest frontend -- --template vue-ts
 
     cd "$FRONTEND_DIR"
-    pnpm install
+    npm install
 
     fn_log "   - Installing core UI and routing dependencies..." "yellow"
     # naive-ui: Vue 3 UI component library (fully TypeScript-native)
@@ -216,17 +203,17 @@ fn_frontend_init() {
     # vue-router@4: official Vue 3 router for SPA navigation
     # pinia: official Vue 3 state management library
     # axios: HTTP client with interceptor and error-handling support
-    pnpm install naive-ui @vicons/ionicons5 vue-router@4 pinia axios
+    npm install naive-ui @vicons/ionicons5 vue-router@4 pinia axios
 
     fn_log "   - Installing additional utility dependencies..." "yellow"
     # frappe-gantt: lightweight MIT-licensed Gantt chart library
     # markdown-it: fast Markdown parser/renderer
     # dayjs: lightweight date library (replaces moment.js)
-    pnpm install frappe-gantt markdown-it dayjs
+    npm install frappe-gantt markdown-it dayjs
 
     fn_log "   - Installing dev dependencies..." "yellow"
     # @types/node: TypeScript type definitions for Node.js APIs (used in vite.config.ts)
-    pnpm install -D @types/node
+    npm install -D @types/node
 
     cd "$REPO_ROOT"
     fn_log "✅ Frontend initialized. Run './run.sh frontend:run' to start the dev server." "green"
@@ -234,7 +221,7 @@ fn_frontend_init() {
 
 fn_frontend_build() {
     fn_log "🔨 Building frontend for production..." "blue"
-    cd "$FRONTEND_DIR" && pnpm build
+    cd "$FRONTEND_DIR" && npm run build
     cd "$REPO_ROOT"
     fn_log "✅ Frontend build complete. Output in frontend/dist/" "green"
 }
@@ -318,7 +305,7 @@ fn_deploy() {
         PYTHONPATH=${BACKEND_SRC} python ${BACKEND_MANAGE} collectstatic --noinput
     "
     fn_log "   - Step 4: Building frontend..." "yellow"
-    sudo -u "$service_user" bash -c "cd ${FRONTEND_DIR} && pnpm build" 2>/dev/null || \
+    sudo -u "$service_user" bash -c "cd ${FRONTEND_DIR} && npm run build" 2>/dev/null || \
         fn_log "   ⚠️  Frontend build skipped (frontend/ not yet initialized)." "yellow"
 
     fn_log "   - Step 5: Installing Systemd & Nginx configs..." "yellow"
