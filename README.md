@@ -23,7 +23,7 @@ T-HEAD-GR-V0.8.0-20250910 (English README for SynapseERP)
 </p>
 
 <p align="center">
-  <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
+  <strong>English</strong> | <a href="./docs/README.zh.md">简体中文</a>
 </p>
 
 <p align="center">
@@ -56,12 +56,12 @@ This project uses a fully automated preparation script.
 
 1.  **Give the script execution permissions:**
     ```bash
-    chmod +x run.sh
+    chmod +x synapse
     ```
 
 2.  **Run the script:**
     ```bash
-    ./run.sh prepare
+    ./synapse prepare
     ```
     This single command handles everything: it will create a Python virtual environment, install all dependencies, generate a secure `.env` configuration file, and initialize the database.
 
@@ -71,13 +71,13 @@ After the preparation is complete:
 
 1.  **Create an administrator user:**
     ```bash
-    ./run.sh superuser
+    ./synapse superuser
     ```
     Follow the prompts to create your admin account.
 
 2.  **Run the development server:**
     ```bash
-    ./run.sh run
+    ./synapse run
     ```
     You can now access the application at **http://127.0.0.1:8000** and the admin panel at **http://127.0.0.1:8000/admin/**.
 
@@ -85,14 +85,14 @@ After the preparation is complete:
 
 # 2. Production Deployment
 
-The `./run.sh run` command is **for development use only**. For a real production environment, this project provides a fully automated deployment command that will run your application using Gunicorn and Nginx.
+The `./synapse run` command is **for development use only**. For a real production environment, this project provides a fully automated deployment command that will run your application using Gunicorn and Nginx.
 
 ### Execute Automated Deployment
 
 On your production server, run the following command with `sudo` privileges:
 
 ```bash
-sudo ./run.sh deploy
+sudo ./synapse deploy
 ```
 This command is **interactive** and **fully automated**. It will guide you through all the necessary steps:
 
@@ -121,13 +121,13 @@ This is the ideal method when you need to provide users with a specific set of r
 *   **Set a remote rules URL:**
     ```bash
     # Replace this URL with your own Gist or raw file URL
-    ./run.sh set-rule "https://your-url/path/to/rules.toml"
+    ./synapse set-rule "https://your-url/path/to/rules.toml"
     ```
     This command will securely save the URL to your local `.env` file.
 
 *   **Clear the remote rules URL** (to revert to using local or default rules):
     ```bash
-    ./run.sh set-rule
+    ./synapse set-rule
     ```
 
 #### Method B (For Local Development): Using a Local File
@@ -145,19 +145,19 @@ If neither a remote URL nor a local file is found, the system will fall back to 
 
 These commands are intended for contributors or developers who **wish to modify the application's source code or database structure**. Regular users **do not need** to use these commands in daily operation.
 
-*   **`./run.sh dev:migrate`**
+*   **`./synapse dev:migrate`**
     *   **Purpose:** Creates and applies database migrations.
     *   **When to use:** Use this command after you have **modified a `models.py` file** to update the database schema.
 
-*   **`./run.sh dev:makemessages`**
+*   **`./synapse dev:makemessages`**
     *   **Purpose:** Scans all source code and templates for translatable strings and updates the `.po` translation source files.
     *   **When to use:** Use this after you have **added or changed user-facing text that needs to be translated**.
 
-*   **`./run.sh dev:compilemessages`**
+*   **`./synapse dev:compilemessages`**
     *   **Purpose:** Compiles the text-based `.po` files into binary `.mo` files that Django uses.
     *   **When to use:** Use this after running `dev:makemessages` or after pulling translation updates from the repository.
 
-*   **`./run.sh dev:test`**
+*   **`./synapse dev:test`**
     *   **Purpose:** Runs the project's automated test suite.
     *   **When to use:** Use frequently during **the development of new features** to ensure your changes have not broken existing functionality.
 
@@ -167,9 +167,9 @@ The Dashboard page features a notification panel that can display important info
 
 #### Step 3.3.1: Access the Admin Panel
 
-1.  Ensure your development server is running (`./run.sh run`).
+1.  Ensure your development server is running (`./synapse run`).
 2.  Open the admin login page in your browser: **http://127.0.0.1:8000/admin/**
-3.  Log in with the administrator account you created in `Step 1.3` using the `./run.sh superuser` command.
+3.  Log in with the administrator account you created in `Step 1.3` using the `./synapse superuser` command.
 
 #### Step 3.3.2: Create a New Notification
 
