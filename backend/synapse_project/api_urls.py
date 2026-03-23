@@ -10,6 +10,6 @@
 from django.urls import path, include
 
 urlpatterns = [
-    # Health check — no authentication required
-    path("health/", include("synapse_api.urls")),
+    # synapse_api handles: GET /api/health/ and GET /api/dashboard/
+    path("", include("synapse_api.urls")),
 ]
