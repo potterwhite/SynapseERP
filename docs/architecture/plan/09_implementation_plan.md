@@ -452,6 +452,169 @@ pnpm install -D @types/node
 
 ---
 
+## Phase 4.5：端到端联调 / End-to-End Integration Test
+
+**目标：** Phase 3 + Phase 4 代码全部合并后，在本地开发环境中验证完整的前后端联调流程。本 Phase 不产出新功能，只验证现有功能的端到端可用性。
+
+> 最后更新：2026-03-23
+> 状态：🔄 进行中
+
+---
+
+### 前置条件
+
+```bash
+# 1. 确保 .venv 存在，否则先执行：
+./synapse prepare
+
+# 2. 确保超级用户账号已创建（第一次使用时）：
+./synapse superuser
+
+# 3. 同时启动后端（:8000）和前端（:5173）：
+./synapse run:all
+```
+
+---
+
+### Step L1：认证流程验证（最关键）
+
+**操作：**
+1. 浏览器打开 `http://localhost:5173`
+2. Vue router 的 `beforeEach` 守卫会调用 `GET /api/auth/me/`
+3. 未登录时返回 403，守卫自动跳转到：
+   ```
+   http://localhost:8000/admin/login/?next=%2F
+   ```
+4. 用超级用户账号登录
+5. Django 设置 session cookie（`sessionid`），跳回 `http://localhost:5173/`
+6. 再次调用 `GET /api/auth/me/` 成功，SPA 正常加载
+
+**预期 Django 终端输出：**
+```
+"GET /api/auth/me/ HTTP/1.1" 403  ← 未登录，正常
+"GET /admin/login/ HTTP/1.1"  200  ← 显示登录页
+"POST /admin/login/ HTTP/1.1" 302  ← 登录成功跳转
+"GET /api/auth/me/ HTTP/1.1"  200  ← 已登录，放行
+```
+
+**验收标准：**
+- [x] 未登录时访问 SPA 自动跳转登录页，不卡死也不报错
+- [x] 登录后回到 Dashboard，显示 3 个工具卡片（PM / Attendance / BOM）
+
+---
+
+### Step L2：后端 API 健康检查
+
+登录后，在浏览器开发者工具 Console（F12）里依次执行：
+
+```js
+// L2-1: 系统状态
+fetch('/api/health/').then(r=>r.json()).then(console.log)
+// 预期: { status: "ok", version: "...", pm_backend: "database" }
+
+// L2-2: Dashboard 数据
+fetch('/api/dashboard/').then(r=>r.json()).then(console.log)
+// 预期: { notification: null, modules: [{key:"synapse_pm",...}, {key:"synapse_attendance",...}, {key:"synapse_bom_analyzer",...}] }
+
+// L2-3: 当前用户
+fetch('/api/auth/me/').then(r=>r.json()).then(console.log)
+// 预期: { id: 1, username: "你的用户名", email: "..." }
+
+// L2-4: PM 项目列表（空库）
+fetch('/api/pm/projects/').then(r=>r.json()).then(console.log)
+// 预期: { count: 0, results: [] }
+
+// L2-5: PM 统计
+fetch('/api/pm/stats/').then(r=>r.json()).then(console.log)
+// 预期: { total_projects: 0, active_projects: 0, total_tasks: 0, ... }
+```
+
+**验收标准：**
+- [x] 所有端点返回 200，结构与注释一致
+- [x] `pm_backend` 字段存在（database 模式）
+
+---
+
+### Step L3：PM 模块展示
+
+**操作：**
+1. 侧边栏点击 **Projects** → `http://localhost:5173/pm`
+   - 预期：stats bar 全为 0，空表格，无 JS 报错（Console 无红色输出）
+2. 侧边栏点击 **Gantt Chart** → `http://localhost:5173/pm/gantt`
+   - 预期：空甘特图，显示 "No tasks to display"
+3. 在 Django admin 手动创建测试数据：
+   ```
+   http://localhost:8000/admin/synapse_pm/project/add/
+   ```
+   创建 1 个 Project + 2 个 Task（设置 deadline），回到 `/pm` 验证：
+   - 项目列表显示正确（task_stats 嵌套对象格式）
+   - 点击项目行，打开 Task 列表（project 嵌套 {id, name} 格式）
+   - 点击任务行，打开 TaskDetail Drawer
+
+**验收标准：**
+- [x] Project 列表的 Tasks 列显示进度条和计数
+- [x] Gantt 正确渲染任务时间线（有 deadline 的任务）
+- [x] Task Drawer 显示正确的 status、priority、actual_hours
+
+---
+
+### Step L4：Attendance Analyzer
+
+**操作：**
+1. 侧边栏点击 **Attendance** → `http://localhost:5173/attendance`
+2. 拖拽上传一个考勤 Excel 文件（`.xlsx`）
+3. 点击 **Analyze**
+
+**验收标准：**
+- [x] 上传后显示 Detailed / Public 两个 Tab
+- [x] 点击 "详细报告 (ZH)" 触发文件下载，文件名含中文
+- [x] 点击 "New Analysis" 重置为上传状态
+
+---
+
+### Step L5：BOM Analyzer
+
+**操作：**
+1. 侧边栏点击 **BOM Analyzer** → `http://localhost:5173/bom`
+2. 拖拽上传一个或多个 BOM Excel 文件
+3. 点击 **Aggregate & Analyze**
+
+**验收标准：**
+- [x] 显示汇总结果表格
+- [x] 可疑行（is_suspicious=true）高亮为黄色
+- [x] 点击 "Download Excel" 下载文件
+
+---
+
+### Step L6：Gantt 拖拽交互
+
+**操作（需有 Task + Deadline 数据）：**
+1. 进入 Gantt 页面
+2. 拖拽甘特条左右移动
+3. 出现确认对话框："Move Task to ... ?"
+4. 点击 **Confirm**
+
+**验收标准：**
+- [x] API PATCH `/api/pm/tasks/{uuid}/` 被调用（Network tab 可见）
+- [x] 刷新后 deadline 已更新
+
+---
+
+### 已知问题记录（联调期间发现）
+
+| 问题 | 影响 | 修复提交 |
+|------|------|---------|
+| `db_adapter._project_to_dict` 返回平铺字段，前端期望嵌套 `task_stats` 对象 | PM 列表页显示异常 | `896bc7c` |
+| `db_adapter._task_to_dict` 缺少 `actual_hours`，`project` 字段平铺 | Task Drawer 显示错误 | `896bc7c` |
+| `create_task`/`update_task` 未过滤非模型字段，vault 模式写入会崩溃 | 创建任务 500 错误 | `896bc7c` |
+| `GET /api/auth/me/` 端点缺失 | router 守卫无法工作 | `896bc7c` |
+| Vue router 无登录守卫，未登录直接 403 无提示 | 用户体验差 | `896bc7c` |
+| `synapse.service.template` 缺少 `PYTHONPATH` 和正确 `WorkingDirectory` | 生产部署启动失败 | `896bc7c` |
+| `frappe-gantt` CSS bare import 与 Vite 8 rolldown 不兼容 | 前端 build 失败 | `19f483c` |
+| `synapse_pm` 未加入 `SYNAPSE_MODULES`，Dashboard 缺 PM 卡片 | Dashboard 显示不完整 | `93a11f0` |
+
+---
+
 ## Phase 5：Docker 容器化
 
 **目标：** `docker-compose up` 一键启动。

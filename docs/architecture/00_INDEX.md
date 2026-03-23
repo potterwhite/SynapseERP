@@ -14,6 +14,7 @@
 | **Phase 2** | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | ✅ 完成 Done |
 | **Phase 3** | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | ✅ 完成 Done |
 | **Phase 4** | 迁移现有模块到 Vue / Migrate existing modules to Vue | ✅ 完成 Done |
+| **Phase 4.5** | 端到端联调 / End-to-end integration testing | 🔄 进行中 In progress |
 | Phase 5 | Docker 容器化 / Docker containerization | ⏳ 待开始 Pending |
 | Phase 6 | 持续扩展 / Ongoing extensions | ⏳ 长期 Long-term |
 
@@ -61,6 +62,17 @@
 | **4.1** | Attendance Analyzer API + Vue 页面 / DRF API + Vue views | ✅ `b906072` |
 | **4.2** | BOM Analyzer API + Vue 页面 / DRF API + Vue views | ✅ `b906072` |
 | **4.3** | 移除 Django 模板路由 / Remove Django template routes | ✅ `19f483c` |
+
+### Phase 4.5 — 联调步骤明细 / Integration Test Breakdown
+
+| 步骤 / Step | 描述 / Description | 状态 / Status |
+|---|---|---|
+| **L1** | 认证流程：未登录跳转 admin 登录页，成功后回 SPA | 🔄 |
+| **L2** | 后端 API 健康检查（health / dashboard / auth/me / pm/*） | 🔄 |
+| **L3** | PM 模块：项目列表 / 任务视图 / Gantt / TaskDetail Drawer | 🔄 |
+| **L4** | Attendance Analyzer：上传 → 分析 → 下载 | 🔄 |
+| **L5** | BOM Analyzer：多文件上传 → 汇总 → 下载 | 🔄 |
+| **L6** | Gantt 拖拽：修改 deadline → 确认 → PATCH API → 刷新验证 | 🔄 |
 
 ---
 
