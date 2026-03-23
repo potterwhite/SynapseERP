@@ -16,6 +16,7 @@ openpyxl
 python-dotenv
 toml
 requests
+PyYAML>=6.0
 markdown2
 colorlog
 polib
