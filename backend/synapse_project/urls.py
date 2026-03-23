@@ -19,17 +19,20 @@ urlpatterns = [
     # 1. Admin Interface: Provides the backend management site.
     path('admin/', admin.site.urls),
 
-    # 2. Attendance Analyzer App: Routes all URLs starting with 'attendance/'
+    # 2. REST API: All /api/* routes are handled by api_urls.py.
+    path('api/', include('synapse_project.api_urls')),
+
+    # 3. Attendance Analyzer App: Routes all URLs starting with 'attendance/'
     #    to the synapse_attendance app's urls.py.
     #    e.g., /attendance/analyze/
     path('attendance/', include('synapse_attendance.urls', namespace='synapse_attendance')),
 
-    # 3. BOM Analyzer App: Routes all URLs starting with 'bom/'
+    # 4. BOM Analyzer App: Routes all URLs starting with 'bom/'
     #    to the synapse_bom_analyzer app's urls.py.
     #    e.g., /bom/
     path('bom/', include('synapse_bom_analyzer.urls', namespace='synapse_bom_analyzer')),
-    
-    # 4. Dashboard App: Routes the root URL ('/') to the dashboard.
+
+    # 5. Dashboard App: Routes the root URL ('/') to the dashboard.
     #    This should be the LAST entry for catch-all paths.
     path('', include('synapse_dashboard.urls', namespace='synapse_dashboard')),
 ]
