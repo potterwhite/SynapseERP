@@ -22,6 +22,18 @@ class DatabaseAdapter(PMBackendAdapter):
         task_qs = p.tasks.all()
         total = task_qs.count()
         done = task_qs.filter(status=Task.Status.DONE).count()
+        doing = task_qs.filter(status=Task.Status.DOING).count()
+        todo = task_qs.filter(status=Task.Status.TODO).count()
+        cancelled = task_qs.filter(status=Task.Status.CANCELLED).count()
+
+        # Aggregate total hours across all tasks for this project.
+        # Uses the prefetched time_entries queryset when available.
+        total_minutes = sum(
+            e.duration_minutes
+            for task in task_qs
+            for e in task.time_entries.all()
+        )
+
         return {
             "id": p.pk,
             "name": p.name,
@@ -32,24 +44,34 @@ class DatabaseAdapter(PMBackendAdapter):
             "created": p.created.isoformat() if p.created else None,
             "vault_path": p.vault_path,
             "synced_at": p.synced_at.isoformat() if p.synced_at else None,
-            "task_count": total,
-            "done_count": done,
-            "completion_rate": round(done / total * 100) if total else 0,
+            # Nested task_stats object — matches frontend types/pm.ts TaskStats shape
+            "task_stats": {
+                "total": total,
+                "todo": todo,
+                "doing": doing,
+                "done": done,
+                "cancelled": cancelled,
+                "completion_rate": round(done / total, 2) if total else 0.0,
+            },
+            "total_hours": round(total_minutes / 60, 1),
         }
 
     @staticmethod
     def _task_to_dict(t: Task, *, include_time_entries: bool = False) -> dict[str, Any]:
+        time_entries_qs = list(t.time_entries.all())
+        actual_minutes = sum(e.duration_minutes for e in time_entries_qs)
         d: dict[str, Any] = {
             "id": t.pk,
             "uuid": str(t.uuid),
             "name": t.name,
-            "project_id": t.project_id,
-            "project_name": t.project.name,
+            # Nested project summary — matches frontend types/pm.ts Task.project shape
+            "project": {"id": t.project_id, "name": t.project.name},
             "status": t.status,
             "priority": t.priority,
             "created": t.created.isoformat() if t.created else None,
             "deadline": t.deadline.isoformat() if t.deadline else None,
             "estimated_hours": t.estimated_hours,
+            "actual_hours": round(actual_minutes / 60, 1),
             "depends_on": [str(dep.uuid) for dep in t.depends_on.all()],
             "vault_path": t.vault_path,
             "synced_at": t.synced_at.isoformat() if t.synced_at else None,
@@ -57,8 +79,10 @@ class DatabaseAdapter(PMBackendAdapter):
         if include_time_entries:
             d["time_entries"] = [
                 DatabaseAdapter._time_entry_to_dict(e)
-                for e in t.time_entries.all()
+                for e in time_entries_qs
             ]
+        else:
+            d["time_entries"] = []
         return d
 
     @staticmethod
@@ -79,14 +103,14 @@ class DatabaseAdapter(PMBackendAdapter):
     # ------------------------------------------------------------------
 
     def list_projects(self, *, status: str | None = None) -> list[dict[str, Any]]:
-        qs = Project.objects.prefetch_related("tasks")
+        qs = Project.objects.prefetch_related("tasks", "tasks__time_entries")
         if status:
             qs = qs.filter(status=status)
         return [self._project_to_dict(p) for p in qs]
 
     def get_project(self, project_id: int) -> dict[str, Any] | None:
         try:
-            p = Project.objects.prefetch_related("tasks").get(pk=project_id)
+            p = Project.objects.prefetch_related("tasks", "tasks__time_entries").get(pk=project_id)
         except Project.DoesNotExist:
             return None
         return self._project_to_dict(p)
@@ -125,7 +149,20 @@ class DatabaseAdapter(PMBackendAdapter):
 
     def create_task(self, data: dict[str, Any]) -> dict[str, Any]:
         depends_on_uuids: list[str] = data.pop("depends_on", [])
-        t = Task.objects.create(**data)
+
+        # Only pass fields that exist on the Task model to avoid unexpected
+        # keyword argument errors when vault-side keys are present.
+        _TASK_FIELDS = {
+            "name", "project_id", "status", "priority", "created",
+            "deadline", "estimated_hours", "vault_path", "vault_mtime",
+            "synced_at", "uuid",
+        }
+        # Handle project FK: accept either project_id (int) or project_ref (ignored here)
+        if "project_id" not in data and "project" in data:
+            data["project_id"] = data.pop("project")
+
+        create_kwargs = {k: v for k, v in data.items() if k in _TASK_FIELDS}
+        t = Task.objects.create(**create_kwargs)
         if depends_on_uuids:
             dep_tasks = Task.objects.filter(uuid__in=depends_on_uuids)
             t.depends_on.set(dep_tasks)
@@ -133,20 +170,32 @@ class DatabaseAdapter(PMBackendAdapter):
 
     def update_task(self, task_uuid: str, data: dict[str, Any]) -> dict[str, Any] | None:
         try:
-            t = Task.objects.select_related("project").prefetch_related("depends_on").get(uuid=task_uuid)
+            t = (
+                Task.objects
+                .select_related("project")
+                .prefetch_related("depends_on", "time_entries")
+                .get(uuid=task_uuid)
+            )
         except Task.DoesNotExist:
             return None
 
         depends_on_uuids: list[str] | None = data.pop("depends_on", None)
+
+        # Only update fields that belong to the Task model.
+        _TASK_FIELDS = {
+            "name", "status", "priority", "created",
+            "deadline", "estimated_hours", "vault_path", "vault_mtime", "synced_at",
+        }
         for field, value in data.items():
-            setattr(t, field, value)
+            if field in _TASK_FIELDS:
+                setattr(t, field, value)
         t.save()
 
         if depends_on_uuids is not None:
             dep_tasks = Task.objects.filter(uuid__in=depends_on_uuids)
             t.depends_on.set(dep_tasks)
 
-        return self._task_to_dict(t)
+        return self._task_to_dict(t, include_time_entries=True)
 
     # ------------------------------------------------------------------
     # Time Entries

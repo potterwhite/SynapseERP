@@ -48,14 +48,14 @@ class VaultAdapter(PMBackendAdapter):
     # ------------------------------------------------------------------
 
     def list_projects(self, *, status: str | None = None) -> list[dict[str, Any]]:
-        qs = Project.objects.prefetch_related("tasks")
+        qs = Project.objects.prefetch_related("tasks", "tasks__time_entries")
         if status:
             qs = qs.filter(status=status)
         return [self._project_to_dict(p) for p in qs]
 
     def get_project(self, project_id: int) -> dict[str, Any] | None:
         try:
-            p = Project.objects.prefetch_related("tasks").get(pk=project_id)
+            p = Project.objects.prefetch_related("tasks", "tasks__time_entries").get(pk=project_id)
         except Project.DoesNotExist:
             return None
         return self._project_to_dict(p)

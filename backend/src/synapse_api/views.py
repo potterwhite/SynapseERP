@@ -1,5 +1,5 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.conf import settings
 
@@ -80,3 +80,23 @@ def dashboard(request):
     ]
 
     return Response({"notification": notification_content, "modules": modules})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    """
+    Return the currently authenticated user's basic profile.
+
+    GET /api/auth/me/
+    Response: {"id": 1, "username": "admin", "email": "admin@example.com"}
+
+    Used by the frontend auth store to confirm session validity on app boot.
+    Returns 403 if not authenticated (handled by DRF's default permission class).
+    """
+    user = request.user
+    return Response({
+        "id": user.pk,
+        "username": user.username,
+        "email": user.email,
+    })
