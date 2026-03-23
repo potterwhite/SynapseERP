@@ -49,8 +49,13 @@ const router = createRouter({
 })
 
 // Global navigation guard: verify the user has an active Django session.
-// On any unrecognised 401/403 response, redirect to the Django admin login page
-// which sets the session cookie and then bounces back to the SPA.
+// On any unrecognised 401/403 response, redirect to the Django admin login page.
+//
+// In development (Vite proxy), /admin is proxied to :8000, so the session
+// cookie is set on the same origin as the Vue SPA (localhost:5173).
+// In production, Nginx serves both the SPA and /admin from the same origin.
+//
+// next= points back to the SPA root (/) so Django redirects here after login.
 let sessionVerified = false
 
 router.beforeEach(async () => {
@@ -61,11 +66,8 @@ router.beforeEach(async () => {
     sessionVerified = true
     return true
   } catch {
-    // Not authenticated — send to Django admin login.
-    // next= points back to the SPA root so the user lands back after login.
-    const loginUrl = `/admin/login/?next=${encodeURIComponent('/')}`
-    window.location.href = loginUrl
-    // Return false to abort the current navigation (we're doing a full redirect)
+    // Not authenticated — redirect to Django admin login (same-origin via proxy).
+    window.location.href = `/admin/login/?next=${encodeURIComponent('/')}`
     return false
   }
 })

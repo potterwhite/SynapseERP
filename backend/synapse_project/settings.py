@@ -37,6 +37,15 @@ ALLOWED_HOSTS = get_env_variable("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,19
     ","
 )
 
+# In development the Vue SPA runs on :5173 (Vite) and proxies /admin/ to :8000.
+# Django's CSRF middleware checks the Origin/Referer header against
+# CSRF_TRUSTED_ORIGINS; without this entry the admin login POST from the
+# Vite proxy would be rejected as a cross-origin request.
+CSRF_TRUSTED_ORIGINS = get_env_variable(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173",
+).split(",")
+
 # --- Application Definitions ---
 INSTALLED_APPS = [
     "django.contrib.admin",
