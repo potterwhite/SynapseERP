@@ -15,9 +15,11 @@ const routes: RouteRecordRaw[] = [
         path: 'pm',
         children: [
           {
+            // /pm               → project list
+            // /pm?project=<id>  → project task view (handled inside the component)
             path: '',
             name: 'pm-projects',
-            component: () => import('@/views/pm/ProjectList.vue'),
+            component: () => import('@/views/pm/PmIndex.vue'),
           },
           {
             path: 'gantt',

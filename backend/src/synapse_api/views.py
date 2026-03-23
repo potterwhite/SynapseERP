@@ -12,9 +12,25 @@ def health_check(request):
     Used by load balancers, Docker health checks, and frontend connectivity tests.
 
     GET /api/health/
-    Response: {"status": "ok"}
+    Response: {"status": "ok", "version": "...", "pm_backend": "...", "vault_connected": bool}
     """
-    return Response({"status": "ok"})
+    import os
+    from synapse import __version__ as version
+
+    pm_backend = getattr(settings, "SYNAPSE_PM_BACKEND", "database")
+    vault_path = getattr(settings, "OBSIDIAN_VAULT_PATH", None)
+    vault_connected = bool(vault_path and os.path.isdir(vault_path))
+
+    payload: dict = {
+        "status": "ok",
+        "version": version,
+        "pm_backend": pm_backend,
+    }
+    if pm_backend == "vault":
+        payload["vault_connected"] = vault_connected
+        payload["vault_path"] = vault_path
+
+    return Response(payload)
 
 
 @api_view(["GET"])

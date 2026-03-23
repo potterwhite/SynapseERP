@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-23
+> 最后更新 / Last updated: 2026-03-23 (Phase 2 完成 / Phase 2 complete)
 > 当前分支 / Branch: `refactor/pm`
 
 ---
@@ -11,8 +11,8 @@
 |---|---|---|
 | **Phase 0** | 项目重组 + 基础设施 / Project restructure + infrastructure | ✅ 完成 Done |
 | **Phase 1** | Vue 前端骨架 + API 基础 / Vue frontend skeleton + API foundation | ✅ 完成 Done |
-| **Phase 2** | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | 🔄 进行中 In Progress |
-| Phase 3 | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | ⏳ 待开始 Pending |
+| **Phase 2** | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | ✅ 完成 Done |
+| Phase 3 | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | 🔄 下一阶段 Next |
 | Phase 4 | 迁移现有模块到 Vue / Migrate existing modules to Vue | ⏳ 待开始 Pending |
 | Phase 5 | Docker 容器化 / Docker containerization | ⏳ 待开始 Pending |
 | Phase 6 | 持续扩展 / Ongoing extensions | ⏳ 长期 Long-term |
@@ -42,8 +42,17 @@
 | **2.2** | Backend Adapter 抽象层 / PMBackendAdapter abstract layer | ✅ `de6ca5e` |
 | **2.3** | VaultReader + VaultWriter / Obsidian read + write | ✅ `8434066` |
 | **2.4** | SQLite 缓存同步 / Vault-to-SQLite cache sync | ✅ `3cf45e9` |
-| **2.5** | DRF API — PM 数据接口 / PM REST API endpoints | ✅ 本次提交 |
-| **2.6** | Vue 前端 — 项目列表 + 任务视图 / ProjectList + TaskDetail views | 🔄 进行中 |
+| **2.5** | DRF API — PM 数据接口 / PM REST API endpoints | ✅ `22c3fe7` |
+| **2.6** | Vue 前端 — 项目列表 + 任务视图 / ProjectList + TaskDetail views | ✅ 本次提交 |
+
+### Phase 3 — 步骤明细 / Step Breakdown
+
+| 步骤 / Step | 描述 / Description | 状态 / Status |
+|---|---|---|
+| **3.1** | 集成 frappe-gantt / Integrate frappe-gantt chart | ⏳ |
+| **3.2** | 甘特图交互 — 拖拽修改 / Gantt drag-and-drop interactions | ⏳ |
+| **3.3** | VaultWriter 集成 — 写回 Obsidian / VaultWriter write-back | ⏳ |
+| **3.4** | 写入 API 接口 / Write API endpoints | ⏳ |
 
 ---
 

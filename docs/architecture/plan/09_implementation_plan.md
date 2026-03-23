@@ -313,22 +313,22 @@ pnpm install -D @types/node
 ### Step 2.6：Vue 前端 — 项目列表和任务视图
 
 **详细操作：**
-- `views/pm/ProjectList.vue`: 项目列表
-  - 表格视图（Naive UI DataTable）
-  - 按状态/优先级过滤
-  - 显示：项目名、任务数、完成率、总工时、deadline
-- `views/pm/TaskDetail.vue`: 任务详情
-  - 基本信息（状态、优先级、创建时间、deadline）
-  - 时间记录列表
-  - 关联的 daily notes
-- `stores/pm.ts`: PM 状态管理
+- `types/pm.ts`: Project, Task, TimeEntry, GanttTask, PmStats 类型定义
+- `api/pm.ts`: pmApi 模块（listProjects, getProject, listTasks, getTask, etc.）
+- `stores/pm.ts`: usePmStore（projects/tasks/selectedTask/stats/syncing state）
+- `stores/app.ts`: 补充 fetchHealth()，从 /api/health/ 读取 pmBackend
+- `views/pm/PmIndex.vue`: 路由入口，根据 ?project= query 切换两个视图
+- `views/pm/ProjectList.vue`: 项目列表，DataTable + 状态过滤 + stats bar + sync 按钮
+- `views/pm/ProjectTaskView.vue`: 项目内任务列表，支持 status/priority/search 过滤
+- `views/pm/TaskDetail.vue`: 任务详情 Drawer（meta + 时间记录表 + vault 信息）
+- `backend/synapse_api/views.py`: health_check 补充 pm_backend/vault_connected 字段
 
 **验收标准：**
-- [x] 项目列表正确展示从 Obsidian vault 读取的数据
-- [x] 点击项目可看到任务列表
-- [x] 点击任务可看到详情和时间记录
+- [x] vue-tsc + vite build 零错误
+- [x] /api/health/ 返回 pm_backend 字段
+- [ ] 端到端联调（需要运行 ./synapse run + ./synapse frontend:run）
 
-**git commit:** `feat(pm): Add project list and task detail views`
+**git commit:** 本次提交
 
 ---
 
