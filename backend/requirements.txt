@@ -1,7 +1,6 @@
 # This file specifies the third-party dependencies for the SynapseERP project.
 # It uses flexible versioning (>=) to ensure portability across Python versions.
-
--e .
+# Note: the editable install (-e backend/) is handled by run.sh, not listed here.
 
 # Core Framework
 Django>=5.0,<6.0
