@@ -43,7 +43,7 @@
 | **2.3** | VaultReader + VaultWriter / Obsidian read + write | ✅ `8434066` |
 | **2.4** | SQLite 缓存同步 / Vault-to-SQLite cache sync | ✅ `3cf45e9` |
 | **2.5** | DRF API — PM 数据接口 / PM REST API endpoints | ✅ `22c3fe7` |
-| **2.6** | Vue 前端 — 项目列表 + 任务视图 / ProjectList + TaskDetail views | ✅ 本次提交 |
+| **2.6** | Vue 前端 — 项目列表 + 任务视图 / ProjectList + TaskDetail views | ✅ `2c45168` |
 
 ### Phase 3 — 步骤明细 / Step Breakdown
 
