@@ -233,7 +233,7 @@ pnpm install -D @types/node
 - [x] `get_adapter()` 根据配置返回正确的 adapter
 - [x] 两个 adapter 实现相同接口
 
-**git commit:** `feat(pm): Implement Backend Adapter pattern for PM data access`
+**git commit:** `de6ca5e feat(pm): Implement Backend Adapter pattern for PM data access`
 
 ---
 
@@ -242,43 +242,45 @@ pnpm install -D @types/node
 **详细操作：**
 - `vault/reader.py`:
   - `scan_projects()`: 扫描 `1_PROJECT/` 和 `4_ARCHIVE/`
-  - `scan_areas()`: 扫描 `2_AREA/`
   - `scan_tasks(project_path)`: 扫描 `tasks/` 子目录
-  - `parse_frontmatter(md_content)`: 解析 YAML frontmatter
-  - `parse_daily_time_blocks(daily_note_path)`: 正则解析时间块
+  - `parse_task_file(file_path)`: 解析 YAML frontmatter
+  - `parse_daily_note_time_blocks(file_path)`: 正则解析时间块
   - `aggregate_time_entries(task_uuid)`: 聚合某任务的所有工时
-- 正则表达式：
-  ```python
-  # 时间块格式:
-  # - [ ] description (start:: HH:MM) (end:: HH:MM) (task_uuid:: xxx) (task_name:: [[xxx]])
-  TIME_BLOCK_PATTERN = r'- \[.\] (.+?) \(start:: (\d{1,2}:\d{2})\) \(end:: (\d{1,2}:\d{2})\)(?: \(task_uuid:: ([^)]+)\))?(?: \(task_name:: \[\[([^\]]+)\]\]\))?'
-  ```
-- 单元测试：用测试数据验证解析正确性
+  - `get_daily_note_path(target_date)`: 推算 daily note 路径
+- `vault/writer.py`:
+  - `create_task_file(data)`: 生成新 task_xxx.md
+  - `update_task_frontmatter(path, updates)`: 原子更新 frontmatter
+  - `append_time_block(date, entry)`: 追加时间块到 daily note
+- 注：真实 vault 的边缘情况验证在 Step 2.4 `sync_vault` 实际运行时进行
 
 **验收标准：**
 - [x] 能正确扫描出所有 project 目录
 - [x] 能正确解析 task frontmatter
-- [x] 能正确解析 daily note 时间块
-- [x] 单元测试通过
+- [x] 能正确解析 daily note 时间块（单元测试通过）
+- [ ] 真实 vault 运行验证（待 Step 2.4 运行后确认）
 
-**git commit:** `feat(pm): Implement VaultReader for Obsidian vault parsing`
+**git commit:** `8434066 feat(pm): Implement VaultReader and VaultWriter for Obsidian vault parsing`
 
 ---
 
 ### Step 2.4：实现 SQLite 缓存同步
 
 **详细操作：**
+- 新增 `SyncMeta` 模型（key-value，存储 `last_sync_at` 等元数据）
 - Management command: `python manage.py sync_vault`
-- 逻辑：扫描 vault → 对比 SQLite 缓存 → 增量更新
-- 以文件 mtime 作为变化检测依据
-- 支持全量同步和增量同步
+  - `--full`: 忽略 mtime 缓存，强制全量重解析
+  - `--dry-run`: 仅报告变化，不写入数据库
+- 逻辑：扫描 vault → 对比 SQLite 缓存（按 vault_mtime）→ 增量更新
+- 二次 pass 解析 task depends_on M2M 关系
+- 自动聚合最近 2 个月的 daily note 时间块
 
 **验收标准：**
-- [x] `sync_vault` 命令成功执行
-- [x] Django admin 中可以看到同步后的数据
-- [x] 再次执行时只更新有变化的文件
+- [x] `sync_vault` 命令成功执行（database 模式下优雅退出）
+- [x] 增量同步：第二次运行相同 vault，skipped 计数正确
+- [x] `SyncMeta.last_sync_at` 在每次成功同步后更新
+- [ ] 真实 vault 运行：`./synapse dev:migrate && python manage.py sync_vault --dry-run`
 
-**git commit:** `feat(pm): Implement vault-to-SQLite cache sync command`
+**git commit:** 本次提交
 
 ---
 

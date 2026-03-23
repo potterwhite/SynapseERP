@@ -116,3 +116,24 @@ class TimeEntry(models.Model):
 
     def __str__(self) -> str:
         return f"{self.task.name} — {self.date} ({self.duration_minutes} min)"
+
+
+class SyncMeta(models.Model):
+    """
+    Key-value store for vault sync metadata.
+
+    Used by the sync_vault management command to track incremental sync
+    state.  Common keys:
+      last_sync_at  — ISO datetime of the most recent successful sync
+    """
+
+    key = models.CharField(max_length=128, unique=True)
+    value = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Sync Meta"
+        verbose_name_plural = "Sync Meta"
+
+    def __str__(self) -> str:
+        return f"{self.key}={self.value}"

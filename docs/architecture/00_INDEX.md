@@ -38,11 +38,11 @@
 
 | 步骤 / Step | 描述 / Description | 状态 / Status |
 |---|---|---|
-| **2.1** | 创建 `synapse_pm` Django App + Models / Create PM app + DB models | 🔄 进行中 |
-| **2.2** | Backend Adapter 抽象层 / PMBackendAdapter abstract layer | ⏳ |
-| **2.3** | VaultAdapter — 读取 Obsidian / VaultReader implementation | ⏳ |
-| **2.4** | SQLite 缓存同步 / Vault-to-SQLite cache sync | ⏳ |
-| **2.5** | DRF API — PM 数据接口 / PM REST API endpoints | ⏳ |
+| **2.1** | 创建 `synapse_pm` Django App + Models / Create PM app + DB models | ✅ `3d9f20e` |
+| **2.2** | Backend Adapter 抽象层 / PMBackendAdapter abstract layer | ✅ `de6ca5e` |
+| **2.3** | VaultReader + VaultWriter / Obsidian read + write | ✅ `8434066` |
+| **2.4** | SQLite 缓存同步 / Vault-to-SQLite cache sync | ✅ 本次提交 |
+| **2.5** | DRF API — PM 数据接口 / PM REST API endpoints | 🔄 进行中 |
 | **2.6** | Vue 前端 — 项目列表 + 任务视图 / ProjectList + TaskDetail views | ⏳ |
 
 ---
