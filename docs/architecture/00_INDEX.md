@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-23 (Phase 2 完成 / Phase 2 complete)
+> 最后更新 / Last updated: 2026-03-23 (Phase 3 甘特图 + Phase 4 Vue 迁移完成)
 > 当前分支 / Branch: `refactor/pm`
 
 ---
@@ -12,8 +12,8 @@
 | **Phase 0** | 项目重组 + 基础设施 / Project restructure + infrastructure | ✅ 完成 Done |
 | **Phase 1** | Vue 前端骨架 + API 基础 / Vue frontend skeleton + API foundation | ✅ 完成 Done |
 | **Phase 2** | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | ✅ 完成 Done |
-| Phase 3 | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | 🔄 下一阶段 Next |
-| Phase 4 | 迁移现有模块到 Vue / Migrate existing modules to Vue | ⏳ 待开始 Pending |
+| **Phase 3** | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | ✅ 完成 Done |
+| **Phase 4** | 迁移现有模块到 Vue / Migrate existing modules to Vue | ✅ 完成 Done |
 | Phase 5 | Docker 容器化 / Docker containerization | ⏳ 待开始 Pending |
 | Phase 6 | 持续扩展 / Ongoing extensions | ⏳ 长期 Long-term |
 
@@ -49,10 +49,18 @@
 
 | 步骤 / Step | 描述 / Description | 状态 / Status |
 |---|---|---|
-| **3.1** | 集成 frappe-gantt / Integrate frappe-gantt chart | ⏳ |
-| **3.2** | 甘特图交互 — 拖拽修改 / Gantt drag-and-drop interactions | ⏳ |
-| **3.3** | VaultWriter 集成 — 写回 Obsidian / VaultWriter write-back | ⏳ |
-| **3.4** | 写入 API 接口 / Write API endpoints | ⏳ |
+| **3.1** | 集成 frappe-gantt / Integrate frappe-gantt chart | ✅ `1ebc3e8` |
+| **3.2** | 甘特图交互 — 拖拽修改 / Gantt drag-and-drop interactions | ✅ `1ebc3e8` |
+| **3.3** | VaultWriter 集成 — 写回 Obsidian / VaultWriter write-back | ✅ `8434066` (已在 2.3 实现) |
+| **3.4** | 写入 API 接口 / Write API endpoints | ✅ `22c3fe7` (已在 2.5 实现) |
+
+### Phase 4 — 步骤明细 / Step Breakdown
+
+| 步骤 / Step | 描述 / Description | 状态 / Status |
+|---|---|---|
+| **4.1** | Attendance Analyzer API + Vue 页面 / DRF API + Vue views | ✅ `b906072` |
+| **4.2** | BOM Analyzer API + Vue 页面 / DRF API + Vue views | ✅ `b906072` |
+| **4.3** | 移除 Django 模板路由 / Remove Django template routes | ✅ `19f483c` |
 
 ---
 
