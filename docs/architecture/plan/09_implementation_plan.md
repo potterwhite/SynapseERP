@@ -287,21 +287,26 @@ pnpm install -D @types/node
 ### Step 2.5：DRF API — PM 数据接口
 
 **详细操作：**
-- Serializers: ProjectSerializer, TaskSerializer, TimeEntrySerializer
-- ViewSets:
-  - `GET /api/pm/projects/` — 项目列表（支持过滤、分页）
-  - `GET /api/pm/projects/{id}/` — 项目详情
-  - `GET /api/pm/tasks/` — 任务列表（支持按 project/status/priority 过滤）
-  - `GET /api/pm/tasks/{uuid}/` — 任务详情 + 时间记录
-  - `GET /api/pm/stats/` — 统计数据（项目数、任务完成率等）
-- 所有接口根据 adapter 配置自动选择数据源
+- `serializers.py`: ProjectSerializer, ProjectDetailSerializer, TaskSerializer,
+  TaskWriteSerializer, TimeEntrySerializer, TimeEntryCreateSerializer, GanttTaskSerializer
+- `api/views.py`: 函数式 views（@api_view 装饰器）
+  - `GET /api/pm/projects/` — 项目列表（支持 status/search/ordering/pagination）
+  - `GET /api/pm/projects/{id}/` — 项目详情（含任务列表）
+  - `GET/POST /api/pm/tasks/` — 任务列表 + 创建
+  - `GET/PATCH /api/pm/tasks/{uuid}/` — 任务详情 + 更新
+  - `GET/POST /api/pm/time-entries/` — 时间记录列表 + 新增
+  - `GET /api/pm/stats/` — 统计数据
+  - `GET /api/pm/gantt/` — 甘特图数据
+  - `POST /api/pm/sync/` — 触发 vault 同步（vault 模式）
+- `api/urls.py`: 完整 URL 路由注册
+- 所有接口通过 adapter 自动选择数据源
 
 **验收标准：**
-- [x] 所有 API endpoint 返回正确的 JSON
-- [x] 过滤和分页工作正常
-- [x] Vault 模式和 Database 模式均可工作
+- [x] 所有 URL 正确解析
+- [x] Adapter 方法在 database 模式下正常返回数据
+- [ ] 集成测试（真实 HTTP 请求）— 待 Vue 前端联调时验证
 
-**git commit:** `feat(pm): Add DRF API endpoints for project management`
+**git commit:** 本次提交
 
 ---
 
