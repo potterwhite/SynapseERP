@@ -154,6 +154,14 @@ if SYNAPSE_PM_BACKEND == "vault":
 
 SYNAPSE_MODULES = [
     {
+        "app_name": "synapse_pm",
+        "display_name": _("Project Management"),
+        "url_name": "pm",
+        "description": _("Manage projects and tasks with Obsidian vault integration."),
+        "placement": "toolbox",
+        "order": 5,
+    },
+    {
         "app_name": "synapse_attendance",
         "display_name": _("Attendance Analyzer"),
         "url_name": "synapse_attendance:analyze",
