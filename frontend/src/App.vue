@@ -1,7 +1,4 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <HelloWorld />
+  <!-- RouterView at the top level renders AppLayout (which contains nested router-view) -->
+  <router-view />
 </template>
