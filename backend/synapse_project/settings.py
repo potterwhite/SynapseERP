@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "synapse_dashboard",
     "synapse_attendance",
     "synapse_bom_analyzer",
+    "synapse_pm",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

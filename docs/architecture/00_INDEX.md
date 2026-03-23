@@ -9,9 +9,9 @@
 
 | 阶段 / Phase | 描述 / Description | 状态 / Status |
 |---|---|---|
-| **Phase 0** | 项目重组 + 基础设施 / Project restructure + infrastructure | 🔄 进行中 In Progress |
-| Phase 1 | Vue 前端骨架 + API 基础 / Vue frontend skeleton + API foundation | ⏳ 待开始 Pending |
-| Phase 2 | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | ⏳ 待开始 Pending |
+| **Phase 0** | 项目重组 + 基础设施 / Project restructure + infrastructure | ✅ 完成 Done |
+| **Phase 1** | Vue 前端骨架 + API 基础 / Vue frontend skeleton + API foundation | ✅ 完成 Done |
+| **Phase 2** | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | 🔄 进行中 In Progress |
 | Phase 3 | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | ⏳ 待开始 Pending |
 | Phase 4 | 迁移现有模块到 Vue / Migrate existing modules to Vue | ⏳ 待开始 Pending |
 | Phase 5 | Docker 容器化 / Docker containerization | ⏳ 待开始 Pending |
@@ -21,10 +21,29 @@
 
 | 步骤 / Step | 描述 / Description | 状态 / Status |
 |---|---|---|
-| **0.1** | 创建 `backend/` 目录，迁移 Django 代码 / Create `backend/` dir, migrate Django code | ✅ 完成 commit `0b29271` |
-| **0.2** | 安装 DRF，创建 API 基础框架 + health check / Install DRF, create API foundation + health check | ⏳ 下一步 Next |
-| 0.3 | 初始化 Vue 3 前端项目 / Initialize Vue 3 frontend project | ⏳ 待开始 Pending |
-| 0.4 | 配置 Obsidian vault 路径 / Configure Obsidian vault path | ⏳ 待开始 Pending |
+| **0.1** | 创建 `backend/` 目录，迁移 Django 代码 / Migrate Django code into `backend/` | ✅ `0b29271` |
+| **0.2** | 安装 DRF，API 基础框架 + health check / DRF setup + health check | ✅ `536693f` |
+| **0.3** | 初始化 Vue 3 前端项目 / Initialize Vue 3 + Vite project | ✅ `a25c6ed` |
+| **0.4** | 配置 Obsidian vault 路径 / Configure Obsidian vault path | ✅ `5cd2a0e` |
+
+### Phase 1 — 步骤明细 / Step Breakdown
+
+| 步骤 / Step | 描述 / Description | 状态 / Status |
+|---|---|---|
+| **1.1** | Vue 骨架：AppLayout、Sidebar、Router / App layout + sidebar + router | ✅ `3b37d43` |
+| **1.2** | Pinia stores + Axios API client / State management + HTTP client | ✅ `2cc0a2a` |
+| **1.3** | Dashboard 首页 Vue 化 / Migrate dashboard to Vue | ✅ `6770c35` |
+
+### Phase 2 — 步骤明细 / Step Breakdown
+
+| 步骤 / Step | 描述 / Description | 状态 / Status |
+|---|---|---|
+| **2.1** | 创建 `synapse_pm` Django App + Models / Create PM app + DB models | 🔄 进行中 |
+| **2.2** | Backend Adapter 抽象层 / PMBackendAdapter abstract layer | ⏳ |
+| **2.3** | VaultAdapter — 读取 Obsidian / VaultReader implementation | ⏳ |
+| **2.4** | SQLite 缓存同步 / Vault-to-SQLite cache sync | ⏳ |
+| **2.5** | DRF API — PM 数据接口 / PM REST API endpoints | ⏳ |
+| **2.6** | Vue 前端 — 项目列表 + 任务视图 / ProjectList + TaskDetail views | ⏳ |
 
 ---
 
@@ -111,12 +130,12 @@ SynapseERP.git/
 │   │   └── synapse_pm/       ← Phase 2 新增 / added in Phase 2
 │   ├── synapse_project/
 │   ├── manage.py
-│   ├── requirements.txt
-│   └── run.sh
-├── frontend/                 Vue 3 SPA（Phase 0 Step 0.3 新增 / added in Step 0.3）
+│   └── requirements.txt
+├── frontend/                 Vue 3 SPA（✅ Phase 0 Step 0.3 已完成）
 │   ├── src/
 │   ├── package.json
 │   └── vite.config.ts
+├── synapse                   统一入口脚本 / Unified entry point (./synapse <cmd>)
 ├── docker/                   Docker 配置（Phase 5 新增 / added in Phase 5）
 ├── docs/
 │   └── architecture/         ← 本目录 / this folder

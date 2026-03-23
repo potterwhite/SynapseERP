@@ -12,4 +12,6 @@ from django.urls import path, include
 urlpatterns = [
     # synapse_api handles: GET /api/health/ and GET /api/dashboard/
     path("", include("synapse_api.urls")),
+    # PM module: /api/pm/*
+    path("pm/", include("synapse_pm.urls")),
 ]
