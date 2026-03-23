@@ -14,4 +14,8 @@ urlpatterns = [
     path("", include("synapse_api.urls")),
     # PM module: /api/pm/*
     path("pm/", include("synapse_pm.urls")),
+    # Attendance Analyzer: /api/attendance/*
+    path("attendance/", include("synapse_attendance.api_urls")),
+    # BOM Analyzer: /api/bom/*
+    path("bom/", include("synapse_bom_analyzer.api_urls")),
 ]
