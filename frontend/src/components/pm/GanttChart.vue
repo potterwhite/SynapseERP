@@ -49,7 +49,11 @@
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { NButton, NButtonGroup, NFlex, NEmpty, NSpin, NText } from 'naive-ui'
 import Gantt from 'frappe-gantt'
-import 'frappe-gantt/dist/frappe-gantt.css'
+// Import CSS via explicit path — frappe-gantt's package.json exports field
+// does not expose the stylesheet under a standard condition, which causes
+// Vite 8 (rolldown) to reject the bare specifier. Using the dist path
+// directly bypasses the exports map restriction.
+import '/node_modules/frappe-gantt/dist/frappe-gantt.css'
 import type { GanttTask } from '@/types/pm'
 
 const VIEW_MODES = ['Day', 'Week', 'Month'] as const

@@ -145,7 +145,7 @@ function onDateChange(task: GanttTask, start: Date, end: Date) {
 async function confirmDateChange() {
   if (!pendingChange.value) return
   saving.value = true
-  const { task, start, end } = pendingChange.value
+  const { task, end } = pendingChange.value
   try {
     await pmApi.updateTask(task.id, {
       deadline: fmtDate(end),

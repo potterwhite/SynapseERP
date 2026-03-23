@@ -4,35 +4,29 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-# T-HEAD-GR-V0.8.0-20250910 (Root URL configuration for SynapseERP)
+# T-HEAD-GR-V0.9.0 (Root URL configuration for SynapseERP — Vue SPA era)
+#
+# After Phase 4 migration, all user-facing pages are served by the Vue SPA.
+# Django only exposes:
+#   /admin/          — Django admin interface
+#   /api/            — REST API (DRF)
+#   /i18n/           — Django internationalisation helper (set_language)
+#
+# Legacy Django template routes for attendance/, bom/, and the dashboard root
+# have been removed.  In production, Nginx serves frontend/dist/ directly and
+# forwards /api/, /admin/, /i18n/ to Gunicorn.  In development, the Vite proxy
+# handles /api/* and everything else is served by the Vite dev server.
 
 from django.contrib import admin
 from django.urls import path, include
 
-# This urlpatterns list is the main entry point for all URL routing.
-# It delegates specific paths to the individual application's urls.py files.
 urlpatterns = [
-    # NEW: Add Django's built-in internationalization URLs.
-    # This provides the 'set_language' view required by the language switcher.
+    # Django internationalisation: required for set_language cookie helper.
     path('i18n/', include('django.conf.urls.i18n')),
 
-    # 1. Admin Interface: Provides the backend management site.
+    # Django admin interface.
     path('admin/', admin.site.urls),
 
-    # 2. REST API: All /api/* routes are handled by api_urls.py.
+    # REST API: all /api/* routes are handled by api_urls.py.
     path('api/', include('synapse_project.api_urls')),
-
-    # 3. Attendance Analyzer App: Routes all URLs starting with 'attendance/'
-    #    to the synapse_attendance app's urls.py.
-    #    e.g., /attendance/analyze/
-    path('attendance/', include('synapse_attendance.urls', namespace='synapse_attendance')),
-
-    # 4. BOM Analyzer App: Routes all URLs starting with 'bom/'
-    #    to the synapse_bom_analyzer app's urls.py.
-    #    e.g., /bom/
-    path('bom/', include('synapse_bom_analyzer.urls', namespace='synapse_bom_analyzer')),
-
-    # 5. Dashboard App: Routes the root URL ('/') to the dashboard.
-    #    This should be the LAST entry for catch-all paths.
-    path('', include('synapse_dashboard.urls', namespace='synapse_dashboard')),
 ]
