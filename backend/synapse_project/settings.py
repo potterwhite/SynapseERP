@@ -124,6 +124,33 @@ ATTENDANCE_ANALYZER_RULE_URL = get_env_variable(
     "ATTENDANCE_ANALYZER_RULE_URL", default=None, is_required=False
 )
 
+# --- Project Management Backend ---
+# SYNAPSE_PM_BACKEND: 'vault' reads/writes Obsidian .md files directly;
+#                     'database' uses Django ORM only (no Obsidian required).
+SYNAPSE_PM_BACKEND = get_env_variable("SYNAPSE_PM_BACKEND", default="database")
+
+# OBSIDIAN_VAULT_PATH: absolute path to the Obsidian vault root directory.
+# Only required when SYNAPSE_PM_BACKEND = 'vault'.
+OBSIDIAN_VAULT_PATH = get_env_variable("OBSIDIAN_VAULT_PATH", default=None)
+
+# Warn at startup if vault mode is enabled but the path is missing or invalid.
+import logging as _logging
+_pm_log = _logging.getLogger("synapse_pm")
+if SYNAPSE_PM_BACKEND == "vault":
+    if not OBSIDIAN_VAULT_PATH:
+        _pm_log.warning(
+            "SYNAPSE_PM_BACKEND is 'vault' but OBSIDIAN_VAULT_PATH is not set in .env. "
+            "PM features will not work until a valid vault path is provided."
+        )
+    else:
+        import os as _os
+        if not _os.path.isdir(OBSIDIAN_VAULT_PATH):
+            _pm_log.warning(
+                "OBSIDIAN_VAULT_PATH '%s' does not exist or is not a directory. "
+                "PM features will not work until the path is corrected.",
+                OBSIDIAN_VAULT_PATH,
+            )
+
 SYNAPSE_MODULES = [
     {
         "app_name": "synapse_attendance",
@@ -180,6 +207,11 @@ LOGGING = {
             "propagate": False,
         },
         "synapse_bom_analyzer": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "synapse_pm": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
