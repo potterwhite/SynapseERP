@@ -37,8 +37,9 @@ import yaml
 # Project directory name: "2025.19_Project_Synapse" → name="Synapse"
 PROJECT_NAME_RE = re.compile(r"^(\d{4}\.\d+)_(?:Project_)?(.+)$")
 
-# Task file name: must match "task_*.md"
-TASK_FILE_RE = re.compile(r"^task_.+\.md$")
+# Task file name: any .md file in tasks/ dir (identified by frontmatter, not filename).
+# Skip Syncthing conflict copies.
+SYNC_CONFLICT_RE = re.compile(r"\.sync-conflict-.*\.md$")
 
 # YAML frontmatter block
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n?(.*)", re.DOTALL)
@@ -133,6 +134,11 @@ class VaultReader:
     def scan_tasks(self, project_path: str) -> list[dict[str, Any]]:
         """
         Scan the tasks/ sub-directory of a project directory.
+
+        A file is considered a task if and only if its YAML frontmatter
+        contains a ``task_uuid`` field.  The filename prefix is irrelevant.
+        Syncthing conflict copies (``*.sync-conflict-*.md``) are skipped.
+
         Returns a list of parsed task dicts.
         """
         tasks_dir = os.path.join(project_path, "tasks")
@@ -143,13 +149,20 @@ class VaultReader:
         for entry in sorted(os.scandir(tasks_dir), key=lambda e: e.name):
             if not entry.is_file():
                 continue
-            if not TASK_FILE_RE.match(entry.name):
+            if not entry.name.endswith(".md"):
+                continue
+            # Skip Syncthing conflict copies
+            if SYNC_CONFLICT_RE.search(entry.name):
                 continue
             parsed = self.parse_task_file(entry.path)
-            if parsed is not None:
-                parsed["vault_path"] = entry.path
-                parsed["vault_mtime"] = entry.stat().st_mtime
-                tasks.append(parsed)
+            if parsed is None:
+                continue
+            # A valid task MUST have a task_uuid in its frontmatter
+            if not parsed.get("uuid"):
+                continue
+            parsed["vault_path"] = entry.path
+            parsed["vault_mtime"] = entry.stat().st_mtime
+            tasks.append(parsed)
 
         return tasks
 

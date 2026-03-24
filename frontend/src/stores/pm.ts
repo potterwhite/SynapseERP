@@ -14,15 +14,18 @@ export const usePmStore = defineStore('pm', () => {
   // Currently selected project (for detail / task drill-down)
   const selectedProject = ref<(Project & { tasks?: Task[] }) | null>(null)
   const selectedProjectLoading = ref(false)
+  const selectedProjectError = ref<string | null>(null)
 
   // --- Tasks (flat list, for global task view) ---
   const tasks = ref<Task[]>([])
   const tasksTotal = ref(0)
   const tasksLoading = ref(false)
+  const tasksError = ref<string | null>(null)
 
   // Currently selected task (detail panel)
   const selectedTask = ref<Task | null>(null)
   const selectedTaskLoading = ref(false)
+  const selectedTaskError = ref<string | null>(null)
 
   // --- Stats ---
   const stats = ref<PmStats | null>(null)
@@ -54,9 +57,12 @@ export const usePmStore = defineStore('pm', () => {
 
   async function fetchProject(id: number) {
     selectedProjectLoading.value = true
+    selectedProjectError.value = null
     try {
       const { data } = await pmApi.getProject(id)
       selectedProject.value = data
+    } catch (e) {
+      selectedProjectError.value = e instanceof Error ? e.message : 'Failed to load project'
     } finally {
       selectedProjectLoading.value = false
     }
@@ -64,10 +70,13 @@ export const usePmStore = defineStore('pm', () => {
 
   async function fetchTasks(params: TaskListParams = {}) {
     tasksLoading.value = true
+    tasksError.value = null
     try {
       const { data } = await pmApi.listTasks({ page_size: 100, ...params })
       tasks.value = data.results
       tasksTotal.value = data.count
+    } catch (e) {
+      tasksError.value = e instanceof Error ? e.message : 'Failed to load tasks'
     } finally {
       tasksLoading.value = false
     }
@@ -75,9 +84,12 @@ export const usePmStore = defineStore('pm', () => {
 
   async function fetchTask(uuid: string) {
     selectedTaskLoading.value = true
+    selectedTaskError.value = null
     try {
       const { data } = await pmApi.getTask(uuid)
       selectedTask.value = data
+    } catch (e) {
+      selectedTaskError.value = e instanceof Error ? e.message : 'Failed to load task'
     } finally {
       selectedTaskLoading.value = false
     }
@@ -109,14 +121,15 @@ export const usePmStore = defineStore('pm', () => {
 
   function clearSelectedTask() {
     selectedTask.value = null
+    selectedTaskError.value = null
   }
 
   return {
     // State
     projects, projectsTotal, projectsLoading, projectsError,
-    selectedProject, selectedProjectLoading,
-    tasks, tasksTotal, tasksLoading,
-    selectedTask, selectedTaskLoading,
+    selectedProject, selectedProjectLoading, selectedProjectError,
+    tasks, tasksTotal, tasksLoading, tasksError,
+    selectedTask, selectedTaskLoading, selectedTaskError,
     stats, syncing, lastSyncResult,
     // Computed
     activeProjects,

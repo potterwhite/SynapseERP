@@ -8,66 +8,87 @@
       </n-button>
       <n-text depth="3">/</n-text>
       <n-text v-if="project">{{ project.name }}</n-text>
-      <n-spin v-else size="small" />
+      <n-spin v-else-if="store.selectedProjectLoading" size="small" />
     </n-flex>
 
-    <!-- Project header card -->
-    <n-card v-if="project" style="margin-bottom: 20px;" size="small">
-      <n-flex justify="space-between" align="flex-start" :wrap="false">
-        <div>
-          <n-h3 style="margin: 0 0 4px;">{{ project.name }}</n-h3>
-          <n-text depth="3" style="font-size: 12px;">{{ project.full_name }}</n-text>
-        </div>
-        <n-flex gap="16" align="center">
-          <n-statistic label="Tasks" :value="project.task_stats.total" style="text-align: center;" />
-          <n-statistic label="Done" :value="project.task_stats.done" style="text-align: center;" />
-          <n-statistic label="Hours" :value="project.total_hours" style="text-align: center;" />
-          <n-progress
-            type="circle"
-            :percentage="Math.round(project.task_stats.completion_rate * 100)"
-            :width="56"
-          />
+    <!-- Error display -->
+    <n-result
+      v-if="store.selectedProjectError || store.tasksError"
+      status="error"
+      title="Failed to load project data"
+      :description="store.selectedProjectError || store.tasksError || 'Unknown error'"
+      style="padding: 48px 0;"
+    >
+      <template #footer>
+        <n-button @click="load">Retry</n-button>
+      </template>
+    </n-result>
+
+    <template v-else>
+      <!-- Project header card -->
+      <n-card v-if="project" style="margin-bottom: 20px;" size="small">
+        <n-flex justify="space-between" align="flex-start" :wrap="false">
+          <div>
+            <n-h3 style="margin: 0 0 4px;">{{ project.name }}</n-h3>
+            <n-text depth="3" style="font-size: 12px;">{{ project.full_name }}</n-text>
+          </div>
+          <n-flex gap="16" align="center">
+            <n-statistic label="Tasks" :value="project.task_stats?.total ?? 0" style="text-align: center;" />
+            <n-statistic label="Done" :value="project.task_stats?.done ?? 0" style="text-align: center;" />
+            <n-statistic label="Hours" :value="project.total_hours ?? 0" style="text-align: center;" />
+            <n-progress
+              type="circle"
+              :percentage="Math.round((project.task_stats?.completion_rate ?? 0) * 100)"
+              :width="56"
+            />
+          </n-flex>
         </n-flex>
+      </n-card>
+
+      <!-- Task filter bar -->
+      <n-flex gap="8" style="margin-bottom: 16px;">
+        <n-select
+          v-model:value="taskStatusFilter"
+          :options="taskStatusOptions"
+          style="width: 140px;"
+          @update:value="onTaskFilter"
+        />
+        <n-select
+          v-model:value="taskPriorityFilter"
+          :options="taskPriorityOptions"
+          style="width: 120px;"
+          @update:value="onTaskFilter"
+        />
+        <n-input
+          v-model:value="taskSearch"
+          placeholder="Search tasks…"
+          clearable
+          style="width: 200px;"
+          @update:value="onTaskFilter"
+        />
       </n-flex>
-    </n-card>
 
-    <!-- Task filter bar -->
-    <n-flex gap="8" style="margin-bottom: 16px;">
-      <n-select
-        v-model:value="taskStatusFilter"
-        :options="taskStatusOptions"
-        style="width: 140px;"
-        @update:value="onTaskFilter"
+      <!-- Task table -->
+      <n-data-table
+        :columns="taskColumns"
+        :data="filteredTasks"
+        :loading="store.tasksLoading"
+        :pagination="{ pageSize: 20 }"
+        striped
+        style="cursor: pointer;"
       />
-      <n-select
-        v-model:value="taskPriorityFilter"
-        :options="taskPriorityOptions"
-        style="width: 120px;"
-        @update:value="onTaskFilter"
-      />
-      <n-input
-        v-model:value="taskSearch"
-        placeholder="Search tasks…"
-        clearable
-        style="width: 200px;"
-        @update:value="onTaskFilter"
-      />
-    </n-flex>
-
-    <!-- Task table -->
-    <n-data-table
-      :columns="taskColumns"
-      :data="filteredTasks"
-      :loading="store.tasksLoading"
-      :pagination="{ pageSize: 20 }"
-      striped
-      style="cursor: pointer;"
-    />
+    </template>
 
     <!-- Task detail drawer -->
     <n-drawer v-model:show="drawerOpen" :width="560" placement="right">
       <n-drawer-content :title="store.selectedTask?.name ?? 'Task Detail'" closable>
         <TaskDetail v-if="store.selectedTask" :task="store.selectedTask" />
+        <n-result
+          v-else-if="store.selectedTaskError"
+          status="error"
+          title="Failed to load task"
+          :description="store.selectedTaskError"
+        />
         <n-spin
           v-else-if="store.selectedTaskLoading"
           style="display:flex;justify-content:center;padding:48px;"
@@ -82,7 +103,7 @@ import { ref, computed, h, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   NButton, NCard, NDataTable, NDrawer, NDrawerContent, NFlex, NH3,
-  NIcon, NInput, NProgress, NSelect, NSpin, NStatistic, NTag, NText,
+  NIcon, NInput, NProgress, NResult, NSelect, NSpin, NStatistic, NTag, NText,
 } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import { ArrowBackOutline as BackIcon } from '@vicons/ionicons5'

@@ -39,9 +39,13 @@ AREA_NAME_PATTERN = r'^(\d+)-Area-(.+)$'
 
 ```python
 # 在每个 Project 目录下寻找 tasks/ 子目录
-# tasks/ 下的 task_*.md 文件就是任务
-# 例: 1_PROJECT/2025.19_Project_Synapse/tasks/task_xxx.md
-TASK_FILE_PATTERN = r'^task_.+\.md$'
+# tasks/ 下的所有 .md 文件都是候选，通过 frontmatter 中的 task_uuid 字段判断是否为 task
+# 有 task_uuid 字段 → 是 task；没有 → 跳过
+# 跳过 Syncthing 冲突副本（*.sync-conflict-*.md）
+# 例: 1_PROJECT/2025.19_Project_Synapse/tasks/task_xxx.md          ← task_ prefix (legacy)
+# 例: 1_PROJECT/2025.23_Project_PCIe_CaptureCard/tasks/01-01-02_uart内部信号观测.md ← no prefix, still valid
+SYNC_CONFLICT_PATTERN = r'\.sync-conflict-.*\.md$'
+# 识别逻辑: read .md → parse frontmatter → has task_uuid? → yes = task
 ```
 
 ### 1.4 Daily Note 发现规则
@@ -73,9 +77,9 @@ DATE_FORMAT_2 = "%Y-%m-%d"       # "2026-03-21"
 
 ```yaml
 ---
-task_uuid: 693d3007-e356-418f-9863-5d8a3fe38b89     # UUID v4, 唯一标识
-task_name: task_打算扩建synapse_自建一个做PM          # 文件名（不含 .md）
-project:                                              # 所属项目，Obsidian wikilink 格式
+task_uuid: 693d3007-e356-418f-9863-5d8a3fe38b89     # UUID v4, 唯一标识 (REQUIRED — 没有此字段的 .md 不被视为 task)
+task_name: task_打算扩建synapse_自建一个做PM          # 任务名称 (NOT necessarily unique, may duplicate)
+project:                                              # 所属项目，Obsidian wikilink 格式 (可为 list 或 string)
   - "[[2025.19_Project_Synapse]]"
 created: 2026-03-21                                   # ISO 日期
 status: todo                                          # todo | doing | done | cancelled
