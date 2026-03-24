@@ -88,6 +88,17 @@ class VaultAdapter(PMBackendAdapter):
         from ..vault.writer import VaultWriter
         from .db_adapter import DatabaseAdapter
 
+        # Resolve project_ref (directory name) from project_id so the writer
+        # can place the task file inside the correct project sub-folder.
+        if not data.get("project_ref"):
+            project_id = data.get("project_id")
+            if project_id:
+                try:
+                    project = Project.objects.get(pk=project_id)
+                    data["project_ref"] = project.full_name
+                except Project.DoesNotExist:
+                    pass
+
         writer = VaultWriter(settings.OBSIDIAN_VAULT_PATH)
         task_data = writer.create_task_file(data)
 

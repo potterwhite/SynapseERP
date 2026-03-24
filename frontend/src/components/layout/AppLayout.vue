@@ -4,7 +4,7 @@
       <n-notification-provider>
         <n-dialog-provider>
           <n-layout style="height: 100vh">
-            <n-layout has-sider>
+            <n-layout has-sider style="height: 100%">
               <!-- Sidebar -->
               <n-layout-sider
                 bordered

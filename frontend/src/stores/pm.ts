@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { pmApi } from '@/api/pm'
 import type { Project, Task, PmStats } from '@/types/pm'
-import type { ProjectListParams, TaskListParams } from '@/api/pm'
+import type { ProjectListParams, TaskListParams, TaskCreatePayload, TaskUpdatePayload } from '@/api/pm'
 
 export const usePmStore = defineStore('pm', () => {
   // --- Projects ---
@@ -124,6 +124,23 @@ export const usePmStore = defineStore('pm', () => {
     selectedTaskError.value = null
   }
 
+  async function createTask(data: TaskCreatePayload): Promise<Task> {
+    const { data: task } = await pmApi.createTask(data)
+    // Insert new task at the top of the list
+    tasks.value = [task, ...tasks.value]
+    return task
+  }
+
+  async function updateTaskInStore(uuid: string, data: TaskUpdatePayload): Promise<Task | null> {
+    const { data: updated } = await pmApi.updateTask(uuid, data)
+    // Update in flat task list
+    const idx = tasks.value.findIndex(t => t.uuid === uuid)
+    if (idx !== -1) tasks.value[idx] = updated
+    // Update selected task if it matches
+    if (selectedTask.value?.uuid === uuid) selectedTask.value = updated
+    return updated
+  }
+
   return {
     // State
     projects, projectsTotal, projectsLoading, projectsError,
@@ -136,5 +153,6 @@ export const usePmStore = defineStore('pm', () => {
     // Actions
     fetchProjects, fetchProject, fetchTasks, fetchTask,
     fetchStats, syncVault, clearSelectedTask,
+    createTask, updateTaskInStore,
   }
 })

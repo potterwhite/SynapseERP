@@ -21,6 +21,27 @@ export interface TaskListParams {
   page_size?: number
 }
 
+/** Payload for creating a new task (mirrors TaskWriteSerializer) */
+export interface TaskCreatePayload {
+  name: string
+  project_id: number
+  status?: string
+  priority?: string
+  deadline?: string | null
+  estimated_hours?: number | null
+  description?: string
+}
+
+/** Payload for updating an existing task (all fields optional) */
+export interface TaskUpdatePayload {
+  name?: string
+  status?: string
+  priority?: string
+  deadline?: string | null
+  estimated_hours?: number | null
+  description?: string
+}
+
 export const pmApi = {
   // Projects
   listProjects(params: ProjectListParams = {}) {
@@ -40,7 +61,11 @@ export const pmApi = {
     return client.get<Task>(`/pm/tasks/${uuid}/`)
   },
 
-  updateTask(uuid: string, data: Partial<Pick<Task, 'status' | 'priority' | 'deadline' | 'estimated_hours'>>) {
+  createTask(data: TaskCreatePayload) {
+    return client.post<Task>('/pm/tasks/', data)
+  },
+
+  updateTask(uuid: string, data: TaskUpdatePayload) {
     return client.patch<Task>(`/pm/tasks/${uuid}/`, data)
   },
 

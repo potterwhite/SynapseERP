@@ -45,8 +45,8 @@
         </n-flex>
       </n-card>
 
-      <!-- Task filter bar -->
-      <n-flex gap="8" style="margin-bottom: 16px;">
+      <!-- Task filter bar + New Task button -->
+      <n-flex gap="8" style="margin-bottom: 16px;" align="center">
         <n-select
           v-model:value="taskStatusFilter"
           :options="taskStatusOptions"
@@ -66,6 +66,12 @@
           style="width: 200px;"
           @update:value="onTaskFilter"
         />
+        <!-- Spacer -->
+        <div style="flex: 1;" />
+        <n-button type="primary" @click="openCreateModal">
+          <template #icon><n-icon :component="AddIcon" /></template>
+          New Task
+        </n-button>
       </n-flex>
 
       <!-- Task table -->
@@ -79,10 +85,19 @@
       />
     </template>
 
-    <!-- Task detail drawer -->
+    <!-- Task detail drawer (read-only + edit button) -->
     <n-drawer v-model:show="drawerOpen" :width="560" placement="right">
       <n-drawer-content :title="store.selectedTask?.name ?? 'Task Detail'" closable>
-        <TaskDetail v-if="store.selectedTask" :task="store.selectedTask" />
+        <template v-if="store.selectedTask">
+          <!-- Edit bar at the top of drawer -->
+          <n-flex justify="flex-end" style="margin-bottom: 12px;">
+            <n-button size="small" @click="openEditModal(store.selectedTask!)">
+              <template #icon><n-icon :component="EditIcon" /></template>
+              Edit Task
+            </n-button>
+          </n-flex>
+          <TaskDetail :task="store.selectedTask" />
+        </template>
         <n-result
           v-else-if="store.selectedTaskError"
           status="error"
@@ -95,18 +110,88 @@
         />
       </n-drawer-content>
     </n-drawer>
+
+    <!-- Create / Edit Task Modal -->
+    <n-modal
+      v-model:show="taskModalOpen"
+      :title="taskModalMode === 'create' ? 'New Task' : 'Edit Task'"
+      preset="card"
+      style="width: 560px;"
+      :mask-closable="false"
+    >
+      <n-form
+        ref="taskFormRef"
+        :model="taskForm"
+        :rules="taskFormRules"
+        label-placement="left"
+        label-width="120px"
+        require-mark-placement="right-hanging"
+      >
+        <n-form-item label="Task Name" path="name">
+          <n-input v-model:value="taskForm.name" placeholder="Enter task name" />
+        </n-form-item>
+
+        <n-form-item label="Status" path="status">
+          <n-select v-model:value="taskForm.status" :options="taskStatusOptions.slice(1)" />
+        </n-form-item>
+
+        <n-form-item label="Priority" path="priority">
+          <n-select v-model:value="taskForm.priority" :options="taskPriorityOptions.slice(1)" />
+        </n-form-item>
+
+        <n-form-item label="Deadline" path="deadline">
+          <n-date-picker
+            v-model:formatted-value="taskForm.deadline"
+            value-format="yyyy-MM-dd"
+            type="date"
+            clearable
+            style="width: 100%;"
+          />
+        </n-form-item>
+
+        <n-form-item label="Est. Hours" path="estimated_hours">
+          <n-input-number
+            v-model:value="taskForm.estimated_hours"
+            :min="0"
+            :step="0.5"
+            style="width: 100%;"
+            placeholder="e.g. 8"
+          />
+        </n-form-item>
+
+        <n-form-item label="Description" path="description">
+          <n-input
+            v-model:value="taskForm.description"
+            type="textarea"
+            :rows="4"
+            placeholder="Task description (written to vault)"
+          />
+        </n-form-item>
+      </n-form>
+
+      <template #footer>
+        <n-flex justify="flex-end" gap="8">
+          <n-button @click="taskModalOpen = false">Cancel</n-button>
+          <n-button type="primary" :loading="taskSaving" @click="submitTaskForm">
+            {{ taskModalMode === 'create' ? 'Create' : 'Save' }}
+          </n-button>
+        </n-flex>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, h, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useMessage } from 'naive-ui'
 import {
-  NButton, NCard, NDataTable, NDrawer, NDrawerContent, NFlex, NH3,
-  NIcon, NInput, NProgress, NResult, NSelect, NSpin, NStatistic, NTag, NText,
+  NButton, NCard, NDataTable, NDatePicker, NDrawer, NDrawerContent, NFlex, NForm,
+  NFormItem, NH3, NIcon, NInput, NInputNumber, NModal, NProgress, NResult,
+  NSelect, NSpin, NStatistic, NTag, NText,
 } from 'naive-ui'
-import type { DataTableColumns } from 'naive-ui'
-import { ArrowBackOutline as BackIcon } from '@vicons/ionicons5'
+import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
+import { ArrowBackOutline as BackIcon, AddOutline as AddIcon, CreateOutline as EditIcon } from '@vicons/ionicons5'
 import { usePmStore } from '@/stores/pm'
 import type { Task } from '@/types/pm'
 import TaskDetail from './TaskDetail.vue'
@@ -114,11 +199,39 @@ import TaskDetail from './TaskDetail.vue'
 const store = usePmStore()
 const router = useRouter()
 const route = useRoute()
+const message = useMessage()
 
+// --- Drawer state ---
 const drawerOpen = ref(false)
+
+// --- Filter state ---
 const taskStatusFilter = ref<string>('all')
 const taskPriorityFilter = ref<string>('all')
 const taskSearch = ref('')
+
+// --- Modal state ---
+const taskModalOpen = ref(false)
+const taskModalMode = ref<'create' | 'edit'>('create')
+const taskSaving = ref(false)
+const taskFormRef = ref<FormInst | null>(null)
+const editingTaskUuid = ref<string | null>(null)
+
+const taskForm = ref({
+  name: '',
+  status: 'todo',
+  priority: 'medium',
+  deadline: null as string | null,
+  estimated_hours: null as number | null,
+  description: '',
+})
+
+const taskFormRules: FormRules = {
+  name: [{ required: true, message: 'Task name is required', trigger: 'blur' }],
+  status: [{ required: true, message: 'Status is required', trigger: 'change' }],
+  priority: [{ required: true, message: 'Priority is required', trigger: 'change' }],
+}
+
+// ---
 
 const projectId = computed(() => {
   const v = route.query.project
@@ -223,6 +336,8 @@ const taskColumns: DataTableColumns<Task> = [
   },
 ]
 
+// --- Actions ---
+
 async function openTask(uuid: string) {
   drawerOpen.value = true
   store.clearSelectedTask()
@@ -231,6 +346,79 @@ async function openTask(uuid: string) {
 
 function onTaskFilter() {
   // Filtering is done client-side via filteredTasks computed
+}
+
+function openCreateModal() {
+  taskModalMode.value = 'create'
+  editingTaskUuid.value = null
+  taskForm.value = {
+    name: '',
+    status: 'todo',
+    priority: 'medium',
+    deadline: null,
+    estimated_hours: null,
+    description: '',
+  }
+  taskModalOpen.value = true
+}
+
+function openEditModal(task: Task) {
+  taskModalMode.value = 'edit'
+  editingTaskUuid.value = task.uuid
+  taskForm.value = {
+    name: task.name,
+    status: task.status,
+    priority: task.priority,
+    deadline: task.deadline ?? null,
+    estimated_hours: task.estimated_hours ?? null,
+    description: '',
+  }
+  taskModalOpen.value = true
+}
+
+async function submitTaskForm() {
+  try {
+    await taskFormRef.value?.validate()
+  } catch {
+    return // validation failed — form shows inline errors
+  }
+
+  taskSaving.value = true
+  try {
+    if (taskModalMode.value === 'create') {
+      if (!projectId.value) return
+      await store.createTask({
+        name: taskForm.value.name,
+        project_id: projectId.value,
+        status: taskForm.value.status,
+        priority: taskForm.value.priority,
+        deadline: taskForm.value.deadline || null,
+        estimated_hours: taskForm.value.estimated_hours,
+        description: taskForm.value.description,
+      })
+      message.success('Task created and written to vault')
+    } else {
+      if (!editingTaskUuid.value) return
+      await store.updateTaskInStore(editingTaskUuid.value, {
+        name: taskForm.value.name,
+        status: taskForm.value.status,
+        priority: taskForm.value.priority,
+        deadline: taskForm.value.deadline || null,
+        estimated_hours: taskForm.value.estimated_hours,
+        description: taskForm.value.description,
+      })
+      // Refresh detail if drawer is open on this task
+      if (drawerOpen.value && store.selectedTask?.uuid === editingTaskUuid.value) {
+        await store.fetchTask(editingTaskUuid.value)
+      }
+      message.success('Task updated and written to vault')
+    }
+    taskModalOpen.value = false
+  } catch (e) {
+    message.error(e instanceof Error ? e.message : 'Save failed')
+  } finally {
+    taskSaving.value = false
+  }
 }
 
 async function load() {
