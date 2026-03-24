@@ -9,17 +9,19 @@ T-HEAD-GR-V0.8.0-20250910 (Chinese README for SynapseERP)
 -->
 
 <div align="center">
-  <h2>SynapseERP</h2>
+  <h1>SynapseERP</h1>
   <p><i>一个用于数据分析工具的模块化 Django 框架</i></p>
 </div>
 
 <p align="center">
-  <img src="./assets/logo.jpg" alt="SynapseERP Logo" width="100%"/>
+  <img src="https://github.com/potterwhite/SynapseERP/blob/main/docs/assets/logo.jpg" alt="SynapseERP Logo" width="100%"/>
 </p>
 
 <p align="center">
-  <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/badge/version-v0.8.0-orange" alt="版本"></a>
-  <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="许可证"></a>
+  <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/github/v/release/potterwhite/SynapseERP?color=orange&label=version" alt="版本"></a>
+  <a href="#"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 版本"></a>
+  <a href="#"><img src="https://img.shields.io/badge/framework-Django%205.x-green" alt="框架"></a>
+  <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="许可证"></a>
 </p>
 
 <p align="center">

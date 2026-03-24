@@ -9,17 +9,19 @@ T-HEAD-GR-V0.8.0-20250910 (English README for SynapseERP)
 -->
 
 <div align="center">
-  <h2>SynapseERP</h2>
-  <p><i>A modular Django framework for data analysis tools</i></p>
+  <h1>SynapseERP</h1>
+  <p><i>A Modular Django Framework for Data Analysis Tools</i></p>
 </div>
 
 <p align="center">
-  <img src="./assets/logo.jpg" alt="SynapseERP Logo" width="100%"/>
+  <img src="https://github.com/potterwhite/SynapseERP/blob/main/docs/assets/logo.jpg" alt="SynapseERP Logo" width="100%"/>
 </p>
 
 <p align="center">
-  <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/badge/version-v0.8.0-orange" alt="Version"></a>
-  <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+  <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/github/v/release/potterwhite/SynapseERP?color=orange&label=version" alt="version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/framework-Django%205.x-green" alt="Framework"></a>
+  <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
 </p>
 
 <p align="center">
@@ -176,7 +178,7 @@ The Dashboard page features a notification panel that can display important info
 1.  After logging in, you will see the "Site administration" page. Under the **SYNAPSE DASHBOARD** section, find and click the "Add" link next to **Notifications**.
 
     <p align="center">
-      <img src="./assets/readme_admin_dashboard_en.png" alt="Admin Dashboard" width="75%"/>
+      <img src="./docs/assets/readme_admin_dashboard_en.png" alt="Admin Dashboard" width="75%"/>
     </p>
 
 2.  You will be taken to the "Add Notification" page. There is only one field you need to fill in: **Content**.
@@ -200,7 +202,7 @@ The Dashboard page features a notification panel that can display important info
 Now, return to the application's main page at **http://127.0.0.1:8000**. You will see that the notification you just published is displayed at the top of the page in a formatted style, like this:
 
 <p align="center">
-  <img src="./assets/readme_dashboard_notification_en.png" alt="Dashboard Notification" width="75%"/>
+  <img src="./docs/assets/readme_dashboard_notification_en.png" alt="Dashboard Notification" width="75%"/>
 </p>
 
 The system will always automatically display the most **recently updated** notification. You can return to the admin panel at any time to edit old notifications or add new ones, and the content on the main page will update automatically.
