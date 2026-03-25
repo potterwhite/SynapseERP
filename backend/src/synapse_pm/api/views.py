@@ -447,6 +447,39 @@ def sync_config(request: Request) -> Response:
     })
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def watcher_status(request: Request) -> Response:
+    """
+    GET /api/pm/sync/watcher/
+
+    Returns whether the watchdog library is available on this server and
+    basic instructions for starting the vault watcher.
+
+    Response:
+      {
+        "watchdog_available": bool,   // watchdog package is installed
+        "start_command":      str,    // how to start the watcher
+      }
+    """
+    try:
+        import watchdog  # noqa: F401
+        watchdog_available = True
+    except ImportError:
+        watchdog_available = False
+
+    return Response({
+        "watchdog_available": watchdog_available,
+        "start_command": "./synapse vault:watch",
+        "notes": (
+            "Run the watcher as a separate long-lived process alongside the "
+            "Django server. It listens for .md file changes in the vault and "
+            "automatically triggers import_from_vault() after a 5-second "
+            "debounce window."
+        ),
+    })
+
+
 # ---------------------------------------------------------------------------
 # Tags
 # ---------------------------------------------------------------------------

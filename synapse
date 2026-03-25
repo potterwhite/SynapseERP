@@ -254,7 +254,13 @@ fn_set_rule_url() {
 
 # --- Dev Shortcuts ---
 
-fn_dev_migrate() {
+fn_vault_watch() {
+    local debounce="${1:-5}"
+    fn_log "👁️  Starting Obsidian vault watcher (debounce=${debounce}s) ..." "blue"
+    fn_log "   Vault changes will automatically trigger import_from_vault()." "yellow"
+    fn_log "   Press Ctrl-C to stop." "yellow"
+    fn_django vault_watch --debounce "$debounce"
+}
     fn_log "🗄️  Creating and applying database migrations..." "blue"
     fn_django makemigrations && fn_django migrate
 }
@@ -434,6 +440,7 @@ fn_show_help() {
     echo "  run                 Start Django backend dev server (port 8000)"
     echo "  frontend:run        Start Vue frontend dev server (port 5173)"
     echo "  run:all             Start backend + frontend together"
+    echo "  vault:watch [SEC]   Watch Obsidian vault and auto-sync to DB (default debounce 5s)"
     echo ""
     echo "━━━ Frontend ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  frontend:init       Scaffold the Vue 3 + TypeScript + Vite project"
@@ -475,6 +482,7 @@ main() {
                 run)                    fn_run_backend ;;
                 frontend:run)           fn_run_frontend ;;
                 run:all)                fn_run_all ;;
+                vault:watch)            fn_vault_watch "$2" ;;
                 frontend:build)         fn_frontend_build ;;
                 deploy)                 fn_deploy ;;
                 superuser)              fn_create_superuser ;;

@@ -46,6 +46,10 @@ urlpatterns = [
     path("sync/trigger/", views.sync_trigger, name="pm-sync-trigger"),
     path("sync/config/", views.sync_config, name="pm-sync-config"),
 
+    # Vault watcher info — Phase 5.5
+    # GET  /api/pm/sync/watcher/  → watchdog availability + start instructions
+    path("sync/watcher/", views.watcher_status, name="pm-watcher-status"),
+
     # Tags — Phase 5.4
     # GET  /api/pm/tags/           → list all distinct project tags
     path("tags/", views.tags_list, name="pm-tags-list"),

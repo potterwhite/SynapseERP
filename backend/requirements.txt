@@ -22,6 +22,9 @@ colorlog
 polib
 googletrans==4.0.0rc1 # Pinned because it is a release candidate
 
+# Vault auto-sync (Phase 5.5)
+watchdog>=4.0          # Cross-platform filesystem event monitoring
+
 # Indirect dependencies (usually handled by pip, listed for clarity if needed)
 asgiref
 certifi
