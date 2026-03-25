@@ -57,6 +57,7 @@ import {
 } from '@vicons/ionicons5'
 
 defineProps<{ collapsed: boolean }>()
+const emit = defineEmits<{ (e: 'navigate'): void }>()
 
 const router = useRouter()
 const route = useRoute()
@@ -125,7 +126,10 @@ const routeMap: Record<string, string> = {
 
 function handleMenuSelect(key: string) {
   const path = routeMap[key]
-  if (path) router.push(path)
+  if (path) {
+    router.push(path)
+    emit('navigate')
+  }
 }
 </script>
 

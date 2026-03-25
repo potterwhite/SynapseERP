@@ -21,37 +21,56 @@ SOFTWARE.
 -->
 
 <template>
-  <n-config-provider :theme="theme">
+  <n-config-provider :theme="naiveTheme">
     <n-message-provider>
       <n-notification-provider>
         <n-dialog-provider>
           <n-layout style="height: 100vh">
             <n-layout has-sider style="height: 100%">
-              <!-- Sidebar -->
+
+              <!-- Desktop sidebar (hidden on mobile) -->
               <n-layout-sider
+                v-if="!isMobile"
                 bordered
                 collapse-mode="width"
                 :collapsed-width="64"
                 :width="220"
-                :collapsed="sidebarCollapsed"
+                :collapsed="appStore.sidebarCollapsed"
                 show-trigger
-                @collapse="sidebarCollapsed = true"
-                @expand="sidebarCollapsed = false"
+                @collapse="appStore.sidebarCollapsed = true"
+                @expand="appStore.sidebarCollapsed = false"
               >
-                <AppSidebar :collapsed="sidebarCollapsed" />
+                <AppSidebar :collapsed="appStore.sidebarCollapsed" />
               </n-layout-sider>
 
               <!-- Main content area -->
               <n-layout>
-                <AppHeader @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed" />
+                <AppHeader
+                  :show-menu-button="isMobile"
+                  @toggle-sidebar="appStore.toggleSidebar"
+                  @open-drawer="drawerOpen = true"
+                />
                 <n-layout-content
-                  content-style="padding: 24px; min-height: calc(100vh - 64px);"
+                  :content-style="isMobile
+                    ? 'padding: 16px; min-height: calc(100vh - 64px);'
+                    : 'padding: 24px; min-height: calc(100vh - 64px);'"
                 >
                   <router-view />
                 </n-layout-content>
               </n-layout>
+
             </n-layout>
           </n-layout>
+
+          <!-- Mobile nav drawer -->
+          <n-drawer
+            v-model:show="drawerOpen"
+            :width="240"
+            placement="left"
+          >
+            <AppSidebar :collapsed="false" @navigate="drawerOpen = false" />
+          </n-drawer>
+
         </n-dialog-provider>
       </n-notification-provider>
     </n-message-provider>
@@ -59,24 +78,41 @@ SOFTWARE.
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   NConfigProvider,
   NDialogProvider,
+  NDrawer,
   NLayout,
   NLayoutSider,
   NLayoutContent,
   NMessageProvider,
   NNotificationProvider,
+  darkTheme,
 } from 'naive-ui'
-import type { GlobalTheme } from 'naive-ui'
 import AppSidebar from './Sidebar.vue'
 import AppHeader from './Header.vue'
+import { useAppStore } from '@/stores/app'
 
-// Sidebar collapsed state — shared between Header toggle button and sider trigger
-const sidebarCollapsed = ref(false)
+const appStore = useAppStore()
 
-// Theme: null = light (Naive UI default), darkTheme = dark
-// Will be driven by a Pinia store in Step 1.2
-const theme = ref<GlobalTheme | null>(null)
+// Map string theme to Naive UI theme object: null = light default, darkTheme = dark
+const naiveTheme = computed(() => appStore.theme === 'dark' ? darkTheme : null)
+
+// ─── Responsive breakpoint ────────────────────────────────────────────────────
+const MOBILE_BREAKPOINT = 768
+
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < MOBILE_BREAKPOINT)
+
+function onResize() {
+  windowWidth.value = window.innerWidth
+}
+
+onMounted(() => window.addEventListener('resize', onResize))
+onUnmounted(() => window.removeEventListener('resize', onResize))
+
+// Mobile drawer open state
+const drawerOpen = ref(false)
 </script>
+

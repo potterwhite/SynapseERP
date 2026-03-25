@@ -21,16 +21,39 @@ SOFTWARE.
 -->
 
 <template>
-  <n-layout-header bordered style="height: 64px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between;">
-    <span style="font-size: 18px; font-weight: 600;">SynapseERP</span>
-    <n-space>
+  <n-layout-header bordered style="height: 64px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;">
+    <n-flex align="center" gap="8">
+      <!-- Hamburger menu on mobile -->
+      <n-button v-if="showMenuButton" quaternary circle @click="emit('open-drawer')">
+        <template #icon>
+          <n-icon><MenuOutline /></n-icon>
+        </template>
+      </n-button>
+      <span style="font-size: 18px; font-weight: 600;">SynapseERP</span>
+    </n-flex>
+    <n-space align="center">
       <n-text depth="3" style="font-size: 13px;">v0.9.0-alpha</n-text>
+      <n-tooltip :content="appStore.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+        <n-button quaternary circle @click="appStore.toggleTheme">
+          <template #icon>
+            <n-icon><component :is="appStore.theme === 'dark' ? SunnyOutline : MoonOutline" /></n-icon>
+          </template>
+        </n-button>
+      </n-tooltip>
     </n-space>
   </n-layout-header>
 </template>
 
 <script setup lang="ts">
-import { NLayoutHeader, NSpace, NText } from 'naive-ui'
+import { NLayoutHeader, NSpace, NText, NButton, NIcon, NTooltip, NFlex } from 'naive-ui'
+import { MoonOutline, SunnyOutline, MenuOutline } from '@vicons/ionicons5'
+import { useAppStore } from '@/stores/app'
 
-defineEmits<{ (e: 'toggle-sidebar'): void }>()
+defineProps<{ showMenuButton?: boolean }>()
+const emit = defineEmits<{
+  (e: 'toggle-sidebar'): void
+  (e: 'open-drawer'): void
+}>()
+
+const appStore = useAppStore()
 </script>

@@ -22,7 +22,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { pmApi } from '@/api/pm'
 import type { Project, Task, PmStats } from '@/types/pm'
-import type { ProjectListParams, TaskListParams, TaskCreatePayload, TaskUpdatePayload } from '@/api/pm'
+import type { ProjectListParams, TaskListParams, TaskCreatePayload, TaskUpdatePayload, ProjectCreatePayload, ProjectUpdatePayload } from '@/api/pm'
 
 export const usePmStore = defineStore('pm', () => {
   // --- Projects ---
@@ -180,6 +180,28 @@ export const usePmStore = defineStore('pm', () => {
     return task
   }
 
+  async function createProject(data: ProjectCreatePayload): Promise<Project> {
+    const { data: project } = await pmApi.createProject(data)
+    projects.value = [project, ...projects.value]
+    projectsTotal.value += 1
+    return project
+  }
+
+  async function updateProject(id: number, data: ProjectUpdatePayload): Promise<Project> {
+    const { data: updated } = await pmApi.updateProject(id, data)
+    const idx = projects.value.findIndex(p => p.id === id)
+    if (idx !== -1) projects.value[idx] = updated
+    if (selectedProject.value?.id === id) selectedProject.value = { ...selectedProject.value, ...updated }
+    return updated
+  }
+
+  async function deleteProject(id: number): Promise<void> {
+    await pmApi.deleteProject(id)
+    projects.value = projects.value.filter(p => p.id !== id)
+    projectsTotal.value = Math.max(0, projectsTotal.value - 1)
+    if (selectedProject.value?.id === id) selectedProject.value = null
+  }
+
   async function updateTaskInStore(uuid: string, data: TaskUpdatePayload): Promise<Task | null> {
     const { data: updated } = await pmApi.updateTask(uuid, data)
     // Update in flat task list
@@ -204,5 +226,6 @@ export const usePmStore = defineStore('pm', () => {
     fetchProjects, fetchProject, fetchTasks, fetchTask,
     fetchStats, fetchTags, toggleMeetingMode, syncVault, clearSelectedTask,
     createTask, updateTaskInStore,
+    createProject, updateProject, deleteProject,
   }
 })

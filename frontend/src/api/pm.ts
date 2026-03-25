@@ -43,6 +43,24 @@ export interface TaskListParams {
   page_size?: number
 }
 
+/** Payload for creating a new project */
+export interface ProjectCreatePayload {
+  name: string
+  status?: 'active' | 'archived' | 'on_hold'
+  deadline?: string | null
+  tags?: string[]
+  description?: string
+}
+
+/** Payload for updating an existing project (all fields optional) */
+export interface ProjectUpdatePayload {
+  name?: string
+  status?: 'active' | 'archived' | 'on_hold'
+  deadline?: string | null
+  tags?: string[]
+  description?: string
+}
+
 /** Payload for creating a new task (mirrors TaskWriteSerializer) */
 export interface TaskCreatePayload {
   name: string
@@ -72,6 +90,18 @@ export const pmApi = {
 
   getProject(id: number) {
     return client.get<Project & { tasks: Task[] }>(`/pm/projects/${id}/`)
+  },
+
+  createProject(data: ProjectCreatePayload) {
+    return client.post<Project>('/pm/projects/', data)
+  },
+
+  updateProject(id: number, data: ProjectUpdatePayload) {
+    return client.patch<Project>(`/pm/projects/${id}/`, data)
+  },
+
+  deleteProject(id: number) {
+    return client.delete(`/pm/projects/${id}/`)
   },
 
   // Tasks

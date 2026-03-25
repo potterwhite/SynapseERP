@@ -29,12 +29,15 @@ interface HealthResponse {
   vault_connected?: boolean
 }
 
+const THEME_KEY = 'synapse_theme'
+
 // Global app-level state: sidebar, theme, and PM backend mode.
 export const useAppStore = defineStore('app', () => {
   const sidebarCollapsed = ref(false)
 
-  // 'light' | 'dark' — wired into NConfigProvider
-  const theme = ref<'light' | 'dark'>('light')
+  // Restore theme from localStorage; default to 'light'
+  const storedTheme = (localStorage.getItem(THEME_KEY) as 'light' | 'dark' | null) ?? 'light'
+  const theme = ref<'light' | 'dark'>(storedTheme)
 
   // Mirrors backend SYNAPSE_PM_BACKEND setting; fetched from /api/health/
   const pmBackend = ref<'vault' | 'database'>('database')
@@ -46,6 +49,7 @@ export const useAppStore = defineStore('app', () => {
 
   function toggleTheme() {
     theme.value = theme.value === 'light' ? 'dark' : 'light'
+    localStorage.setItem(THEME_KEY, theme.value)
   }
 
   // Fetch server capabilities on app boot

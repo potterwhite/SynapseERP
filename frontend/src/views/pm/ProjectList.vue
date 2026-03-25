@@ -93,6 +93,12 @@ SOFTWARE.
           <template #icon><n-icon :component="SyncIcon" /></template>
           Sync Vault
         </n-button>
+
+        <!-- New Project button -->
+        <n-button type="primary" @click="openCreateModal">
+          <template #icon><n-icon :component="AddIcon" /></template>
+          New Project
+        </n-button>
       </n-flex>
     </n-flex>
 
@@ -145,6 +151,13 @@ SOFTWARE.
         <n-spin v-else-if="store.selectedTaskLoading" style="display:flex;justify-content:center;padding:48px;" />
       </n-drawer-content>
     </n-drawer>
+
+    <!-- Project create / edit modal -->
+    <ProjectFormModal
+      v-model="formModalOpen"
+      :project="editingProject"
+      @saved="onProjectSaved"
+    />
   </div>
 </template>
 
@@ -154,8 +167,8 @@ import { useRouter } from 'vue-router'
 import {
   NButton, NDataTable, NDrawer, NDrawerContent, NFlex, NGrid, NGi,
   NH2, NIcon, NInput, NResult, NSelect, NSpin, NStatistic,
-  NTag, NProgress, NTooltip,
-  useMessage,
+  NTag, NProgress, NTooltip, NPopconfirm,
+  useMessage, useDialog,
 } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import {
@@ -163,21 +176,63 @@ import {
   RefreshOutline as SyncIcon,
   EyeOutline as EyeIcon,
   EyeOffOutline as EyeOffIcon,
+  AddOutline as AddIcon,
+  CreateOutline as EditIcon,
+  TrashOutline as DeleteIcon,
 } from '@vicons/ionicons5'
 import { usePmStore } from '@/stores/pm'
 import { useAppStore } from '@/stores/app'
 import type { Project } from '@/types/pm'
 import TaskDetail from './TaskDetail.vue'
+import ProjectFormModal from './ProjectFormModal.vue'
 
 const store = usePmStore()
 const appStore = useAppStore()
 const router = useRouter()
 const message = useMessage()
+const dialog = useDialog()
 
 const searchQuery = ref('')
 const statusFilter = ref<'active' | 'archived' | 'on_hold' | 'all'>('active')
 const tagFilter = ref<string[]>([])
 const drawerOpen = ref(false)
+
+// Project CRUD modal state
+const formModalOpen = ref(false)
+const editingProject = ref<Project | null>(null)
+
+function openCreateModal() {
+  editingProject.value = null
+  formModalOpen.value = true
+}
+
+function openEditModal(row: Project) {
+  editingProject.value = row
+  formModalOpen.value = true
+}
+
+function onProjectSaved(_project: Project) {
+  store.fetchStats()
+  store.fetchTags()
+}
+
+async function confirmDelete(row: Project) {
+  dialog.warning({
+    title: 'Delete Project',
+    content: `Are you sure you want to delete "${row.name}"? This action cannot be undone.`,
+    positiveText: 'Delete',
+    negativeText: 'Cancel',
+    onPositiveClick: async () => {
+      try {
+        await store.deleteProject(row.id)
+        message.success(`Project "${row.name}" deleted`)
+        store.fetchStats()
+      } catch (err: unknown) {
+        message.error(err instanceof Error ? err.message : 'Delete failed')
+      }
+    },
+  })
+}
 
 const pmBackend = computed(() => appStore.pmBackend)
 
@@ -304,6 +359,26 @@ const columns: DataTableColumns<Project> = [
       })
     },
   },
+  {
+    title: '',
+    key: 'actions',
+    width: 90,
+    render(row) {
+      return h('div', { style: 'display: flex; gap: 4px; justify-content: flex-end;', onClick: (e: MouseEvent) => e.stopPropagation() }, [
+        h(NButton, {
+          size: 'small',
+          quaternary: true,
+          onClick: () => openEditModal(row),
+        }, { icon: () => h(NIcon, { component: EditIcon }) }),
+        h(NButton, {
+          size: 'small',
+          quaternary: true,
+          type: 'error',
+          onClick: () => confirmDelete(row),
+        }, { icon: () => h(NIcon, { component: DeleteIcon }) }),
+      ])
+    },
+  },
 ]
 
 // Click a row → open project detail (tasks in drawer)
@@ -332,7 +407,7 @@ function buildFetchParams() {
   }
 }
 
-function onSearch(val: string) {
+function onSearch(_val: string) {
   store.fetchProjects(buildFetchParams())
 }
 

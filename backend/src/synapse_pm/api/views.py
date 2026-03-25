@@ -111,12 +111,13 @@ def project_list(request: Request) -> Response:
     })
 
 
-@api_view(["GET", "PATCH"])
+@api_view(["GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def project_detail(request: Request, project_id: int) -> Response:
     """
-    GET   /api/pm/projects/{id}/
-    PATCH /api/pm/projects/{id}/
+    GET    /api/pm/projects/{id}/
+    PATCH  /api/pm/projects/{id}/
+    DELETE /api/pm/projects/{id}/
     """
     adapter = get_adapter()
 
@@ -133,6 +134,14 @@ def project_detail(request: Request, project_id: int) -> Response:
         project.save()
         result = adapter.get_project(project.pk)
         return Response(result)
+
+    if request.method == "DELETE":
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # GET
     project = adapter.get_project(project_id)
