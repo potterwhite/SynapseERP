@@ -122,7 +122,11 @@
 |         | `SynapseModule` 基类 + 标准接口 / Base class + standard interface | |
 |         | 每个模块注册可用操作 / Each module registers available actions | |
 |         | 为 AI Agent (MCP/OpenClaw) 预留接口 / Reserve interface for AI Agents | |
-| **5.9** | **Docker Compose 部署 / Docker Compose deployment** | ⏳ |
+| **5.9** | **PostgreSQL 迁移 + Docker Compose 部署 / PostgreSQL migration + Docker Compose deployment** | ⏳ |
+|         | 🆕 迁移原因：SQLite JSON 查询受限（如 tag 过滤必须在 Python 层做）；多用户并发；生产级稳定性 | |
+|         | 🆕 切换 Django 数据库配置到 PostgreSQL（`dj-database-url` / `psycopg2`）| |
+|         | 🆕 一键数据迁移脚本：SQLite → PostgreSQL（`pg_restore` / `django-admin dumpdata`）| |
+|         | 🆕 恢复原生 JSONField `__contains` 查询，移除 Python 层 tag 过滤补丁 | |
 |         | docker-compose.yml (Nginx + Django + Vue + PostgreSQL) | |
 |         | 开发/生产双模式 / Dev/prod dual mode | |
 |         | 一键 `docker compose up` 启动 / One-command startup | |
@@ -141,6 +145,7 @@
 | #8 价值定位 + 多用户 | 5.7 + 09 文档 | 权限系统 + 架构愿景文档 |
 | 🆕 DB-Primary 架构清理 | 5.2 | 移除切换开关，补全 CRUD |
 | 🆕 Obsidian 同步服务 | 5.3 | 独立双向同步，替代旧适配器 |
+| 🆕 PostgreSQL 迁移 | 5.9 | SQLite JSON 查询限制暴露于 5.4 tag 过滤；5.9 统一随 Docker Compose 一并迁移 |
 | ⚠️ 考勤中文下载 Bug | 5.1 | ✅ 已修复 |
 | ⚠️ 甘特图拖拽体验 | 5.1 | ✅ 已修复 |
 | ⚠️ Admin 页面丑 | 5.1 | ✅ 已修复 |
