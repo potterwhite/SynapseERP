@@ -298,3 +298,6 @@ synapse_nginx.conf
 
 
 
+
+# Local operation guides (not part of the codebase)
+squash-merge-guide.md
