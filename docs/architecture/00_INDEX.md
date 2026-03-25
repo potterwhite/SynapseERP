@@ -1,7 +1,7 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-23 (Phase 3 甘特图 + Phase 4 Vue 迁移完成)
-> 当前分支 / Branch: `refactor/pm`
+> 最后更新 / Last updated: 2026-03-25 (Phase 4.5 联调完成，Phase 5 规划就绪)
+> 当前分支 / Branch: `main`
 
 ---
 
@@ -14,9 +14,9 @@
 | **Phase 2** | PM 核心 — Obsidian 读取 + 展示 / PM core — Obsidian read + display | ✅ 完成 Done |
 | **Phase 3** | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | ✅ 完成 Done |
 | **Phase 4** | 迁移现有模块到 Vue / Migrate existing modules to Vue | ✅ 完成 Done |
-| **Phase 4.5** | 端到端联调 / End-to-end integration testing | 🔄 进行中 In progress |
-| Phase 5 | Docker 容器化 / Docker containerization | ⏳ 待开始 Pending |
-| Phase 6 | 持续扩展 / Ongoing extensions | ⏳ 长期 Long-term |
+| **Phase 4.5** | 端到端联调 / End-to-end integration testing | ✅ 完成 Done |
+| **Phase 5** | 产品化 — 权限、多用户、实时同步、UI 升级 / Productization | 🔄 规划中 Planning |
+| Phase 6 | Docker 容器化 + 部署 / Docker containerization + deployment | ⏳ 待开始 Pending |
 
 ### Phase 0 — 步骤明细 / Step Breakdown
 
@@ -67,12 +67,71 @@
 
 | 步骤 / Step | 描述 / Description | 状态 / Status |
 |---|---|---|
-| **L1** | 认证流程：未登录跳转 admin 登录页，成功后回 SPA | 🔄 |
-| **L2** | 后端 API 健康检查（health / dashboard / auth/me / pm/*） | 🔄 |
-| **L3** | PM 模块：项目列表 / 任务视图 / Gantt / TaskDetail Drawer | 🔄 |
-| **L4** | Attendance Analyzer：上传 → 分析 → 下载 | 🔄 |
-| **L5** | BOM Analyzer：多文件上传 → 汇总 → 下载 | 🔄 |
-| **L6** | Gantt 拖拽：修改 deadline → 确认 → PATCH API → 刷新验证 | 🔄 |
+| **L1** | 认证流程：未登录跳转 admin 登录页，成功后回 SPA | ✅ 通过 |
+| **L2** | 后端 API 健康检查（health / dashboard / auth/me / pm/*） | ✅ 通过 |
+| **L3** | PM 模块：项目列表 / 任务视图 / Gantt / TaskDetail Drawer | ✅ 通过 |
+| **L4** | Attendance Analyzer：上传 → 分析 → 下载 | ✅ 通过 ⚠️ 中文下载仍出英文表头 |
+| **L5** | BOM Analyzer：多文件上传 → 汇总 → 下载 | ✅ 通过 |
+| **L6** | Gantt 拖拽：修改 deadline → 确认 → PATCH API → 刷新验证 | ✅ 通过 ⚠️ 交互体验待优化（逐格移动+立即弹窗） |
+
+
+### Phase 5 — 产品化步骤明细 / Productization Step Breakdown
+
+> **架构决策 / Architectural Decision (2026-03-25)**:
+> Phase 5 正式切换到 **DB-Primary + Obsidian-Mirror** 架构。
+> 数据库为唯一真相源，Obsidian 作为管理员的"离线客户端"。
+> 详见 `background/09_architecture_vision.md`。
+
+| 步骤 / Step | 描述 / Description | 状态 / Status |
+|---|---|---|
+| **5.1** | **Bug 修复 + 已知问题 / Bug fixes + known issues** | 🔄 |
+|         | fix: 考勤下载中文版仍出英文表头 / Attendance zh-Hans download shows English headers | |
+|         | improve: 甘特图拖拽交互（真正拖拽代替逐格移动+立即弹窗）/ Gantt drag UX | |
+|         | improve: Admin 登录页美化 / Admin login page styling | |
+| **5.2** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ⏳ |
+|         | Project 模型增加 `tags` 字段 / Add `tags` field to Project model | |
+|         | 前端 Tag 筛选器（多选下拉）/ Tag filter UI (multi-select dropdown) | |
+|         | 会议模式：一键隐藏个人项目 / Meeting mode: one-click hide personal projects | |
+| **5.3** | **Vault 动态配置 / Vault dynamic configuration** | ⏳ |
+|         | Admin 界面设置 Vault 路径（`SiteConfig` 模型）/ Admin UI to set Vault path | |
+|         | 移除 `.env` 硬编码 / Remove hardcoded `OBSIDIAN_VAULT_PATH` from `.env` | |
+| **5.4** | **Vault 自动同步 / Vault auto-sync** | ⏳ |
+|         | 文件监听方案（watchdog/inotify）代替轮询 / File watcher (watchdog/inotify) instead of polling | |
+|         | 变更事件触发增量同步 / Change events trigger incremental sync | |
+|         | 低 CPU/内存占用设计 / Low CPU/memory footprint design | |
+| **5.5** | **UI/UX 全面升级 / UI/UX overhaul** | ⏳ |
+|         | Dashboard 重新设计（美观 + 性能）/ Dashboard redesign (beautiful + performant) | |
+|         | 响应式布局（手机/平板友好）/ Responsive layout (mobile/tablet friendly) | |
+|         | 长时间后台运行优化 / Long-running background optimization | |
+| **5.6** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ |
+|         | JWT 认证替代 Django Session / JWT auth replacing Django Session | |
+|         | 用户角色（admin / editor / viewer）/ User roles (admin / editor / viewer) | |
+|         | 自定义登录/注册页面 / Custom login/register pages | |
+|         | 基于 Tag 的项目访问控制 / Tag-based project access control | |
+| **5.7** | **Plugin API 框架 / Plugin API framework** | ⏳ |
+|         | `SynapseModule` 基类 + 标准接口 / Base class + standard interface | |
+|         | 每个模块注册可用操作 / Each module registers available actions | |
+|         | 为 AI Agent (MCP/OpenClaw) 预留接口 / Reserve interface for AI Agents | |
+| **5.8** | **Docker Compose 部署 / Docker Compose deployment** | ⏳ |
+|         | docker-compose.yml (Nginx + Django + Vue + PostgreSQL) | |
+|         | 开发/生产双模式 / Dev/prod dual mode | |
+|         | 一键 `docker compose up` 启动 / One-command startup | |
+
+#### Phase 5 原始需求追溯 / Original Requirements Traceability
+
+| 原始需求 # | 映射到步骤 / Mapped to Step | 备注 / Notes |
+|---|---|---|
+| #1 按 Tag 显示、隐藏个人项目 | 5.2 | 增加 tags + 会议模式 |
+| #2 Vault 自动同步 | 5.4 | 用 watchdog 文件监听，不轮询 |
+| #3 界面太丑 | 5.5 | Dashboard 重设计 + 响应式 |
+| #4 低资源占用、手机使用 | 5.4 + 5.5 | 监听方案 + 响应式布局 |
+| #5 OpenClaw / AI 集成 | 5.7 | 预留 Plugin API，不实现 AI 代码 |
+| #6 Docker Compose | 5.8 | 多容器组合，不做巨大镜像 |
+| #7 Vault 路径动态配置 | 5.3 | Admin 界面设置 |
+| #8 价值定位 + 多用户 | 5.6 + 09 文档 | 权限系统 + 架构愿景文档 |
+| ⚠️ 考勤中文下载 Bug | 5.1 | 已知 Bug |
+| ⚠️ 甘特图拖拽体验 | 5.1 | 已知 Bug |
+| ⚠️ Admin 页面丑 | 5.1 | 已知 Bug |
 
 ---
 
@@ -95,22 +154,27 @@ docs/architecture/
 │   └── 12_frontend_config.md            Vite / TS / Router / Pinia 精确配置
 │                                        Vite / TS / Router / Pinia exact config
 │
-└── background/                          决策历史，看一遍就够 / Decision history, read once
-    ├── 01_current_state_analysis.md     重构前的项目现状 / Project state before refactor
-    ├── 02_obsidian_integration_design.md Obsidian ↔ Synapse 数据模型映射 / Data model mapping
-    ├── 03_frontend_tech_decision.md     HTMX vs Vue SPA 对比 / HTMX vs Vue SPA comparison
-    ├── 04_old_plan_deprecated.md        ⚠️ 已过时，被 09 取代 / OUTDATED, superseded by 09
-    ├── 05_para_mapping.md               PARA 层级的正确理解 / PARA hierarchy correctly understood
-    ├── 06_vue3_spa_architecture.md      Vue 3 架构方案评估 / Vue 3 architecture options evaluated
-    ├── 07_vue_vs_python_clarification.md Vue 替代的是模板，不是 Python / Vue replaces templates, NOT Python
-    └── 08_final_tech_stack.md           最终确认的技术栈 + 选型理由 / Final confirmed tech stack + rationale
+├── background/                          当前有效的架构决策 / Active architectural decisions
+│   ├── 02_obsidian_integration_design.md Obsidian ↔ Synapse 数据模型映射 / Data model mapping
+│   ├── 05_para_mapping.md               PARA 层级的正确理解 / PARA hierarchy correctly understood
+│   ├── 08_final_tech_stack.md           最终确认的技术栈 + 选型理由 / Final confirmed tech stack
+│   ├── 09_architecture_vision.md        架构愿景与竞争优势 / Architecture vision & competitive advantage
+│   │
+│   └── archived/                        历史决策，已归档 / Historical decisions, archived
+│       ├── 01_current_state_analysis.md  重构前的项目现状 / Pre-refactor project state
+│       ├── 03_frontend_tech_decision.md  HTMX vs Vue 决策过程 / HTMX vs Vue decision process
+│       ├── 06_vue3_spa_architecture.md   Vue 3 架构方案评估 / Vue 3 architecture evaluation
+│       └── 07_vue_vs_python_clarification.md Vue ≠ Python 替代品 / Vue ≠ Python replacement
+│
+└── (04_old_plan_deprecated.md 已删除 — 被 plan/09 完全取代)
 ```
 
 ### 推荐阅读路线 / Recommended Reading Path
 
-- **快速上手（5 分钟）/ Quick catch-up (5 min):** `background/08_final_tech_stack.md` → `plan/09_implementation_plan.md`
-- **编码参考 / Coding reference:** `plan/` 目录，开发时随时查阅 / keep open while working
-- **深度背景 / Deep background:** `background/` 目录，看一遍即可 / read once, then archived mentally
+- **新人入门（5 分钟）/ Newcomer (5 min):** `background/08_final_tech_stack.md` → `background/09_architecture_vision.md`
+- **开始编码 / Start coding:** `plan/09_implementation_plan.md` → `plan/10_api_spec.md`
+- **PM 模块开发 / PM module dev:** `plan/11_obsidian_parsing_rules.md` + `background/02_obsidian_integration_design.md`
+- **深度历史 / Deep history:** `background/archived/` 目录，看一遍即可 / read once if curious
 
 ---
 
@@ -139,10 +203,11 @@ docs/architecture/
 |---|---|---|
 | 前端方案 / Frontend approach | Vue 3 SPA（前后端分离）/ full separation | `background/03` |
 | UI 库 / UI library | Naive UI（原生 TS + Composition API）| `background/08` |
-| Obsidian 集成 / Obsidian integration | 可切换 Backend Adapter 模式 / Switchable Backend Adapter | `background/08` |
+| Obsidian 集成 / Obsidian integration | DB-Primary + Obsidian-Mirror（Phase 5 架构升级）| `background/09` |
 | PARA 暴露 / PARA exposure | UI 不暴露 PARA 术语，用通用 PM 语言 / Hidden, generic PM terminology | `background/05` |
 | Django 模板 / Django templates | Phase 4 全部删除（全面 Vue 化）/ Removed in Phase 4 | `plan/09` |
-| Docker 时机 / Docker timing | Phase 5（PM 模块稳定后）/ After PM module is stable | `plan/09` |
+| Docker 时机 / Docker timing | Phase 5.8（PM 模块稳定后）/ After PM module is stable | `plan/09` |
+| AI 集成策略 / AI integration | 预留 Plugin API，不写 AI 代码 / Reserve Plugin API, no AI code yet | `background/09` |
 
 ---
 
