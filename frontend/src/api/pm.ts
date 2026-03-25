@@ -30,6 +30,8 @@ export interface ProjectListParams {
   ordering?: string
   page?: number
   page_size?: number
+  /** Comma-separated tag names; returns projects containing ALL specified tags */
+  tags?: string
 }
 
 export interface TaskListParams {
@@ -104,5 +106,10 @@ export const pmApi = {
   // Vault sync (vault mode only)
   syncVault() {
     return client.post<{ status: string; tasks_synced: number; duration_ms: number }>('/pm/sync/')
+  },
+
+  // Tags — Phase 5.4
+  listTags() {
+    return client.get<{ tags: string[] }>('/pm/tags/')
   },
 }

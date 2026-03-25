@@ -71,7 +71,15 @@ def project_list(request: Request) -> Response:
     raw_status = request.query_params.get("status", "active")
     filter_status = None if raw_status == "all" else raw_status
 
-    projects = adapter.list_projects(status=filter_status)
+    # tags query param: comma-separated list of tags to filter by (AND semantics)
+    raw_tags = request.query_params.get("tags", "").strip()
+    filter_tags: list[str] | None = (
+        [t.strip() for t in raw_tags.split(",") if t.strip()]
+        if raw_tags
+        else None
+    )
+
+    projects = adapter.list_projects(status=filter_status, tags=filter_tags)
 
     # Additional in-memory filters (small data sets — no SQL needed yet)
     search = request.query_params.get("search", "").lower().strip()
@@ -437,3 +445,27 @@ def sync_config(request: Request) -> Response:
         "effective_vault_path": effective_path,
         "sync_enabled": svc.enabled,
     })
+
+
+# ---------------------------------------------------------------------------
+# Tags
+# ---------------------------------------------------------------------------
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def tags_list(request: Request) -> Response:
+    """
+    GET /api/pm/tags/
+
+    Return a sorted list of all distinct tags currently used by projects.
+    This powers the tag-filter multi-select on the frontend.
+
+    Response:
+      { "tags": ["personal", "urgent", "work", ...] }
+    """
+    all_tags: set[str] = set()
+    for project in Project.objects.only("tags"):
+        for tag in (project.tags or []):
+            if tag:
+                all_tags.add(tag)
+    return Response({"tags": sorted(all_tags)})

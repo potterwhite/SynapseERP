@@ -31,6 +31,12 @@ export const usePmStore = defineStore('pm', () => {
   const projectsLoading = ref(false)
   const projectsError = ref<string | null>(null)
 
+  // --- Tag filtering (Phase 5.4) ---
+  /** All tags currently in use across projects */
+  const allTags = ref<string[]>([])
+  /** Meeting mode: when true, projects tagged 'personal' are hidden client-side */
+  const meetingMode = ref(false)
+
   // Currently selected project (for detail / task drill-down)
   const selectedProject = ref<(Project & { tasks?: Task[] }) | null>(null)
   const selectedProjectLoading = ref(false)
@@ -57,6 +63,16 @@ export const usePmStore = defineStore('pm', () => {
   // --- Computed ---
   const activeProjects = computed(() =>
     projects.value.filter(p => p.status === 'active')
+  )
+
+  /**
+   * Projects visible in meeting mode — hides any project tagged 'personal'.
+   * Components can use this computed instead of `projects` when in meeting mode.
+   */
+  const visibleProjects = computed(() =>
+    meetingMode.value
+      ? projects.value.filter(p => !(p.tags ?? []).includes('personal'))
+      : projects.value
   )
 
   // --- Actions ---
@@ -124,6 +140,19 @@ export const usePmStore = defineStore('pm', () => {
     }
   }
 
+  async function fetchTags() {
+    try {
+      const { data } = await pmApi.listTags()
+      allTags.value = data.tags
+    } catch {
+      // tags are non-critical — silently ignore
+    }
+  }
+
+  function toggleMeetingMode() {
+    meetingMode.value = !meetingMode.value
+  }
+
   async function syncVault() {
     syncing.value = true
     lastSyncResult.value = null
@@ -168,11 +197,12 @@ export const usePmStore = defineStore('pm', () => {
     tasks, tasksTotal, tasksLoading, tasksError,
     selectedTask, selectedTaskLoading, selectedTaskError,
     stats, syncing, lastSyncResult,
+    allTags, meetingMode,
     // Computed
-    activeProjects,
+    activeProjects, visibleProjects,
     // Actions
     fetchProjects, fetchProject, fetchTasks, fetchTask,
-    fetchStats, syncVault, clearSelectedTask,
+    fetchStats, fetchTags, toggleMeetingMode, syncVault, clearSelectedTask,
     createTask, updateTaskInStore,
   }
 })

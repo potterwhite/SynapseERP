@@ -42,6 +42,8 @@ export interface Project {
   status: ProjectStatus
   created: string | null
   deadline: string | null
+  /** Tag list for filtering and meeting-mode visibility control */
+  tags: string[]
   vault_path: string
   task_stats: TaskStats
   total_hours: number

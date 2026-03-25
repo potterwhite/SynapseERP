@@ -45,4 +45,8 @@ urlpatterns = [
     path("sync/", views.sync_status, name="pm-sync-status"),
     path("sync/trigger/", views.sync_trigger, name="pm-sync-trigger"),
     path("sync/config/", views.sync_config, name="pm-sync-config"),
+
+    # Tags — Phase 5.4
+    # GET  /api/pm/tags/           → list all distinct project tags
+    path("tags/", views.tags_list, name="pm-tags-list"),
 ]

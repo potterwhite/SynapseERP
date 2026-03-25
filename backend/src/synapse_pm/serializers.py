@@ -136,6 +136,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "status",
             "created",
             "deadline",
+            "tags",
             "vault_path",
             "task_stats",
             "total_hours",
@@ -185,6 +186,11 @@ class ProjectWriteSerializer(serializers.Serializer):
     para_type = serializers.ChoiceField(choices=Project.ParaType.choices, required=False)
     deadline = serializers.DateField(required=False, allow_null=True)
     created = serializers.DateField(required=False, allow_null=True)
+    tags = serializers.ListField(
+        child=serializers.CharField(max_length=64),
+        required=False,
+        default=list,
+    )
 
 
 class TimeEntryCreateSerializer(serializers.Serializer):

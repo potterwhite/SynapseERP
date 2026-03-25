@@ -64,6 +64,7 @@ class DatabaseAdapter(PMBackendAdapter):
             "para_type": p.para_type,
             "deadline": p.deadline.isoformat() if p.deadline else None,
             "created": p.created.isoformat() if p.created else None,
+            "tags": p.tags or [],
             "vault_path": p.vault_path,
             "synced_at": p.synced_at.isoformat() if p.synced_at else None,
             # Nested task_stats object — matches frontend types/pm.ts TaskStats shape
@@ -124,10 +125,14 @@ class DatabaseAdapter(PMBackendAdapter):
     # Projects
     # ------------------------------------------------------------------
 
-    def list_projects(self, *, status: str | None = None) -> list[dict[str, Any]]:
+    def list_projects(self, *, status: str | None = None, tags: list[str] | None = None) -> list[dict[str, Any]]:
         qs = Project.objects.prefetch_related("tasks", "tasks__time_entries")
         if status:
             qs = qs.filter(status=status)
+        if tags:
+            # Filter projects that contain ALL specified tags (AND semantics)
+            for tag in tags:
+                qs = qs.filter(tags__contains=tag)
         return [self._project_to_dict(p) for p in qs]
 
     def get_project(self, project_id: int) -> dict[str, Any] | None:

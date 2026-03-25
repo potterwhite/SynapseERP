@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-25 (Phase 5.3 Bug 修复：import 重复项目已解决，5.4 Tag 筛选规划中)
+> 最后更新 / Last updated: 2026-03-25 (Phase 5.4 ✅ 完成，5.5 Vault 自动同步规划中)
 > 当前分支 / Branch: `main`
 
 ---
@@ -99,10 +99,11 @@
 |         | 前端 Obsidian Sync 设置页面 / Frontend SyncSettings view | |
 |         | ⚠️ Bug 修复：vault 路径变更后 import 重复创建 Project / Fix: duplicate projects on vault path change | ✅ 已修复 |
 |         | — 修复：用 `full_name` 作为稳定标识符查找，路径变化时自动更新 vault_path / Use `full_name` as stable key | |
-| **5.4** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ⏳ |
-|         | Project/Task 模型增加 `tags` 字段 / Add `tags` field to Project/Task models | |
+| **5.4** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ✅ 完成 Done |
+|         | Project 模型增加 `tags` JSONField / Add `tags` JSONField to Project model | |
 |         | 前端 Tag 筛选器（多选下拉）/ Tag filter UI (multi-select dropdown) | |
-|         | 会议模式：一键隐藏个人项目 / Meeting mode: one-click hide personal projects | |
+|         | 会议模式：一键隐藏 personal 标签项目 / Meeting mode: one-click hide personal projects | |
+|         | `GET /api/pm/tags/` 返回所有已用 tags / Return all distinct tags | |
 | **5.5** | **Vault 自动同步 / Vault auto-sync** | ⏳ |
 |         | 文件监听方案（watchdog/inotify）代替轮询 / File watcher (watchdog/inotify) instead of polling | |
 |         | 变更事件触发增量同步 / Change events trigger incremental sync | |

@@ -41,16 +41,17 @@ class PMBackendAdapter(ABC):
     # ------------------------------------------------------------------
 
     @abstractmethod
-    def list_projects(self, *, status: str | None = None) -> list[dict[str, Any]]:
+    def list_projects(self, *, status: str | None = None, tags: list[str] | None = None) -> list[dict[str, Any]]:
         """
         Return a list of project dicts.
 
-        Optional filter:
+        Optional filters:
           status: 'active' | 'archived' | 'on_hold'
+          tags:   list of tag strings — returns projects that contain ALL given tags
 
         Each dict must include at minimum:
           id, name, full_name, status, para_type, deadline, created,
-          vault_path, synced_at
+          tags, vault_path, synced_at
         """
 
     @abstractmethod

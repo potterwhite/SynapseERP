@@ -53,6 +53,8 @@ class Project(models.Model):
     vault_path = models.CharField(max_length=1024, blank=True)
     deadline = models.DateField(null=True, blank=True)
     created = models.DateField(null=True, blank=True)
+    # Tags for filtering and visibility control (e.g. ["personal", "work", "urgent"])
+    tags = models.JSONField(default=list, blank=True)
     # mtime of the vault directory at last sync (used for incremental sync)
     vault_mtime = models.FloatField(default=0)
     synced_at = models.DateTimeField(null=True, blank=True)

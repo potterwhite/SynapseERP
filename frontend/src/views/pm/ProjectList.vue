@@ -24,8 +24,15 @@ SOFTWARE.
   <div>
     <!-- Header row: title + actions -->
     <n-flex justify="space-between" align="center" style="margin-bottom: 20px;">
-      <n-h2 style="margin: 0;">Project Management</n-h2>
+      <n-flex align="center" gap="8">
+        <n-h2 style="margin: 0;">Project Management</n-h2>
+        <!-- Meeting mode indicator badge -->
+        <n-tag v-if="store.meetingMode" type="warning" size="small" round>
+          Meeting Mode
+        </n-tag>
+      </n-flex>
       <n-flex :wrap="false" gap="8">
+        <!-- Search -->
         <n-input
           v-model:value="searchQuery"
           placeholder="Search projects…"
@@ -37,12 +44,45 @@ SOFTWARE.
             <n-icon :component="SearchIcon" />
           </template>
         </n-input>
+
+        <!-- Status filter -->
         <n-select
           v-model:value="statusFilter"
           :options="statusOptions"
           style="width: 130px;"
           @update:value="onStatusChange"
         />
+
+        <!-- Tag multi-select filter -->
+        <n-select
+          v-model:value="tagFilter"
+          :options="tagOptions"
+          multiple
+          clearable
+          placeholder="Filter by tag…"
+          style="min-width: 160px; max-width: 260px;"
+          @update:value="onTagFilterChange"
+        />
+
+        <!-- Meeting mode toggle -->
+        <n-tooltip>
+          <template #trigger>
+            <n-button
+              :type="store.meetingMode ? 'warning' : 'default'"
+              :ghost="!store.meetingMode"
+              @click="store.toggleMeetingMode()"
+            >
+              <template #icon>
+                <n-icon :component="store.meetingMode ? EyeOffIcon : EyeIcon" />
+              </template>
+              {{ store.meetingMode ? 'Exit Meeting' : 'Meeting Mode' }}
+            </n-button>
+          </template>
+          {{ store.meetingMode
+            ? 'Meeting mode active — personal projects are hidden'
+            : 'Meeting mode: hide projects tagged "personal"' }}
+        </n-tooltip>
+
         <n-button
           v-if="pmBackend === 'vault'"
           :loading="store.syncing"
@@ -85,7 +125,7 @@ SOFTWARE.
     <n-data-table
       v-else
       :columns="columns"
-      :data="store.projects"
+      :data="store.visibleProjects"
       :loading="store.projectsLoading"
       :pagination="pagination"
       :row-props="rowProps"
@@ -118,7 +158,12 @@ import {
   useMessage,
 } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
-import { SearchOutline as SearchIcon, RefreshOutline as SyncIcon } from '@vicons/ionicons5'
+import {
+  SearchOutline as SearchIcon,
+  RefreshOutline as SyncIcon,
+  EyeOutline as EyeIcon,
+  EyeOffOutline as EyeOffIcon,
+} from '@vicons/ionicons5'
 import { usePmStore } from '@/stores/pm'
 import { useAppStore } from '@/stores/app'
 import type { Project } from '@/types/pm'
@@ -131,6 +176,7 @@ const message = useMessage()
 
 const searchQuery = ref('')
 const statusFilter = ref<'active' | 'archived' | 'on_hold' | 'all'>('active')
+const tagFilter = ref<string[]>([])
 const drawerOpen = ref(false)
 
 const pmBackend = computed(() => appStore.pmBackend)
@@ -141,6 +187,11 @@ const statusOptions = [
   { label: 'On Hold', value: 'on_hold' },
   { label: 'All', value: 'all' },
 ]
+
+/** Build tag options from store.allTags */
+const tagOptions = computed(() =>
+  store.allTags.map(t => ({ label: t, value: t }))
+)
 
 const pagination = computed(() => ({
   pageSize: 20,
@@ -155,10 +206,26 @@ const columns: DataTableColumns<Project> = [
     key: 'name',
     sorter: 'default',
     render(row) {
-      return h('div', [
+      const children: ReturnType<typeof h>[] = [
         h('div', { style: 'font-weight: 500;' }, row.name),
         h('div', { style: 'font-size: 12px; color: var(--n-text-color-3);' }, row.full_name),
-      ])
+      ]
+      // Render tags inline under the project name
+      if (row.tags && row.tags.length > 0) {
+        children.push(
+          h('div', { style: 'margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;' },
+            row.tags.map(tag =>
+              h(NTag, {
+                size: 'small',
+                round: true,
+                bordered: false,
+                style: tag === 'personal' ? 'background: #fde8c8;' : undefined,
+              }, { default: () => tag })
+            )
+          )
+        )
+      }
+      return h('div', children)
     },
   },
   {
@@ -257,13 +324,25 @@ async function openProject(row: Project) {
   router.push({ path: '/pm', query: { project: String(row.id) } })
 }
 
+function buildFetchParams() {
+  return {
+    search: searchQuery.value,
+    status: statusFilter.value,
+    tags: tagFilter.value.length > 0 ? tagFilter.value.join(',') : undefined,
+  }
+}
+
 function onSearch(val: string) {
-  store.fetchProjects({ search: val, status: statusFilter.value })
+  store.fetchProjects(buildFetchParams())
 }
 
 function onStatusChange(val: typeof statusFilter.value) {
   statusFilter.value = val
-  store.fetchProjects({ search: searchQuery.value, status: val })
+  store.fetchProjects(buildFetchParams())
+}
+
+function onTagFilterChange() {
+  store.fetchProjects(buildFetchParams())
 }
 
 async function handleSync() {
@@ -277,6 +356,7 @@ onMounted(async () => {
   await Promise.all([
     store.fetchProjects({ status: statusFilter.value }),
     store.fetchStats(),
+    store.fetchTags(),
   ])
 })
 </script>
@@ -286,3 +366,4 @@ onMounted(async () => {
   opacity: 0.55;
 }
 </style>
+
