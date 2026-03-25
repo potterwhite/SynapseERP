@@ -99,6 +99,9 @@ const containerRef = ref<HTMLElement | null>(null)
 const currentView = ref<ViewMode>(props.initialView)
 let ganttInstance: InstanceType<typeof Gantt> | null = null
 
+// Debounce date-change to avoid rapid-fire dialog during drag
+let dateChangeTimer: ReturnType<typeof setTimeout> | null = null
+
 // frappe-gantt expects tasks in its own format
 function toFrappeTask(t: GanttTask) {
   return {
@@ -128,8 +131,14 @@ function buildGantt() {
       if (orig) emit('task-click', orig)
     },
     on_date_change: (fTask: { id: string }, start: Date, end: Date) => {
-      const orig = props.tasks.find(t => t.id === fTask.id)
-      if (orig) emit('date-change', orig, start, end)
+      // Debounce: frappe-gantt fires this on every snap during drag.
+      // Only emit once after the user finishes dragging (300ms idle).
+      if (dateChangeTimer) clearTimeout(dateChangeTimer)
+      dateChangeTimer = setTimeout(() => {
+        const orig = props.tasks.find(t => t.id === fTask.id)
+        if (orig) emit('date-change', orig, start, end)
+        dateChangeTimer = null
+      }, 300)
     },
   })
 }
@@ -145,6 +154,7 @@ onMounted(() => nextTick(buildGantt))
 watch(() => props.tasks, () => nextTick(buildGantt), { deep: true })
 
 onUnmounted(() => {
+  if (dateChangeTimer) clearTimeout(dateChangeTimer)
   ganttInstance = null
 })
 </script>

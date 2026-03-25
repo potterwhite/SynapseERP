@@ -1,0 +1,195 @@
+{% extends "admin/login.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  /* ===== SynapseERP Login Page — Full Override ===== */
+
+  /* Reset ALL Django admin layout constraints */
+  * { box-sizing: border-box !important; }
+
+  body.login {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Kill Django's fixed-width container */
+  body.login #container {
+    background: none !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+    float: none !important;
+  }
+
+  /* Header / branding */
+  body.login #header {
+    background: transparent !important;
+    color: #e2e8f0 !important;
+    padding: 0 0 24px 0 !important;
+    text-align: center !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body.login #header h1,
+  body.login #header h1 a {
+    color: #e2e8f0 !important;
+    font-size: 28px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+    text-decoration: none !important;
+  }
+
+  body.login #branding h1 { margin: 0 !important; }
+
+  /* Main content card */
+  body.login #content {
+    background: rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    padding: 36px 32px !important;
+    width: 360px !important;
+    max-width: 88vw !important;
+    min-width: 0 !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
+    margin: 0 auto !important;
+    float: none !important;
+    position: static !important;
+  }
+
+  body.login #content h1 {
+    color: #e2e8f0 !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    margin-bottom: 24px !important;
+    text-align: center !important;
+  }
+
+  body.login #content-main {
+    float: none !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  /* Form rows */
+  body.login .form-row {
+    margin-bottom: 16px !important;
+    padding: 0 !important;
+    border: none !important;
+    float: none !important;
+    overflow: visible !important;
+  }
+
+  body.login .form-row label {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: block !important;
+    margin-bottom: 6px !important;
+    float: none !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+
+  body.login .form-row input[type="text"],
+  body.login .form-row input[type="password"] {
+    width: 100% !important;
+    padding: 12px 14px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+    font-size: 15px !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+  }
+
+  body.login .form-row input[type="text"]:focus,
+  body.login .form-row input[type="password"]:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+  }
+
+  /* Submit button */
+  body.login .submit-row {
+    margin-top: 24px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    text-align: center !important;
+    overflow: visible !important;
+  }
+
+  body.login .submit-row input[type="submit"] {
+    width: 100% !important;
+    padding: 12px 24px !important;
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+  }
+
+  body.login .submit-row input[type="submit"]:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Error messages */
+  body.login .errornote {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5 !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin-bottom: 20px !important;
+    font-size: 14px !important;
+  }
+
+  /* Hide unnecessary elements */
+  body.login #user-tools,
+  body.login #nav-sidebar,
+  body.login #footer,
+  body.login .toggle-nav-sidebar,
+  body.login .nav-sidebar {
+    display: none !important;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    body.login #content {
+      padding: 24px 20px !important;
+      width: 320px !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+  <span style="margin-right: 8px;">⚡</span>SynapseERP
+</h1>
+{% endblock %}

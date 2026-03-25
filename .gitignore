@@ -68,8 +68,8 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# Translations
-*.mo
+# Translations — keep compiled .mo files for deployment
+# *.mo  (removed: Django locale .mo files must be tracked)
 
 # Django stuff:
 

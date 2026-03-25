@@ -110,10 +110,13 @@ fn_prepare_env() {
     fn_log "   - Running database migrations..." "yellow"
     fn_django migrate
 
-    # 4. Compile translations if gettext is available
+    # 4. Compile translations (try Django compilemessages, fallback to Python msgfmt)
+    fn_log "   - Compiling translations..." "yellow"
     if command -v msgfmt &>/dev/null; then
-        fn_log "   - Compiling translations..." "yellow"
         fn_django compilemessages
+    else
+        fn_log "     (msgfmt not found, using Python fallback)" "yellow"
+        "${VENV_DIR}/bin/python" "${REPO_ROOT}/scripts/compile_messages.py" "${BACKEND_DIR}/locale"
     fi
 
     if [ -d "$FRONTEND_DIR" ]; then
