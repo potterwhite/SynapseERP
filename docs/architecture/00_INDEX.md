@@ -111,6 +111,7 @@
 |         | Dashboard 重新设计（美观 + 性能）/ Dashboard redesign (beautiful + performant) | |
 |         | 响应式布局（手机/平板友好）/ Responsive layout (mobile/tablet friendly) | |
 |         | 长时间后台运行优化 / Long-running background optimization | |
+|         | 🆕 前端 Project/Task CRUD 表单页（新建 / 编辑 / 删除）/ Frontend Create-Edit-Delete forms for Project & Task | |
 | **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ |
 |         | JWT 认证替代 Django Session / JWT auth replacing Django Session | |
 |         | 用户角色（admin / editor / viewer）/ User roles (admin / editor / viewer) | |
