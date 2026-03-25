@@ -39,6 +39,10 @@ urlpatterns = [
     # Gantt
     path("gantt/", views.gantt_tasks, name="pm-gantt"),
 
-    # Vault sync
-    path("sync/", views.sync_vault, name="pm-sync"),
+    # Vault sync — Phase 5.3
+    # GET  /api/pm/sync/          → sync status
+    # POST /api/pm/sync/          → trigger import or export
+    path("sync/", views.sync_status, name="pm-sync-status"),
+    path("sync/trigger/", views.sync_trigger, name="pm-sync-trigger"),
+    path("sync/config/", views.sync_config, name="pm-sync-config"),
 ]

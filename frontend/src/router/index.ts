@@ -47,6 +47,11 @@ const routes: RouteRecordRaw[] = [
             name: 'pm-gantt',
             component: () => import('@/views/pm/GanttView.vue'),
           },
+          {
+            path: 'sync',
+            name: 'pm-sync',
+            component: () => import('@/views/pm/SyncSettings.vue'),
+          },
         ],
       },
       {

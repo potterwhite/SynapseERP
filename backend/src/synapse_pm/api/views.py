@@ -27,7 +27,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..adapters import get_adapter
-from ..models import Project, Task
+from ..models import Project, Task, SyncMeta
 from ..serializers import (
     GanttTaskSerializer,
     ProjectDetailSerializer,
@@ -285,51 +285,155 @@ def gantt_tasks(request: Request) -> Response:
 
 
 # ---------------------------------------------------------------------------
-# Vault sync trigger
+# Vault sync — status, trigger, and configuration
 # ---------------------------------------------------------------------------
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def sync_status(request: Request) -> Response:
+    """
+    GET /api/pm/sync/
+
+    Returns current sync status: vault path, enabled flag, last sync timestamps,
+    and current DB record counts.
+    """
+    from ..vault.sync_service import ObsidianSyncService
+    svc = ObsidianSyncService()
+    return Response(svc.get_status())
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def sync_vault(request: Request) -> Response:
+def sync_trigger(request: Request) -> Response:
     """
     POST /api/pm/sync/
 
-    Triggers the sync_vault management command programmatically.
-    Requires OBSIDIAN_SYNC_ENABLED=True and a valid OBSIDIAN_VAULT_PATH.
+    Triggers a vault sync operation.
+
+    Request body (all optional):
+      {
+        "mode":    "import" | "export"   (default: "import")
+        "full":    true | false           (default: false; import only)
+        "dry_run": true | false           (default: false)
+      }
+
+    Response:
+      {
+        "status":                 "completed" | "disabled" | "error"
+        "mode":                   "import" | "export"
+        "projects_created":       int
+        "projects_updated":       int
+        "tasks_created":          int
+        "tasks_updated":          int
+        "time_entries_created":   int
+        "skipped":                int
+        "errors":                 list[str]
+        "duration_ms":            int
+      }
     """
-    sync_enabled = getattr(settings, "OBSIDIAN_SYNC_ENABLED", False)
-    if not sync_enabled:
+    from ..vault.sync_service import ObsidianSyncService
+    svc = ObsidianSyncService()
+
+    if not svc.enabled:
         return Response(
-            {"detail": "Vault sync is not enabled. Set OBSIDIAN_VAULT_PATH in .env."},
+            {
+                "status": "disabled",
+                "detail": (
+                    "Vault sync is not enabled. "
+                    "Configure vault_path via /api/pm/sync/config/ or set OBSIDIAN_VAULT_PATH in .env."
+                ),
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    from django.core.management import call_command
-    from io import StringIO
+    mode: str = request.data.get("mode", "import")
+    full: bool = bool(request.data.get("full", False))
+    dry_run: bool = bool(request.data.get("dry_run", False))
 
     t0 = time.monotonic()
-    out = StringIO()
     try:
-        call_command("sync_vault", stdout=out)
+        if mode == "export":
+            result = svc.export_to_vault(dry_run=dry_run)
+        else:
+            result = svc.import_from_vault(full=full, dry_run=dry_run)
     except Exception as exc:
         return Response(
-            {"detail": f"Sync failed: {exc}"},
+            {"status": "error", "detail": str(exc)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
     duration_ms = int((time.monotonic() - t0) * 1000)
-    output = out.getvalue()
 
-    # Parse counts from command output
-    def _extract(label: str) -> int:
-        import re
-        m = re.search(rf"{label}\s*:\s*(\d+) created", output)
-        return int(m.group(1)) if m else 0
+    return Response(
+        {
+            "status": "completed",
+            "mode": mode,
+            "dry_run": dry_run,
+            "duration_ms": duration_ms,
+            **result.to_dict(),
+        }
+    )
+
+
+@api_view(["GET", "PATCH"])
+@permission_classes([IsAuthenticated])
+def sync_config(request: Request) -> Response:
+    """
+    GET  /api/pm/sync/config/
+    PATCH /api/pm/sync/config/
+
+    Manage dynamic sync configuration stored in SyncMeta.
+
+    GET response:
+      {
+        "vault_path":    str | null   (from SyncMeta, overrides .env)
+        "env_vault_path": str | null  (from settings.OBSIDIAN_VAULT_PATH, read-only)
+        "effective_vault_path": str | null  (the path actually used)
+        "sync_enabled":  bool
+      }
+
+    PATCH request body:
+      {
+        "vault_path": "/absolute/path/to/vault"   (set to "" or null to clear)
+      }
+    """
+    from ..vault.sync_service import ObsidianSyncService, get_vault_path
+
+    if request.method == "PATCH":
+        new_path = request.data.get("vault_path", "").strip()
+        if new_path:
+            # Validate directory exists
+            import os
+            if not os.path.isdir(new_path):
+                return Response(
+                    {"detail": f"Path does not exist or is not a directory: {new_path}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            SyncMeta.objects.update_or_create(
+                key="vault_path",
+                defaults={"value": new_path},
+            )
+        else:
+            # Clear the dynamic vault_path — fall back to .env setting
+            SyncMeta.objects.filter(key="vault_path").delete()
+
+    # Build response for both GET and PATCH
+    dynamic_path: str | None = None
+    try:
+        meta = SyncMeta.objects.get(key="vault_path")
+        if meta.value.strip():
+            dynamic_path = meta.value.strip()
+    except SyncMeta.DoesNotExist:
+        pass
+
+    env_path = getattr(settings, "OBSIDIAN_VAULT_PATH", None) or None
+    effective_path = dynamic_path or env_path
+
+    svc = ObsidianSyncService()
 
     return Response({
-        "status": "completed",
-        "projects_synced": _extract("Projects"),
-        "tasks_synced": _extract("Tasks"),
-        "time_entries_synced": _extract("TimeEntries"),
-        "duration_ms": duration_ms,
+        "vault_path": dynamic_path,
+        "env_vault_path": env_path,
+        "effective_vault_path": effective_path,
+        "sync_enabled": svc.enabled,
     })

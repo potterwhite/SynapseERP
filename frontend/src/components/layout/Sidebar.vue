@@ -53,6 +53,7 @@ import {
   BarChartOutline as GanttIcon,
   TimeOutline as AttendanceIcon,
   DocumentTextOutline as BOMIcon,
+  SyncOutline as SyncIcon,
 } from '@vicons/ionicons5'
 
 defineProps<{ collapsed: boolean }>()
@@ -63,6 +64,7 @@ const route = useRoute()
 const activeKey = computed(() => {
   const path = route.path
   if (path.startsWith('/pm/gantt')) return 'pm-gantt'
+  if (path.startsWith('/pm/sync')) return 'pm-sync'
   if (path.startsWith('/pm')) return 'pm-projects'
   if (path.startsWith('/attendance')) return 'attendance'
   if (path.startsWith('/bom')) return 'bom'
@@ -93,6 +95,11 @@ const menuOptions: MenuOption[] = [
         key: 'pm-gantt',
         icon: renderIcon(GanttIcon),
       },
+      {
+        label: 'Obsidian Sync',
+        key: 'pm-sync',
+        icon: renderIcon(SyncIcon),
+      },
     ],
   },
   {
@@ -111,6 +118,7 @@ const routeMap: Record<string, string> = {
   dashboard: '/',
   'pm-projects': '/pm',
   'pm-gantt': '/pm/gantt',
+  'pm-sync': '/pm/sync',
   attendance: '/attendance',
   bom: '/bom',
 }

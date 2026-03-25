@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from django.contrib import admin
-from .models import Project, Task, TimeEntry
+from .models import Project, Task, TimeEntry, SyncMeta
 
 
 @admin.register(Project)
@@ -42,3 +42,18 @@ class TimeEntryAdmin(admin.ModelAdmin):
     list_display = ("task", "date", "start_time", "end_time", "duration_minutes")
     list_filter = ("date",)
     raw_id_fields = ("task",)
+
+
+@admin.register(SyncMeta)
+class SyncMetaAdmin(admin.ModelAdmin):
+    """
+    Admin UI for SyncMeta key-value store.
+
+    Key entries used by ObsidianSyncService:
+      vault_path     — absolute path to the Obsidian vault root (overrides .env)
+      last_import_at — ISO datetime of the last successful vault→DB import
+      last_export_at — ISO datetime of the last successful DB→vault export
+    """
+    list_display = ("key", "value", "updated_at")
+    search_fields = ("key", "value")
+    ordering = ("key",)

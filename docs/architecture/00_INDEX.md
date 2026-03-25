@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-25 (Phase 5.1 ✅ 完成，5.2 DB-Primary 架构清理规划中)
+> 最后更新 / Last updated: 2026-03-25 (Phase 5.3 ✅ 完成，5.4 Tag 筛选规划中)
 > 当前分支 / Branch: `main`
 
 ---
@@ -15,7 +15,7 @@
 | **Phase 3** | PM 进阶 — 甘特图 + 写回 / PM advanced — Gantt + write-back | ✅ 完成 Done |
 | **Phase 4** | 迁移现有模块到 Vue / Migrate existing modules to Vue | ✅ 完成 Done |
 | **Phase 4.5** | 端到端联调 / End-to-end integration testing | ✅ 完成 Done |
-| **Phase 5** | 产品化 — 权限、多用户、实时同步、UI 升级 / Productization | 🔄 规划中 Planning |
+| **Phase 5** | 产品化 — 权限、多用户、实时同步、UI 升级 / Productization | 🔄 进行中 In Progress |
 | Phase 6 | Docker 容器化 + 部署 / Docker containerization + deployment | ⏳ 待开始 Pending |
 
 ### Phase 0 — 步骤明细 / Step Breakdown
@@ -92,10 +92,11 @@
 |         | 移除 vault/database 切换开关 / Remove vault/database switch mechanism | |
 |         | API 始终使用 DatabaseAdapter / API always uses DatabaseAdapter | |
 |         | 补全项目 CRUD 端点 / Add missing Project CRUD endpoints | |
-| **5.3** | **Obsidian 同步服务 / Obsidian sync service** | ⏳ |
+| **5.3** | **Obsidian 同步服务 / Obsidian sync service** | ✅ 完成 Done |
 |         | 创建独立的 ObsidianSyncService（导入+导出）/ Standalone sync service (import+export) | |
-|         | Vault 路径动态配置（Admin 界面）/ Vault path dynamic config (Admin UI) | |
+|         | Vault 路径动态配置（Admin 界面 + API）/ Vault path dynamic config (Admin UI + API) | |
 |         | 冲突策略：最近修改胜出 / Conflict: last-modified-wins | |
+|         | 前端 Obsidian Sync 设置页面 / Frontend SyncSettings view | |
 | **5.4** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ⏳ |
 |         | Project/Task 模型增加 `tags` 字段 / Add `tags` field to Project/Task models | |
 |         | 前端 Tag 筛选器（多选下拉）/ Tag filter UI (multi-select dropdown) | |
