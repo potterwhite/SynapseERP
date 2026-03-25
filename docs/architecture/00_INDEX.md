@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-25 (Phase 5.3 ✅ 完成，5.4 Tag 筛选规划中)
+> 最后更新 / Last updated: 2026-03-25 (Phase 5.3 Bug 修复：import 重复项目已解决，5.4 Tag 筛选规划中)
 > 当前分支 / Branch: `main`
 
 ---
@@ -97,6 +97,8 @@
 |         | Vault 路径动态配置（Admin 界面 + API）/ Vault path dynamic config (Admin UI + API) | |
 |         | 冲突策略：最近修改胜出 / Conflict: last-modified-wins | |
 |         | 前端 Obsidian Sync 设置页面 / Frontend SyncSettings view | |
+|         | ⚠️ Bug 修复：vault 路径变更后 import 重复创建 Project / Fix: duplicate projects on vault path change | ✅ 已修复 |
+|         | — 修复：用 `full_name` 作为稳定标识符查找，路径变化时自动更新 vault_path / Use `full_name` as stable key | |
 | **5.4** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ⏳ |
 |         | Project/Task 模型增加 `tags` 字段 / Add `tags` field to Project/Task models | |
 |         | 前端 Tag 筛选器（多选下拉）/ Tag filter UI (multi-select dropdown) | |

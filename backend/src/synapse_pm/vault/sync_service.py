@@ -209,14 +209,39 @@ class ObsidianSyncService:
 
         for vp in vault_projects:
             mtime: float = vp["vault_mtime"]
+            db_proj: "Project | None" = None
+
+            # --- Lookup strategy (handles vault-path relocations) -----------
+            # 1st: match by full_name (stable, path-independent identifier)
+            # 2nd: match by vault_path (legacy / initial import)
+            # If neither matches → create new record.
             try:
-                db_proj = Project.objects.get(vault_path=vp["vault_path"])
+                db_proj = Project.objects.get(full_name=vp["full_name"])
+            except Project.DoesNotExist:
+                try:
+                    db_proj = Project.objects.get(vault_path=vp["vault_path"])
+                except Project.DoesNotExist:
+                    db_proj = None
+
+            if db_proj is not None:
                 project_ref_map[vp["full_name"]] = db_proj
+
+                # If the vault was relocated, always update vault_path even when
+                # skipping (so future mtime comparisons use the correct path).
+                vault_path_changed = db_proj.vault_path != vp["vault_path"]
 
                 if not full:
                     # Convert DB synced_at to a comparable timestamp
                     db_ts = db_proj.synced_at.timestamp() if db_proj.synced_at else 0.0
                     if db_ts >= mtime:
+                        # DB is up-to-date — only patch vault_path if it moved
+                        if vault_path_changed and not dry_run:
+                            db_proj.vault_path = vp["vault_path"]
+                            db_proj.save(update_fields=["vault_path"])
+                            logger.debug(
+                                "  Updated vault_path for project: %s → %s",
+                                vp["name"], vp["vault_path"],
+                            )
                         result.skipped += 1
                         continue
 
@@ -225,6 +250,7 @@ class ObsidianSyncService:
                     db_proj.full_name = vp["full_name"]
                     db_proj.status = vp["status"]
                     db_proj.para_type = vp["para_type"]
+                    db_proj.vault_path = vp["vault_path"]
                     db_proj.vault_mtime = mtime
                     db_proj.synced_at = now
                     db_proj.save()
@@ -232,7 +258,8 @@ class ObsidianSyncService:
                 result.projects_updated += 1
                 logger.debug("  Updated project: %s", vp["name"])
 
-            except Project.DoesNotExist:
+            else:
+                # No existing record found → create
                 if not dry_run:
                     db_proj = Project.objects.create(
                         name=vp["name"],
@@ -276,6 +303,10 @@ class ObsidianSyncService:
                     if not full:
                         db_ts = db_task.synced_at.timestamp() if db_task.synced_at else 0.0
                         if db_ts >= mtime:
+                            # DB is up-to-date — patch vault_path if vault was relocated
+                            if db_task.vault_path != vt["vault_path"] and not dry_run:
+                                db_task.vault_path = vt["vault_path"]
+                                db_task.save(update_fields=["vault_path"])
                             result.skipped += 1
                             continue
 
