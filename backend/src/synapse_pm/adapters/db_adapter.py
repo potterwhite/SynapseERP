@@ -129,11 +129,18 @@ class DatabaseAdapter(PMBackendAdapter):
         qs = Project.objects.prefetch_related("tasks", "tasks__time_entries")
         if status:
             qs = qs.filter(status=status)
+        # Note: JSONField __contains lookup is only supported on PostgreSQL.
+        # For SQLite compatibility, we filter in Python after the queryset is evaluated.
+        # On PostgreSQL this is still efficient because the Python filter runs on the
+        # already-status-filtered result set, which is typically small.
+        result = [self._project_to_dict(p) for p in qs]
         if tags:
-            # Filter projects that contain ALL specified tags (AND semantics)
-            for tag in tags:
-                qs = qs.filter(tags__contains=tag)
-        return [self._project_to_dict(p) for p in qs]
+            # AND semantics: project must have ALL specified tags
+            result = [
+                d for d in result
+                if all(t in (d.get("tags") or []) for t in tags)
+            ]
+        return result
 
     def get_project(self, project_id: int) -> dict[str, Any] | None:
         try:
