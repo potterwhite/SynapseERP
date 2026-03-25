@@ -30,7 +30,9 @@ from .base import PMBackendAdapter
 class DatabaseAdapter(PMBackendAdapter):
     """
     PM backend that reads and writes data via Django ORM.
-    Used when SYNAPSE_PM_BACKEND = 'database' (the default).
+
+    Since Phase 5.2 (DB-Primary architecture), this is the sole backend.
+    The database is the single source of truth for all PM data.
     """
 
     # ------------------------------------------------------------------

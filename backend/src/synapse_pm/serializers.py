@@ -176,6 +176,17 @@ class ProjectDetailSerializer(ProjectSerializer):
         fields = ProjectSerializer.Meta.fields + ["tasks"]
 
 
+class ProjectWriteSerializer(serializers.Serializer):
+    """Serializer for POST /projects/ and PATCH /projects/{id}/."""
+
+    name = serializers.CharField(max_length=255, required=False)
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    status = serializers.ChoiceField(choices=Project.Status.choices, required=False)
+    para_type = serializers.ChoiceField(choices=Project.ParaType.choices, required=False)
+    deadline = serializers.DateField(required=False, allow_null=True)
+    created = serializers.DateField(required=False, allow_null=True)
+
+
 class TimeEntryCreateSerializer(serializers.Serializer):
     """Serializer for POST /pm/time-entries/."""
 

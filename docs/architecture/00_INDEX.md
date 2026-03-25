@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-25 (Phase 4.5 联调完成，Phase 5 规划就绪)
+> 最后更新 / Last updated: 2026-03-25 (Phase 5.1 ✅ 完成，5.2 DB-Primary 架构清理规划中)
 > 当前分支 / Branch: `main`
 
 ---
@@ -84,35 +84,40 @@
 
 | 步骤 / Step | 描述 / Description | 状态 / Status |
 |---|---|---|
-| **5.1** | **Bug 修复 + 已知问题 / Bug fixes + known issues** | 🔄 |
+| **5.1** | **Bug 修复 + 已知问题 / Bug fixes + known issues** | ✅ 完成 Done |
 |         | fix: 考勤下载中文版仍出英文表头 / Attendance zh-Hans download shows English headers | |
 |         | improve: 甘特图拖拽交互（真正拖拽代替逐格移动+立即弹窗）/ Gantt drag UX | |
 |         | improve: Admin 登录页美化 / Admin login page styling | |
-| **5.2** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ⏳ |
-|         | Project 模型增加 `tags` 字段 / Add `tags` field to Project model | |
+| **5.2** | **DB-Primary 架构清理 / DB-Primary architecture cleanup** | ✅ 完成 Done |
+|         | 移除 vault/database 切换开关 / Remove vault/database switch mechanism | |
+|         | API 始终使用 DatabaseAdapter / API always uses DatabaseAdapter | |
+|         | 补全项目 CRUD 端点 / Add missing Project CRUD endpoints | |
+| **5.3** | **Obsidian 同步服务 / Obsidian sync service** | ⏳ |
+|         | 创建独立的 ObsidianSyncService（导入+导出）/ Standalone sync service (import+export) | |
+|         | Vault 路径动态配置（Admin 界面）/ Vault path dynamic config (Admin UI) | |
+|         | 冲突策略：最近修改胜出 / Conflict: last-modified-wins | |
+| **5.4** | **Tag 筛选 + 项目可见性 / Tag filtering + project visibility** | ⏳ |
+|         | Project/Task 模型增加 `tags` 字段 / Add `tags` field to Project/Task models | |
 |         | 前端 Tag 筛选器（多选下拉）/ Tag filter UI (multi-select dropdown) | |
 |         | 会议模式：一键隐藏个人项目 / Meeting mode: one-click hide personal projects | |
-| **5.3** | **Vault 动态配置 / Vault dynamic configuration** | ⏳ |
-|         | Admin 界面设置 Vault 路径（`SiteConfig` 模型）/ Admin UI to set Vault path | |
-|         | 移除 `.env` 硬编码 / Remove hardcoded `OBSIDIAN_VAULT_PATH` from `.env` | |
-| **5.4** | **Vault 自动同步 / Vault auto-sync** | ⏳ |
+| **5.5** | **Vault 自动同步 / Vault auto-sync** | ⏳ |
 |         | 文件监听方案（watchdog/inotify）代替轮询 / File watcher (watchdog/inotify) instead of polling | |
 |         | 变更事件触发增量同步 / Change events trigger incremental sync | |
 |         | 低 CPU/内存占用设计 / Low CPU/memory footprint design | |
-| **5.5** | **UI/UX 全面升级 / UI/UX overhaul** | ⏳ |
+| **5.6** | **UI/UX 全面升级 / UI/UX overhaul** | ⏳ |
 |         | Dashboard 重新设计（美观 + 性能）/ Dashboard redesign (beautiful + performant) | |
 |         | 响应式布局（手机/平板友好）/ Responsive layout (mobile/tablet friendly) | |
 |         | 长时间后台运行优化 / Long-running background optimization | |
-| **5.6** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ |
+| **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ |
 |         | JWT 认证替代 Django Session / JWT auth replacing Django Session | |
 |         | 用户角色（admin / editor / viewer）/ User roles (admin / editor / viewer) | |
 |         | 自定义登录/注册页面 / Custom login/register pages | |
 |         | 基于 Tag 的项目访问控制 / Tag-based project access control | |
-| **5.7** | **Plugin API 框架 / Plugin API framework** | ⏳ |
+| **5.8** | **Plugin API 框架 / Plugin API framework** | ⏳ |
 |         | `SynapseModule` 基类 + 标准接口 / Base class + standard interface | |
 |         | 每个模块注册可用操作 / Each module registers available actions | |
 |         | 为 AI Agent (MCP/OpenClaw) 预留接口 / Reserve interface for AI Agents | |
-| **5.8** | **Docker Compose 部署 / Docker Compose deployment** | ⏳ |
+| **5.9** | **Docker Compose 部署 / Docker Compose deployment** | ⏳ |
 |         | docker-compose.yml (Nginx + Django + Vue + PostgreSQL) | |
 |         | 开发/生产双模式 / Dev/prod dual mode | |
 |         | 一键 `docker compose up` 启动 / One-command startup | |
@@ -121,17 +126,19 @@
 
 | 原始需求 # | 映射到步骤 / Mapped to Step | 备注 / Notes |
 |---|---|---|
-| #1 按 Tag 显示、隐藏个人项目 | 5.2 | 增加 tags + 会议模式 |
-| #2 Vault 自动同步 | 5.4 | 用 watchdog 文件监听，不轮询 |
-| #3 界面太丑 | 5.5 | Dashboard 重设计 + 响应式 |
-| #4 低资源占用、手机使用 | 5.4 + 5.5 | 监听方案 + 响应式布局 |
-| #5 OpenClaw / AI 集成 | 5.7 | 预留 Plugin API，不实现 AI 代码 |
-| #6 Docker Compose | 5.8 | 多容器组合，不做巨大镜像 |
-| #7 Vault 路径动态配置 | 5.3 | Admin 界面设置 |
-| #8 价值定位 + 多用户 | 5.6 + 09 文档 | 权限系统 + 架构愿景文档 |
-| ⚠️ 考勤中文下载 Bug | 5.1 | 已知 Bug |
-| ⚠️ 甘特图拖拽体验 | 5.1 | 已知 Bug |
-| ⚠️ Admin 页面丑 | 5.1 | 已知 Bug |
+| #1 按 Tag 显示、隐藏个人项目 | 5.4 | 增加 tags + 会议模式 |
+| #2 Vault 自动同步 | 5.5 | 用 watchdog 文件监听，不轮询 |
+| #3 界面太丑 | 5.6 | Dashboard 重设计 + 响应式 |
+| #4 低资源占用、手机使用 | 5.5 + 5.6 | 监听方案 + 响应式布局 |
+| #5 OpenClaw / AI 集成 | 5.8 | 预留 Plugin API，不实现 AI 代码 |
+| #6 Docker Compose | 5.9 | 多容器组合，不做巨大镜像 |
+| #7 Vault 路径动态配置 | 5.3 | 合并到同步服务中 |
+| #8 价值定位 + 多用户 | 5.7 + 09 文档 | 权限系统 + 架构愿景文档 |
+| 🆕 DB-Primary 架构清理 | 5.2 | 移除切换开关，补全 CRUD |
+| 🆕 Obsidian 同步服务 | 5.3 | 独立双向同步，替代旧适配器 |
+| ⚠️ 考勤中文下载 Bug | 5.1 | ✅ 已修复 |
+| ⚠️ 甘特图拖拽体验 | 5.1 | ✅ 已修复 |
+| ⚠️ Admin 页面丑 | 5.1 | ✅ 已修复 |
 
 ---
 

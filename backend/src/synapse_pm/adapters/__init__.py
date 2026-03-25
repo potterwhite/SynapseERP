@@ -21,6 +21,10 @@
 """
 PM Backend Adapter factory.
 
+Phase 5.2 (2026-03-25): Switched to DB-Primary architecture.
+The database is the sole source of truth. Obsidian vault integration
+is handled by a separate sync service (see services/).
+
 Usage:
     from synapse_pm.adapters import get_adapter
 
@@ -32,26 +36,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from django.conf import settings
-
 if TYPE_CHECKING:
     from .base import PMBackendAdapter
 
 
 def get_adapter() -> "PMBackendAdapter":
     """
-    Return the appropriate PMBackendAdapter based on SYNAPSE_PM_BACKEND.
+    Return the DatabaseAdapter (DB-Primary architecture).
 
-    'database' → DatabaseAdapter (default, uses Django ORM)
-    'vault'    → VaultAdapter (reads/writes Obsidian markdown files)
+    Since Phase 5.2, the database is always the source of truth.
+    Obsidian vault sync is handled separately via the sync service.
     """
-    backend = getattr(settings, "SYNAPSE_PM_BACKEND", "database")
-
-    if backend == "vault":
-        from .vault_adapter import VaultAdapter
-        return VaultAdapter()
-
-    # Default: database
     from .db_adapter import DatabaseAdapter
     return DatabaseAdapter()
 

@@ -32,6 +32,7 @@ from ..serializers import (
     GanttTaskSerializer,
     ProjectDetailSerializer,
     ProjectSerializer,
+    ProjectWriteSerializer,
     TaskSerializer,
     TaskWriteSerializer,
     TimeEntryCreateSerializer,
@@ -43,18 +44,30 @@ from ..serializers import (
 # Projects
 # ---------------------------------------------------------------------------
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def project_list(request: Request) -> Response:
     """
-    GET /api/pm/projects/
+    GET  /api/pm/projects/
+    POST /api/pm/projects/
 
-    Query params:
+    Query params (GET):
       status   — 'active' | 'archived' | 'on_hold' | 'all'
       search   — substring match on name / full_name
       ordering — 'name' | '-name' | 'deadline' | '-deadline'
     """
     adapter = get_adapter()
+
+    if request.method == "POST":
+        ser = ProjectWriteSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.validated_data.copy()
+        # Create project via ORM
+        project = Project.objects.create(**data)
+        result = adapter.get_project(project.pk)
+        return Response(result, status=status.HTTP_201_CREATED)
+
+    # GET
     raw_status = request.query_params.get("status", "active")
     filter_status = None if raw_status == "all" else raw_status
 
@@ -90,11 +103,30 @@ def project_list(request: Request) -> Response:
     })
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
 def project_detail(request: Request, project_id: int) -> Response:
-    """GET /api/pm/projects/{id}/"""
+    """
+    GET   /api/pm/projects/{id}/
+    PATCH /api/pm/projects/{id}/
+    """
     adapter = get_adapter()
+
+    if request.method == "PATCH":
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        ser = ProjectWriteSerializer(data=request.data, partial=True)
+        ser.is_valid(raise_exception=True)
+        for field, value in ser.validated_data.items():
+            setattr(project, field, value)
+        project.save()
+        result = adapter.get_project(project.pk)
+        return Response(result)
+
+    # GET
     project = adapter.get_project(project_id)
     if project is None:
         return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -154,14 +186,21 @@ def task_list(request: Request) -> Response:
     })
 
 
-@api_view(["GET", "PATCH"])
+@api_view(["GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def task_detail(request: Request, task_uuid: str) -> Response:
     """
-    GET   /api/pm/tasks/{uuid}/
-    PATCH /api/pm/tasks/{uuid}/
+    GET    /api/pm/tasks/{uuid}/
+    PATCH  /api/pm/tasks/{uuid}/
+    DELETE /api/pm/tasks/{uuid}/  (soft-delete: sets status to cancelled)
     """
     adapter = get_adapter()
+
+    if request.method == "DELETE":
+        task = adapter.update_task(task_uuid, {"status": "cancelled"})
+        if task is None:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Task cancelled.", "uuid": task_uuid})
 
     if request.method == "PATCH":
         ser = TaskWriteSerializer(data=request.data, partial=True)
@@ -201,8 +240,9 @@ def time_entry_list(request: Request) -> Response:
         data["task_uuid"] = str(data["task_uuid"])
         data["date"] = data["date"].isoformat() if hasattr(data["date"], "isoformat") else data["date"]
         entry = adapter.create_time_entry(data)
-        written = getattr(settings, "SYNAPSE_PM_BACKEND", "database") == "vault"
-        result = dict(entry, written_to_daily_note=written)
+        # In DB-Primary mode, time entries are always stored in DB only.
+        # Vault sync is handled separately by the sync service.
+        result = dict(entry, written_to_daily_note=False)
         return Response(result, status=status.HTTP_201_CREATED)
 
     # GET
@@ -255,12 +295,12 @@ def sync_vault(request: Request) -> Response:
     POST /api/pm/sync/
 
     Triggers the sync_vault management command programmatically.
-    Only meaningful when SYNAPSE_PM_BACKEND = 'vault'.
+    Requires OBSIDIAN_SYNC_ENABLED=True and a valid OBSIDIAN_VAULT_PATH.
     """
-    backend = getattr(settings, "SYNAPSE_PM_BACKEND", "database")
-    if backend != "vault":
+    sync_enabled = getattr(settings, "OBSIDIAN_SYNC_ENABLED", False)
+    if not sync_enabled:
         return Response(
-            {"detail": "Vault sync is not available in database mode."},
+            {"detail": "Vault sync is not enabled. Set OBSIDIAN_VAULT_PATH in .env."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

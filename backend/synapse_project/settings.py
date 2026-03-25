@@ -134,30 +134,37 @@ ATTENDANCE_ANALYZER_RULE_URL = get_env_variable(
     "ATTENDANCE_ANALYZER_RULE_URL", default=None, is_required=False
 )
 
-# --- Project Management Backend ---
-# SYNAPSE_PM_BACKEND: 'vault' reads/writes Obsidian .md files directly;
-#                     'database' uses Django ORM only (no Obsidian required).
-SYNAPSE_PM_BACKEND = get_env_variable("SYNAPSE_PM_BACKEND", default="database")
+# --- Project Management (DB-Primary since Phase 5.2) ---
+# The database is always the source of truth for PM data.
+# Obsidian vault sync is an optional feature controlled by these settings.
 
 # OBSIDIAN_VAULT_PATH: absolute path to the Obsidian vault root directory.
-# Only required when SYNAPSE_PM_BACKEND = 'vault'.
+# Required only if you want to sync data between DB and Obsidian.
 OBSIDIAN_VAULT_PATH = get_env_variable("OBSIDIAN_VAULT_PATH", default=None)
 
-# Warn at startup if vault mode is enabled but the path is missing or invalid.
+# OBSIDIAN_SYNC_ENABLED: set to 'True' to enable vault sync features.
+# Defaults to True if OBSIDIAN_VAULT_PATH is set, False otherwise.
+_sync_enabled_raw = get_env_variable("OBSIDIAN_SYNC_ENABLED", default=None)
+if _sync_enabled_raw is not None:
+    OBSIDIAN_SYNC_ENABLED = _sync_enabled_raw.lower() in ("true", "1", "yes")
+else:
+    OBSIDIAN_SYNC_ENABLED = bool(OBSIDIAN_VAULT_PATH)
+
+# Warn at startup if sync is enabled but the vault path is missing or invalid.
 import logging as _logging
 _pm_log = _logging.getLogger("synapse_pm")
-if SYNAPSE_PM_BACKEND == "vault":
+if OBSIDIAN_SYNC_ENABLED:
     if not OBSIDIAN_VAULT_PATH:
         _pm_log.warning(
-            "SYNAPSE_PM_BACKEND is 'vault' but OBSIDIAN_VAULT_PATH is not set in .env. "
-            "PM features will not work until a valid vault path is provided."
+            "OBSIDIAN_SYNC_ENABLED is True but OBSIDIAN_VAULT_PATH is not set in .env. "
+            "Vault sync will not work until a valid vault path is provided."
         )
     else:
         import os as _os
         if not _os.path.isdir(OBSIDIAN_VAULT_PATH):
             _pm_log.warning(
                 "OBSIDIAN_VAULT_PATH '%s' does not exist or is not a directory. "
-                "PM features will not work until the path is corrected.",
+                "Vault sync will not work until the path is corrected.",
                 OBSIDIAN_VAULT_PATH,
             )
 

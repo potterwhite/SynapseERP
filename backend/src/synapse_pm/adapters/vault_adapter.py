@@ -32,11 +32,17 @@ from .base import PMBackendAdapter
 class VaultAdapter(PMBackendAdapter):
     """
     PM backend that reads data from an Obsidian vault.
-    Used when SYNAPSE_PM_BACKEND = 'vault'.
 
-    This adapter treats the SQLite database as a read-through cache: it
-    delegates to the cached data for listing/reading, and triggers a
-    sync against the vault when needed. Write operations go to both the
+    .. deprecated:: Phase 5.2 (2026-03-25)
+        This adapter is no longer used. The system now uses DB-Primary
+        architecture where DatabaseAdapter is the sole backend.
+        Obsidian vault integration is handled by a separate sync service.
+        This file is kept for reference; it will be removed in a future release.
+
+    Previously used when SYNAPSE_PM_BACKEND = 'vault'.
+    This adapter treated the SQLite database as a read-through cache: it
+    delegated to the cached data for listing/reading, and triggered a
+    sync against the vault when needed. Write operations went to both the
     vault (via VaultWriter) and the cache.
     """
 
