@@ -116,3 +116,41 @@ The project follows a 6-phase plan documented in `docs/architecture/plan/09_impl
 - **Phase 3–6**: ⏳ Gantt write-back, module migration, Docker, JWT auth
 
 Key architectural decision docs are in `docs/architecture/background/`. The API contracts are in `docs/architecture/plan/10_api_spec.md`.
+
+## Current Development Status
+
+**Current Phase: 5.5 ✅ Complete → Working on Phase 5.6**
+
+### Phase 5.5 — Vault Auto-Sync (COMPLETE)
+
+All Phase 5.5 deliverables are implemented and working:
+
+- `backend/src/synapse_pm/vault/vault_watcher.py` — VaultWatcher core (watchdog + 5s debounce)
+- `backend/src/synapse_pm/management/commands/vault_watch.py` — `vault_watch` management command
+- `frontend/src/views/pm/SyncSettings.vue` — Frontend Auto-Sync info card
+- `GET /api/pm/sync/watcher/` — API returns watchdog availability status
+
+**Vault watcher is working.** `watchdog` 6.0.0 installed. `vault_watch --once` imports correctly.
+
+**Key constraint**: Tasks must be placed in `<project_dir>/tasks/*.md` with a valid
+YAML frontmatter block containing `task_uuid`. Files placed elsewhere or without
+`task_uuid` are silently ignored by `VaultReader.scan_tasks()`.
+
+### Run auto-sync watcher
+
+```bash
+./synapse vault:watch        # debounce 5s
+./synapse vault:watch 3      # debounce 3s
+./synapse run:all            # starts backend + frontend + vault watcher together
+```
+
+Manual one-shot import:
+```bash
+cd backend && ../.venv/bin/python manage.py vault_watch --once
+```
+
+### Next: Phase 5.6 — UI/UX Overhaul
+
+- Dashboard redesign (beautiful + performant)
+- Responsive layout (mobile/tablet)
+- Frontend Project/Task CRUD forms (Create / Edit / Delete)

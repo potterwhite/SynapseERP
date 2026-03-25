@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-25 (Phase 5.5 ✅ 完成，5.6 UI/UX 规划中)
+> 最后更新 / Last updated: 2026-03-25 (Phase 5.5 ✅ 完成并验证，5.6 UI/UX 规划中)
 > 当前分支 / Branch: `main`
 
 ---
@@ -104,13 +104,14 @@
 |         | 前端 Tag 筛选器（多选下拉）/ Tag filter UI (multi-select dropdown) | |
 |         | 会议模式：一键隐藏 personal 标签项目 / Meeting mode: one-click hide personal projects | |
 |         | `GET /api/pm/tags/` 返回所有已用 tags / Return all distinct tags | |
-| **5.5** | **Vault 自动同步 / Vault auto-sync** | ✅ 完成 Done |
+| **5.5** | **Vault 自动同步 / Vault auto-sync** | ✅ 完成并验证 Done & Verified |
 |         | `watchdog>=4.0` 依赖加入 requirements.txt / watchdog added to requirements | |
 |         | `VaultWatcher` 核心类（防抖 5s + inotify/FSEvents/ReadDirectoryChangesW）/ Core watcher with debounce | |
 |         | `vault_watch` management command (`--debounce`, `--once`)  / Django management command | |
 |         | `./synapse vault:watch [SEC]` 便捷入口 / Convenience alias in synapse orchestrator | |
 |         | `GET /api/pm/sync/watcher/` 返回 watchdog 安装状态 / API returns watchdog availability | |
 |         | 前端 SyncSettings 新增 Auto-Sync 卡片 + 使用说明 / Frontend watcher info card | |
+|         | ⚠️ 关键约束：task 文件必须在 `<project_dir>/tasks/*.md`，且 frontmatter 含 `task_uuid` / Tasks must be in project tasks/ subdir with task_uuid frontmatter | ✅ 已文档化 |
 | **5.6** | **UI/UX 全面升级 / UI/UX overhaul** | ⏳ |
 |         | Dashboard 重新设计（美观 + 性能）/ Dashboard redesign (beautiful + performant) | |
 |         | 响应式布局（手机/平板友好）/ Responsive layout (mobile/tablet friendly) | |
