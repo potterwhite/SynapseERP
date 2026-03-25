@@ -142,15 +142,32 @@ fn_run_frontend() {
 }
 
 fn_run_all() {
-    fn_log "🚀 Starting backend + frontend in parallel ..." "blue"
-    fn_log "   Backend → http://localhost:8000" "yellow"
+    fn_log "🚀 Starting backend + frontend + vault watcher in parallel ..." "blue"
+    fn_log "   Backend  → http://localhost:8000" "yellow"
     fn_log "   Frontend → http://localhost:5173" "yellow"
-    # Run both in background; trap Ctrl-C to kill both
+    fn_log "   Vault watcher: auto-sync on .md file changes (5s debounce)" "yellow"
+    fn_log "   Press Ctrl-C to stop all processes." "yellow"
+
+    # Start Django backend
     fn_django runserver 0.0.0.0:8000 &
     BACKEND_PID=$!
+
+    # Start Vue frontend
     (cd "$FRONTEND_DIR" && npm run dev) &
     FRONTEND_PID=$!
-    trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit 0" INT TERM
+
+    # Start vault watcher only if a vault path is configured
+    WATCHER_PID=""
+    if fn_django vault_watch --once 2>/dev/null; then
+        # vault is reachable — start persistent watcher
+        fn_django vault_watch &
+        WATCHER_PID=$!
+        fn_log "   Vault watcher started (PID $WATCHER_PID)" "green"
+    else
+        fn_log "   Vault watcher skipped (no vault path configured — set OBSIDIAN_VAULT_PATH or use Sync Settings)" "yellow"
+    fi
+
+    trap "kill $BACKEND_PID $FRONTEND_PID ${WATCHER_PID:-} 2>/dev/null; exit 0" INT TERM
     wait
 }
 
@@ -261,6 +278,10 @@ fn_vault_watch() {
     fn_log "   Press Ctrl-C to stop." "yellow"
     fn_django vault_watch --debounce "$debounce"
 }
+
+# --- Dev Shortcuts ---
+
+fn_dev_migrate() {
     fn_log "🗄️  Creating and applying database migrations..." "blue"
     fn_django makemigrations && fn_django migrate
 }
@@ -439,7 +460,7 @@ fn_show_help() {
     echo "━━━ Running ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  run                 Start Django backend dev server (port 8000)"
     echo "  frontend:run        Start Vue frontend dev server (port 5173)"
-    echo "  run:all             Start backend + frontend together"
+    echo "  run:all             Start backend + frontend + vault watcher (if configured)"
     echo "  vault:watch [SEC]   Watch Obsidian vault and auto-sync to DB (default debounce 5s)"
     echo ""
     echo "━━━ Frontend ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
