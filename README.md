@@ -9,21 +9,23 @@ T-HEAD-GR-V0.8.0-20250910 (English README for SynapseERP)
 -->
 
 <div align="center">
-  <h2>SynapseERP</h2>
-  <p><i>A modular Django framework for data analysis tools</i></p>
+  <h1>SynapseERP</h1>
+  <p><i>A Modular Django Framework for Data Analysis Tools</i></p>
 </div>
 
 <p align="center">
-  <img src="./assets/logo.jpg" alt="SynapseERP Logo" width="100%"/>
+  <img src="https://github.com/potterwhite/SynapseERP/blob/main/docs/assets/logo.jpg" alt="SynapseERP Logo" width="100%"/>
 </p>
 
 <p align="center">
-  <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/badge/version-v0.8.0-orange" alt="Version"></a>
-  <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+  <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/github/v/release/potterwhite/SynapseERP?color=orange&label=version" alt="version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/framework-Django%205.x-green" alt="Framework"></a>
+  <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
 </p>
 
 <p align="center">
-  <strong>English</strong> | <a href="./README.zh.md">简体中文</a>
+  <strong>English</strong> | <a href="./docs/README.zh.md">简体中文</a>
 </p>
 
 <p align="center">
@@ -56,12 +58,12 @@ This project uses a fully automated preparation script.
 
 1.  **Give the script execution permissions:**
     ```bash
-    chmod +x run.sh
+    chmod +x synapse
     ```
 
 2.  **Run the script:**
     ```bash
-    ./run.sh prepare
+    ./synapse prepare
     ```
     This single command handles everything: it will create a Python virtual environment, install all dependencies, generate a secure `.env` configuration file, and initialize the database.
 
@@ -71,13 +73,13 @@ After the preparation is complete:
 
 1.  **Create an administrator user:**
     ```bash
-    ./run.sh superuser
+    ./synapse superuser
     ```
     Follow the prompts to create your admin account.
 
 2.  **Run the development server:**
     ```bash
-    ./run.sh run
+    ./synapse run
     ```
     You can now access the application at **http://127.0.0.1:8000** and the admin panel at **http://127.0.0.1:8000/admin/**.
 
@@ -85,14 +87,14 @@ After the preparation is complete:
 
 # 2. Production Deployment
 
-The `./run.sh run` command is **for development use only**. For a real production environment, this project provides a fully automated deployment command that will run your application using Gunicorn and Nginx.
+The `./synapse run` command is **for development use only**. For a real production environment, this project provides a fully automated deployment command that will run your application using Gunicorn and Nginx.
 
 ### Execute Automated Deployment
 
 On your production server, run the following command with `sudo` privileges:
 
 ```bash
-sudo ./run.sh deploy
+sudo ./synapse deploy
 ```
 This command is **interactive** and **fully automated**. It will guide you through all the necessary steps:
 
@@ -121,13 +123,13 @@ This is the ideal method when you need to provide users with a specific set of r
 *   **Set a remote rules URL:**
     ```bash
     # Replace this URL with your own Gist or raw file URL
-    ./run.sh set-rule "https://your-url/path/to/rules.toml"
+    ./synapse set-rule "https://your-url/path/to/rules.toml"
     ```
     This command will securely save the URL to your local `.env` file.
 
 *   **Clear the remote rules URL** (to revert to using local or default rules):
     ```bash
-    ./run.sh set-rule
+    ./synapse set-rule
     ```
 
 #### Method B (For Local Development): Using a Local File
@@ -145,19 +147,19 @@ If neither a remote URL nor a local file is found, the system will fall back to 
 
 These commands are intended for contributors or developers who **wish to modify the application's source code or database structure**. Regular users **do not need** to use these commands in daily operation.
 
-*   **`./run.sh dev:migrate`**
+*   **`./synapse dev:migrate`**
     *   **Purpose:** Creates and applies database migrations.
     *   **When to use:** Use this command after you have **modified a `models.py` file** to update the database schema.
 
-*   **`./run.sh dev:makemessages`**
+*   **`./synapse dev:makemessages`**
     *   **Purpose:** Scans all source code and templates for translatable strings and updates the `.po` translation source files.
     *   **When to use:** Use this after you have **added or changed user-facing text that needs to be translated**.
 
-*   **`./run.sh dev:compilemessages`**
+*   **`./synapse dev:compilemessages`**
     *   **Purpose:** Compiles the text-based `.po` files into binary `.mo` files that Django uses.
     *   **When to use:** Use this after running `dev:makemessages` or after pulling translation updates from the repository.
 
-*   **`./run.sh dev:test`**
+*   **`./synapse dev:test`**
     *   **Purpose:** Runs the project's automated test suite.
     *   **When to use:** Use frequently during **the development of new features** to ensure your changes have not broken existing functionality.
 
@@ -167,16 +169,16 @@ The Dashboard page features a notification panel that can display important info
 
 #### Step 3.3.1: Access the Admin Panel
 
-1.  Ensure your development server is running (`./run.sh run`).
+1.  Ensure your development server is running (`./synapse run`).
 2.  Open the admin login page in your browser: **http://127.0.0.1:8000/admin/**
-3.  Log in with the administrator account you created in `Step 1.3` using the `./run.sh superuser` command.
+3.  Log in with the administrator account you created in `Step 1.3` using the `./synapse superuser` command.
 
 #### Step 3.3.2: Create a New Notification
 
 1.  After logging in, you will see the "Site administration" page. Under the **SYNAPSE DASHBOARD** section, find and click the "Add" link next to **Notifications**.
 
     <p align="center">
-      <img src="./assets/readme_admin_dashboard_en.png" alt="Admin Dashboard" width="75%"/>
+      <img src="./docs/assets/readme_admin_dashboard_en.png" alt="Admin Dashboard" width="75%"/>
     </p>
 
 2.  You will be taken to the "Add Notification" page. There is only one field you need to fill in: **Content**.
@@ -200,7 +202,7 @@ The Dashboard page features a notification panel that can display important info
 Now, return to the application's main page at **http://127.0.0.1:8000**. You will see that the notification you just published is displayed at the top of the page in a formatted style, like this:
 
 <p align="center">
-  <img src="./assets/readme_dashboard_notification_en.png" alt="Dashboard Notification" width="75%"/>
+  <img src="./docs/assets/readme_dashboard_notification_en.png" alt="Dashboard Notification" width="75%"/>
 </p>
 
 The system will always automatically display the most **recently updated** notification. You can return to the admin panel at any time to edit old notifications or add new ones, and the content on the main page will update automatically.

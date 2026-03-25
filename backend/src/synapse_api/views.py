@@ -1,0 +1,122 @@
+# Copyright (c) 2026 PotterWhite
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from django.conf import settings
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def health_check(request):
+    """
+    Health check endpoint. No authentication required.
+    Used by load balancers, Docker health checks, and frontend connectivity tests.
+
+    GET /api/health/
+    Response: {"status": "ok", "version": "...", "pm_backend": "...", "vault_connected": bool}
+    """
+    import os
+    from synapse import __version__ as version
+
+    pm_backend = getattr(settings, "SYNAPSE_PM_BACKEND", "database")
+    vault_path = getattr(settings, "OBSIDIAN_VAULT_PATH", None)
+    vault_connected = bool(vault_path and os.path.isdir(vault_path))
+
+    payload: dict = {
+        "status": "ok",
+        "version": version,
+        "pm_backend": pm_backend,
+    }
+    if pm_backend == "vault":
+        payload["vault_connected"] = vault_connected
+        payload["vault_path"] = vault_path
+
+    return Response(payload)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def dashboard(request):
+    """
+    Returns dashboard data: latest notification (raw Markdown) + toolbox modules.
+    Markdown rendering is intentionally delegated to the frontend (markdown-it).
+
+    GET /api/dashboard/
+    Response:
+    {
+      "notification": "## Hello\\n\\nMarkdown content..." | null,
+      "modules": [
+        {"key": "attendance", "display_name": "...", "route": "/attendance", "description": "..."},
+        ...
+      ]
+    }
+    """
+    # --- Notification ---
+    # Import here to avoid circular imports if this module is loaded early
+    from synapse_dashboard.models import Notification
+
+    latest = Notification.objects.order_by("-updated_at").first()
+    notification_content = latest.content if latest else None
+
+    # --- Modules ---
+    all_modules = getattr(settings, "SYNAPSE_MODULES", [])
+    sorted_modules = sorted(all_modules, key=lambda m: m.get("order", 99))
+
+    # Map app_name to a frontend route
+    route_map: dict[str, str] = {
+        "synapse_attendance": "/attendance",
+        "synapse_bom_analyzer": "/bom",
+        "synapse_pm": "/pm",
+    }
+
+    modules = [
+        {
+            "key": m["app_name"],
+            "display_name": str(m.get("display_name", m["app_name"])),
+            "route": route_map.get(m["app_name"], "/"),
+            "description": str(m.get("description", "")),
+        }
+        for m in sorted_modules
+        if m.get("placement") == "toolbox"
+    ]
+
+    return Response({"notification": notification_content, "modules": modules})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    """
+    Return the currently authenticated user's basic profile.
+
+    GET /api/auth/me/
+    Response: {"id": 1, "username": "admin", "email": "admin@example.com"}
+
+    Used by the frontend auth store to confirm session validity on app boot.
+    Returns 403 if not authenticated (handled by DRF's default permission class).
+    """
+    user = request.user
+    return Response({
+        "id": user.pk,
+        "username": user.username,
+        "email": user.email,
+    })

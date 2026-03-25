@@ -1,0 +1,52 @@
+# Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# T-HEAD-GR-V0.9.0 (Nginx configuration for SynapseERP — Vue SPA era)
+#
+# Layout:
+#   /api/*, /admin/*, /i18n/*  → Gunicorn (Django backend)
+#   /static/                   → Django collectstatic output (admin CSS, etc.)
+#   everything else            → Vue SPA (frontend/dist/)
+#
+# The try_files fallback ensures that Vue Router history-mode deep links
+# (e.g. /pm/gantt, /attendance) are all routed to index.html so the SPA
+# can handle them client-side.
+
+server {
+    listen 80;
+    server_name __SERVER_NAME__;
+
+    # --- Favicon (suppress noisy 404 logs) ---
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    # --- Django admin static assets ---
+    # Collected into staticfiles/ by `python manage.py collectstatic`
+    location /static/ {
+        alias __PROJECT_PATH__/backend/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # --- Vue SPA static assets (hashed filenames → immutable cache) ---
+    location /assets/ {
+        root __PROJECT_PATH__/frontend/dist;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # --- Backend API & admin (proxy to Gunicorn) ---
+    location ~ ^/(api|admin|i18n)/ {
+        include proxy_params;
+        proxy_pass http://unix:/run/synapse.sock;
+    }
+
+    # --- Vue SPA catch-all ---
+    # All other requests serve index.html so Vue Router handles the URL.
+    location / {
+        root __PROJECT_PATH__/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+}

@@ -1,0 +1,493 @@
+#!/bin/bash
+# Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+# All rights reserved.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
+# ==============================================================================
+# SynapseERP Project Orchestrator
+# ==============================================================================
+# Single entry point for the entire project (backend + frontend).
+#
+# Layout:
+#   .venv/          Python virtual environment (at repo root)
+#   backend/        Django application (internal module, not a sub-project)
+#   frontend/       Vue 3 SPA (added in Phase 0, Step 0.3)
+#
+# Usage:
+#   ./synapse <command>
+# ==============================================================================
+
+set -e
+
+# --- Paths ---
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="${REPO_ROOT}/.venv"
+PYTHON_CMD="python3"
+BACKEND_DIR="${REPO_ROOT}/backend"
+FRONTEND_DIR="${REPO_ROOT}/frontend"
+BACKEND_SRC="${BACKEND_DIR}/src"
+BACKEND_MANAGE="${BACKEND_DIR}/manage.py"
+BACKEND_REQUIREMENTS="${BACKEND_DIR}/requirements.txt"
+BACKEND_PYPROJECT="${BACKEND_DIR}/pyproject.toml"
+BACKEND_ENV="${BACKEND_DIR}/.env"
+SERVICE_NAME="synapse"
+
+# --- Helpers ---
+
+fn_log() {
+    local message="$1"
+    local color_name="$2"
+    local color_code=""
+    case "$color_name" in
+        green)  color_code="\033[0;32m" ;;
+        yellow) color_code="\033[0;33m" ;;
+        red)    color_code="\033[0;31m" ;;
+        blue)   color_code="\033[0;34m" ;;
+        *)      color_code="\033[0m" ;;
+    esac
+    echo -e "${color_code}${message}\033[0m"
+}
+
+fn_activate_venv() {
+    if [ ! -d "$VENV_DIR" ]; then
+        fn_log "❌ Virtual environment not found. Run './synapse prepare' first." "red"
+        exit 1
+    fi
+    source "${VENV_DIR}/bin/activate"
+}
+
+# Run a Django management command from the repo root.
+# PYTHONPATH is set so that 'import synapse_api', 'import synapse_dashboard', etc. all work.
+fn_django() {
+    PYTHONPATH="${BACKEND_SRC}" python "${BACKEND_MANAGE}" "$@"
+}
+
+# --- Core Commands ---
+
+fn_prepare_env() {
+    fn_log "🛠️  Starting project preparation..." "blue"
+
+    # 1. Python virtual environment
+    if [ ! -d "$VENV_DIR" ]; then
+        fn_log "   - Creating virtual environment at .venv/ ..." "yellow"
+        "$PYTHON_CMD" -m venv "$VENV_DIR"
+    fi
+    source "${VENV_DIR}/bin/activate"
+
+    fn_log "   - Installing Python dependencies..." "yellow"
+    pip install --upgrade pip --quiet
+    # Install the backend package in editable mode so all synapse_* apps are importable
+    pip install -r "$BACKEND_REQUIREMENTS" --quiet
+    pip install -e "$BACKEND_DIR" --quiet
+
+    # 2. Generate backend .env if missing
+    if [ ! -f "$BACKEND_ENV" ]; then
+        fn_log "   - Generating backend/.env with a fresh SECRET_KEY..." "yellow"
+        local new_key
+        new_key=$(python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
+        {
+            echo "DJANGO_SECRET_KEY='${new_key}'"
+            echo "DJANGO_DEBUG='True'"
+            echo "DJANGO_ALLOWED_HOSTS='127.0.0.1,localhost'"
+        } > "$BACKEND_ENV"
+    fi
+
+    # Prompt for optional attendance rules URL
+    if ! grep -q "^ATTENDANCE_ANALYZER_RULE_URL=" "$BACKEND_ENV" 2>/dev/null; then
+        read -p "   Set a remote URL for attendance rules now? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            read -p "   Enter the full URL for rules.toml: " remote_url
+            if [[ -n "$remote_url" ]]; then
+                fn_set_rule_url "$remote_url"
+            fi
+        fi
+    fi
+
+    # 3. Database migrations
+    fn_log "   - Running database migrations..." "yellow"
+    fn_django migrate
+
+    # 4. Compile translations if gettext is available
+    if command -v msgfmt &>/dev/null; then
+        fn_log "   - Compiling translations..." "yellow"
+        fn_django compilemessages
+    fi
+
+    if [ -d "$FRONTEND_DIR" ]; then
+        fn_log "   - Installing frontend dependencies..." "yellow"
+        fn_frontend_install
+    fi
+
+    fn_log "🎉 Preparation complete! Run './synapse run' to start the backend." "green"
+}
+
+fn_run_backend() {
+    fn_log "🚀 Starting Django development server on 0.0.0.0:8000 ..." "blue"
+    fn_django runserver 0.0.0.0:8000
+}
+
+fn_run_frontend() {
+    if [ ! -d "$FRONTEND_DIR" ]; then
+        fn_log "❌ frontend/ directory not found. Run './synapse frontend:init' first." "red"
+        exit 1
+    fi
+    fn_log "🚀 Starting Vue development server ..." "blue"
+    cd "$FRONTEND_DIR" && npm run dev
+}
+
+fn_run_all() {
+    fn_log "🚀 Starting backend + frontend in parallel ..." "blue"
+    fn_log "   Backend → http://localhost:8000" "yellow"
+    fn_log "   Frontend → http://localhost:5173" "yellow"
+    # Run both in background; trap Ctrl-C to kill both
+    fn_django runserver 0.0.0.0:8000 &
+    BACKEND_PID=$!
+    (cd "$FRONTEND_DIR" && npm run dev) &
+    FRONTEND_PID=$!
+    trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit 0" INT TERM
+    wait
+}
+
+fn_clean() {
+    fn_log "🧹  This will completely reset the project to its initial state." "red"
+    fn_log "   The following will be DELETED:"
+    fn_log "   - .venv/  (Python virtual environment)"
+    fn_log "   - backend/db.sqlite3"
+    fn_log "   - backend/.env"
+    fn_log "   - backend/staticfiles/"
+    fn_log "   - frontend/node_modules/"
+    fn_log "   - frontend/dist/"
+    fn_log "   - All __pycache__ / *.pyc files"
+    read -p "   Are you sure? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        fn_log "   Cancelled." "yellow"
+        exit 1
+    fi
+
+    rm -rf "$VENV_DIR"
+    rm -f "${BACKEND_DIR}/db.sqlite3" "$BACKEND_ENV"
+    rm -rf "${BACKEND_DIR}/staticfiles"
+    rm -f "${BACKEND_DIR}/synapse.service" "${BACKEND_DIR}/synapse_nginx.conf"
+    [ -d "$FRONTEND_DIR" ] && rm -rf "${FRONTEND_DIR}/node_modules" "${FRONTEND_DIR}/dist"
+    find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+    fn_log "✅ Project cleaned. Run './synapse prepare' to start over." "green"
+}
+
+# --- Frontend Helpers ---
+
+fn_frontend_install() {
+    cd "$FRONTEND_DIR" && npm install
+    cd "$REPO_ROOT"
+}
+
+fn_frontend_init() {
+    fn_log "🏗️  Initializing Vue 3 frontend project..." "blue"
+
+    # 'npm create vite@latest' scaffolds a new Vite project from an official template.
+    # '--template vue-ts' = Vue 3 + TypeScript starter.
+    cd "$REPO_ROOT"
+    npm create vite@latest frontend -- --template vue-ts
+
+    cd "$FRONTEND_DIR"
+    npm install
+
+    fn_log "   - Installing core UI and routing dependencies..." "yellow"
+    # naive-ui: Vue 3 UI component library (fully TypeScript-native)
+    # @vicons/ionicons5: icon set for use with Naive UI
+    # vue-router@4: official Vue 3 router for SPA navigation
+    # pinia: official Vue 3 state management library
+    # axios: HTTP client with interceptor and error-handling support
+    npm install naive-ui @vicons/ionicons5 vue-router@4 pinia axios
+
+    fn_log "   - Installing additional utility dependencies..." "yellow"
+    # frappe-gantt: lightweight MIT-licensed Gantt chart library
+    # markdown-it: fast Markdown parser/renderer
+    # dayjs: lightweight date library (replaces moment.js)
+    npm install frappe-gantt markdown-it dayjs
+
+    fn_log "   - Installing dev dependencies..." "yellow"
+    # @types/node: TypeScript type definitions for Node.js APIs (used in vite.config.ts)
+    npm install -D @types/node
+
+    cd "$REPO_ROOT"
+    fn_log "✅ Frontend initialized. Run './synapse frontend:run' to start the dev server." "green"
+}
+
+fn_frontend_build() {
+    fn_log "🔨 Building frontend for production..." "blue"
+    cd "$FRONTEND_DIR" && npm run build
+    cd "$REPO_ROOT"
+    fn_log "✅ Frontend build complete. Output in frontend/dist/" "green"
+}
+
+# --- Utilities ---
+
+fn_create_superuser() {
+    fn_log "👤 Creating Django superuser..." "blue"
+    fn_django createsuperuser
+}
+
+fn_set_rule_url() {
+    local url="$1"
+    local var_name="ATTENDANCE_ANALYZER_RULE_URL"
+    if [ -z "$url" ]; then
+        sed -i "/^${var_name}=/d" "$BACKEND_ENV" 2>/dev/null || true
+        fn_log "✅ Remote rule URL cleared." "green"
+    else
+        if grep -q "^${var_name}=" "$BACKEND_ENV" 2>/dev/null; then
+            sed -i "s|^${var_name}=.*|${var_name}='${url}'|" "$BACKEND_ENV"
+        else
+            echo "${var_name}='${url}'" >> "$BACKEND_ENV"
+        fi
+        fn_log "✅ Remote rule URL set to: $url" "green"
+    fi
+}
+
+# --- Dev Shortcuts ---
+
+fn_dev_migrate() {
+    fn_log "🗄️  Creating and applying database migrations..." "blue"
+    fn_django makemigrations && fn_django migrate
+}
+
+fn_dev_test() {
+    fn_log "🧪 Running test suite..." "blue"
+    fn_django test
+}
+
+fn_dev_makemessages() {
+    fn_log "🌐 Updating translation source files..." "blue"
+    fn_django makemessages -l zh_Hans -d django --ignore ".venv/*"
+}
+
+fn_dev_compilemessages() {
+    fn_log "🌐 Compiling translation files..." "blue"
+    fn_django compilemessages
+}
+
+# --- Deployment ---
+
+fn_deploy() {
+    fn_log "🚢  Starting automated deployment..." "blue"
+    if ! command -v nginx &>/dev/null; then
+        fn_log "❌ Nginx not found. Run: sudo apt install nginx" "red"; exit 1
+    fi
+    if ! command -v msgfmt &>/dev/null; then
+        fn_log "❌ gettext (msgfmt) not found. Run: sudo apt install gettext" "red"; exit 1
+    fi
+    if [ "$EUID" -ne 0 ]; then
+        fn_log "❌ This command requires sudo. Run: sudo ./synapse deploy" "red"; exit 1
+    fi
+
+    local default_server_name
+    # hostname -I: prints all machine IP addresses; awk picks the first one
+    default_server_name=$(hostname -I | awk '{print $1}')
+    read -p "Enter domain/IP for this server [${default_server_name}]: " server_name
+    server_name=${server_name:-$default_server_name}
+
+    read -p "Enter the non-root Linux user for the service [$(logname)]: " service_user
+    service_user=${service_user:-$(logname)}
+
+    fn_deploy_permissions_wizard "$service_user"
+    fn_deploy_log_config_wizard
+
+    local project_path="$REPO_ROOT"
+    fn_log "   - Step 3: Collecting static files and compiling translations..." "yellow"
+    sudo -u "$service_user" bash -c "
+        source ${VENV_DIR}/bin/activate
+        PYTHONPATH=${BACKEND_SRC} python ${BACKEND_MANAGE} compilemessages
+        PYTHONPATH=${BACKEND_SRC} python ${BACKEND_MANAGE} collectstatic --noinput
+    "
+    fn_log "   - Step 4: Building frontend..." "yellow"
+    sudo -u "$service_user" bash -c "cd ${FRONTEND_DIR} && npm run build" 2>/dev/null || \
+        fn_log "   ⚠️  Frontend build skipped (frontend/ not yet initialized)." "yellow"
+
+    fn_log "   - Step 5: Installing Systemd & Nginx configs..." "yellow"
+    fn_install_system_configs "$service_user" "$project_path" "$server_name"
+
+    fn_log "   - Step 6: Enabling and restarting services..." "yellow"
+    # systemctl: Linux service manager; daemon-reload re-reads unit files
+    systemctl daemon-reload
+    systemctl enable --now "${SERVICE_NAME}.socket"
+    systemctl restart "${SERVICE_NAME}.service"
+    nginx -t && systemctl restart nginx
+
+    fn_update_production_env "$server_name"
+    fn_log "🎉 Deployment complete! Live at http://${server_name}" "green"
+}
+
+fn_deploy_permissions_wizard() {
+    local service_user="$1"
+    fn_log "   - Step 1: Checking permissions..." "yellow"
+    if ! groups "$service_user" | grep -q '\bwww-data\b'; then
+        read -p "   User '$service_user' needs to join 'www-data'. Add now? [Y/n] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ || -z $REPLY ]]; then
+            # usermod -aG: appends the user to a group without removing existing groups
+            usermod -aG www-data "$service_user"
+            fn_log "   ✅ Done. [CRITICAL] Log out and back in, then re-run deploy." "red"
+            exit 0
+        fi
+    fi
+}
+
+fn_deploy_log_config_wizard() {
+    fn_log "   - Step 2: Checking system log rotation policy..." "yellow"
+    local journald_conf="/etc/systemd/journald.conf"
+    if grep -q -E "^SystemMaxUse=" "$journald_conf"; then
+        fn_log "   ✅ SystemMaxUse already configured. Skipping." "green"
+        return
+    fi
+    read -p "   Set a log size limit to prevent disk fill? (Recommended) [Y/n] " -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Nn]$ ]] && { fn_log "   Skipping." "yellow"; return; }
+
+    # df --output=avail --block-size=1M: shows available disk space in megabytes
+    local available_mb
+    available_mb=$(df --output=avail --block-size=1M . | tail -n 1 | xargs)
+    local suggestion_mb=$(( available_mb / 10 ))
+    [ "$suggestion_mb" -gt 4096 ] && suggestion_mb=4096
+    [ "$suggestion_mb" -lt 200 ] && suggestion_mb=200
+    local suggestion_str="${suggestion_mb}M"
+
+    read -p "   Available: ~${available_mb}M. Suggested limit: ${suggestion_str}. Accept? [Y/n] " -n 1 -r
+    echo
+    local final_size
+    if [[ $REPLY =~ ^[Yy]$ || -z $REPLY ]]; then
+        final_size="$suggestion_str"
+    else
+        while true; do
+            read -p "   Enter size (e.g. 500M, 2G): " custom_size
+            [[ "$custom_size" =~ ^[0-9]+[MG]?$ ]] && { final_size="$custom_size"; break; }
+            fn_log "   ❌ Invalid. Use a number + M or G." "red"
+        done
+    fi
+
+    grep -q "\[Journal\]" "$journald_conf" || echo -e "\n[Journal]" >> "$journald_conf"
+    if grep -q -E "^#?SystemMaxUse=" "$journald_conf"; then
+        # sed -i: edit file in-place; s|pattern|replacement|: substitute
+        sed -i "s|^#\?SystemMaxUse=.*|SystemMaxUse=${final_size}|" "$journald_conf"
+    else
+        sed -i "/\[Journal\]/a SystemMaxUse=${final_size}" "$journald_conf"
+    fi
+    systemctl restart systemd-journald
+    fn_log "   ✅ Log size capped at ${final_size}." "green"
+}
+
+fn_install_system_configs() {
+    local service_user="$1"
+    local project_path="$2"
+    local server_name="$3"
+
+    # sed -e: apply multiple substitutions; writes result to /etc/systemd/
+    sed -e "s|__USER__|${service_user}|g" \
+        "${BACKEND_DIR}/deploy/synapse.socket.template" \
+        > "/etc/systemd/system/${SERVICE_NAME}.socket"
+
+    sed -e "s|__USER__|${service_user}|g" \
+        -e "s|__PROJECT_PATH__|${project_path}|g" \
+        "${BACKEND_DIR}/deploy/synapse.service.template" \
+        > "/etc/systemd/system/${SERVICE_NAME}.service"
+
+    sed -e "s|__SERVER_NAME__|${server_name}|g" \
+        -e "s|__PROJECT_PATH__|${project_path}|g" \
+        "${BACKEND_DIR}/deploy/nginx.conf.template" \
+        > "/etc/nginx/sites-available/${SERVICE_NAME}"
+
+    rm -f /etc/nginx/sites-enabled/default
+    # ln -sf: create a symbolic link, -f overwrites existing
+    ln -sf "/etc/nginx/sites-available/${SERVICE_NAME}" "/etc/nginx/sites-enabled/"
+}
+
+fn_update_production_env() {
+    local server_name="$1"
+    fn_log "   - Updating backend/.env for production..." "yellow"
+    local detected_ips
+    detected_ips=$(hostname -I | tr ' ' ',')
+    local final_allowed_hosts="127.0.0.1,localhost,${detected_ips%,}"
+    [ -n "$server_name" ] && final_allowed_hosts="${server_name},${final_allowed_hosts}"
+    sed -i "s/^DJANGO_DEBUG=.*/DJANGO_DEBUG='False'/" "$BACKEND_ENV"
+    sed -i "s/^DJANGO_ALLOWED_HOSTS=.*/DJANGO_ALLOWED_HOSTS='${final_allowed_hosts}'/" "$BACKEND_ENV"
+    fn_log "   - Production env updated (DEBUG=False, ALLOWED_HOSTS set)." "yellow"
+}
+
+# --- Help ---
+
+fn_show_help() {
+    echo ""
+    echo "Usage: ./synapse <command>"
+    echo ""
+    echo "━━━ Setup ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  prepare             One-time setup: create .venv, install deps, migrate DB"
+    echo "  clean               Destructive reset: remove .venv, DB, node_modules, dist"
+    echo ""
+    echo "━━━ Running ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  run                 Start Django backend dev server (port 8000)"
+    echo "  frontend:run        Start Vue frontend dev server (port 5173)"
+    echo "  run:all             Start backend + frontend together"
+    echo ""
+    echo "━━━ Frontend ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  frontend:init       Scaffold the Vue 3 + TypeScript + Vite project"
+    echo "  frontend:build      Build the frontend for production"
+    echo ""
+    echo "━━━ Utilities ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  superuser           Create a new Django admin user"
+    echo "  set-rule [URL]      Set or clear the remote attendance rules URL"
+    echo ""
+    echo "━━━ Development ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  dev:migrate         Run makemigrations + migrate"
+    echo "  dev:test            Run the Django test suite"
+    echo "  dev:makemessages    Update .po translation source files"
+    echo "  dev:compilemessages Compile .mo translation files"
+    echo ""
+    echo "━━━ Deployment ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  deploy              (Requires sudo) Automated production deployment"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+}
+
+# --- Main Dispatcher ---
+
+main() {
+    local command="${1:-help}"
+
+    case "$command" in
+        # Commands that do NOT need the venv to already exist
+        prepare)        fn_prepare_env ;;
+        clean)          fn_clean ;;
+        frontend:init)  fn_frontend_init ;;
+        help|--help|-h) fn_show_help ;;
+
+        # All other commands need the venv active
+        *)
+            fn_activate_venv
+            case "$command" in
+                run)                    fn_run_backend ;;
+                frontend:run)           fn_run_frontend ;;
+                run:all)                fn_run_all ;;
+                frontend:build)         fn_frontend_build ;;
+                deploy)                 fn_deploy ;;
+                superuser)              fn_create_superuser ;;
+                set-rule)               fn_set_rule_url "$2" ;;
+                dev:migrate)            fn_dev_migrate ;;
+                dev:test)               fn_dev_test ;;
+                dev:makemessages)       fn_dev_makemessages ;;
+                dev:compilemessages)    fn_dev_compilemessages ;;
+                *)
+                    fn_log "❌ Unknown command: '$command'" "red"
+                    fn_show_help
+                    exit 1
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+main "$@"

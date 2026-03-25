@@ -1,0 +1,29 @@
+# Copyright (c) 2025-present, PotterWhite (themanuknowwhom@outlook.com).
+# All rights reserved.
+#
+# Systemd service unit for SynapseERP (Gunicorn backend).
+#
+# Template variables (substituted by ./synapse deploy):
+#   __USER__         — non-root Linux user that owns the project files
+#   __PROJECT_PATH__ — absolute path to the repository root
+
+[Unit]
+Description=Gunicorn daemon for SynapseERP
+Requires=synapse.socket
+After=network.target
+
+[Service]
+User=__USER__
+Group=www-data
+WorkingDirectory=__PROJECT_PATH__/backend
+
+# PYTHONPATH must include backend/src/ so all synapse_* apps are importable.
+Environment=PYTHONPATH=__PROJECT_PATH__/backend/src
+
+ExecStart=__PROJECT_PATH__/.venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          synapse_project.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

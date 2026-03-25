@@ -1,0 +1,190 @@
+# Copyright (c) 2026 PotterWhite
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+from typing import Any
+
+from django.conf import settings
+
+from ..models import Project, Task, TimeEntry
+from .base import PMBackendAdapter
+
+
+class VaultAdapter(PMBackendAdapter):
+    """
+    PM backend that reads data from an Obsidian vault.
+    Used when SYNAPSE_PM_BACKEND = 'vault'.
+
+    This adapter treats the SQLite database as a read-through cache: it
+    delegates to the cached data for listing/reading, and triggers a
+    sync against the vault when needed. Write operations go to both the
+    vault (via VaultWriter) and the cache.
+    """
+
+    def __init__(self) -> None:
+        from ..vault.reader import VaultReader
+        self._reader = VaultReader(settings.OBSIDIAN_VAULT_PATH)
+
+    # ------------------------------------------------------------------
+    # Internal helpers (re-use DatabaseAdapter serialisation)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _project_to_dict(p: Project) -> dict[str, Any]:
+        from .db_adapter import DatabaseAdapter
+        return DatabaseAdapter._project_to_dict(p)
+
+    @staticmethod
+    def _task_to_dict(t: Task, *, include_time_entries: bool = False) -> dict[str, Any]:
+        from .db_adapter import DatabaseAdapter
+        return DatabaseAdapter._task_to_dict(t, include_time_entries=include_time_entries)
+
+    @staticmethod
+    def _time_entry_to_dict(e: TimeEntry) -> dict[str, Any]:
+        from .db_adapter import DatabaseAdapter
+        return DatabaseAdapter._time_entry_to_dict(e)
+
+    # ------------------------------------------------------------------
+    # Projects
+    # ------------------------------------------------------------------
+
+    def list_projects(self, *, status: str | None = None) -> list[dict[str, Any]]:
+        qs = Project.objects.prefetch_related("tasks", "tasks__time_entries")
+        if status:
+            qs = qs.filter(status=status)
+        return [self._project_to_dict(p) for p in qs]
+
+    def get_project(self, project_id: int) -> dict[str, Any] | None:
+        try:
+            p = Project.objects.prefetch_related("tasks", "tasks__time_entries").get(pk=project_id)
+        except Project.DoesNotExist:
+            return None
+        return self._project_to_dict(p)
+
+    # ------------------------------------------------------------------
+    # Tasks
+    # ------------------------------------------------------------------
+
+    def list_tasks(
+        self,
+        *,
+        project_id: int | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+    ) -> list[dict[str, Any]]:
+        from .db_adapter import DatabaseAdapter
+        db = DatabaseAdapter()
+        return db.list_tasks(project_id=project_id, status=status, priority=priority)
+
+    def get_task(self, task_uuid: str) -> dict[str, Any] | None:
+        from .db_adapter import DatabaseAdapter
+        db = DatabaseAdapter()
+        return db.get_task(task_uuid)
+
+    def create_task(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Create a task: writes to the Obsidian vault first, then upserts
+        the cache entry.
+        """
+        from ..vault.writer import VaultWriter
+        from .db_adapter import DatabaseAdapter
+
+        # Resolve project_ref (directory name) from project_id so the writer
+        # can place the task file inside the correct project sub-folder.
+        if not data.get("project_ref"):
+            project_id = data.get("project_id")
+            if project_id:
+                try:
+                    project = Project.objects.get(pk=project_id)
+                    data["project_ref"] = project.full_name
+                except Project.DoesNotExist:
+                    pass
+
+        writer = VaultWriter(settings.OBSIDIAN_VAULT_PATH)
+        task_data = writer.create_task_file(data)
+
+        # Merge vault-assigned fields back (e.g. generated uuid, vault_path)
+        data.update(task_data)
+        db = DatabaseAdapter()
+        return db.create_task(data)
+
+    def update_task(self, task_uuid: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        """
+        Update a task: writes frontmatter changes to the vault, then
+        updates the cache.
+        """
+        from ..vault.writer import VaultWriter
+        from .db_adapter import DatabaseAdapter
+
+        try:
+            task = Task.objects.get(uuid=task_uuid)
+        except Task.DoesNotExist:
+            return None
+
+        if task.vault_path:
+            writer = VaultWriter(settings.OBSIDIAN_VAULT_PATH)
+            writer.update_task_frontmatter(task.vault_path, data)
+
+        db = DatabaseAdapter()
+        return db.update_task(task_uuid, data)
+
+    # ------------------------------------------------------------------
+    # Time Entries
+    # ------------------------------------------------------------------
+
+    def list_time_entries(self, *, task_uuid: str) -> list[dict[str, Any]]:
+        from .db_adapter import DatabaseAdapter
+        db = DatabaseAdapter()
+        return db.list_time_entries(task_uuid=task_uuid)
+
+    def create_time_entry(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Log a time entry: appends to the Obsidian daily note, then saves
+        to the cache.
+        """
+        from ..vault.writer import VaultWriter
+        from .db_adapter import DatabaseAdapter
+
+        writer = VaultWriter(settings.OBSIDIAN_VAULT_PATH)
+        target_date = date.fromisoformat(data["date"]) if isinstance(data["date"], str) else data["date"]
+        writer.append_time_block(target_date, data)
+
+        db = DatabaseAdapter()
+        return db.create_time_entry(data)
+
+    # ------------------------------------------------------------------
+    # Stats
+    # ------------------------------------------------------------------
+
+    def get_stats(self) -> dict[str, Any]:
+        from .db_adapter import DatabaseAdapter
+        db = DatabaseAdapter()
+        return db.get_stats()
+
+    # ------------------------------------------------------------------
+    # Gantt
+    # ------------------------------------------------------------------
+
+    def list_gantt_tasks(self, *, project_id: int | None = None) -> list[dict[str, Any]]:
+        from .db_adapter import DatabaseAdapter
+        db = DatabaseAdapter()
+        return db.list_gantt_tasks(project_id=project_id)
