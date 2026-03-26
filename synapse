@@ -301,6 +301,56 @@ fn_dev_compilemessages() {
     fn_django compilemessages
 }
 
+# --- Docker Compose (Phase 5.9) ---
+
+fn_docker_build() {
+    local env_file="${1:-.env.docker}"
+    fn_log "🔨 Building Docker images (backend + nginx/frontend)..." "blue"
+    docker compose --env-file "$env_file" build
+    fn_log "✅ Build complete." "green"
+}
+
+fn_docker_up() {
+    local env_file="${1:-.env.docker}"
+    if [ ! -f "$env_file" ]; then
+        fn_log "❌ $env_file not found." "red"
+        fn_log "   Copy .env.docker.example to $env_file and fill in DJANGO_SECRET_KEY and DB_PASSWORD." "yellow"
+        exit 1
+    fi
+    fn_log "🚀 Starting SynapseERP via Docker Compose (PostgreSQL + backend + nginx)..." "blue"
+    docker compose --env-file "$env_file" up -d --build
+    fn_log "✅ All services started. Visit http://localhost" "green"
+    fn_log "   To create an admin user run: ./synapse docker:shell" "yellow"
+    fn_log "   Then inside the container: python manage.py createsuperuser" "yellow"
+}
+
+fn_docker_down() {
+    local env_file="${1:-.env.docker}"
+    fn_log "🛑 Stopping Docker services (data volumes preserved)..." "blue"
+    docker compose --env-file "$env_file" down
+    fn_log "✅ Services stopped." "green"
+}
+
+fn_docker_logs() {
+    # Usage: ./synapse docker:logs [service]
+    # Service defaults to empty (shows all). Specific: backend | nginx | postgres
+    local service="${1:-}"
+    local env_file=".env.docker"
+    if [ -n "$service" ]; then
+        docker compose --env-file "$env_file" logs -f "$service"
+    else
+        docker compose --env-file "$env_file" logs -f
+    fi
+}
+
+fn_docker_shell() {
+    # Opens an interactive shell in the backend container.
+    # Usage: ./synapse docker:shell [service]   (default: backend)
+    local service="${1:-backend}"
+    fn_log "🐚 Opening shell in '$service' container..." "blue"
+    docker compose --env-file ".env.docker" exec "$service" /bin/sh
+}
+
 # --- Deployment ---
 
 fn_deploy() {
@@ -477,6 +527,13 @@ fn_show_help() {
     echo "  dev:makemessages    Update .po translation source files"
     echo "  dev:compilemessages Compile .mo translation files"
     echo ""
+    echo "━━━ Docker Compose (Phase 5.9) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  docker:build [env]   Build Docker images (default env file: .env.docker)"
+    echo "  docker:up [env]      Build + start all services (postgres + backend + nginx)"
+    echo "  docker:down [env]    Stop all services (volumes are preserved)"
+    echo "  docker:logs [svc]    Tail logs (all services, or one: backend/nginx/postgres)"
+    echo "  docker:shell [svc]   Open shell in a container (default: backend)"
+    echo ""
     echo "━━━ Deployment ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  deploy              (Requires sudo) Automated production deployment"
     echo ""
@@ -505,6 +562,11 @@ main() {
                 run:all)                fn_run_all ;;
                 vault:watch)            fn_vault_watch "$2" ;;
                 frontend:build)         fn_frontend_build ;;
+                docker:build)           fn_docker_build "$2" ;;
+                docker:up)              fn_docker_up "$2" ;;
+                docker:down)            fn_docker_down "$2" ;;
+                docker:logs)            fn_docker_logs "$2" ;;
+                docker:shell)           fn_docker_shell "$2" ;;
                 deploy)                 fn_deploy ;;
                 superuser)              fn_create_superuser ;;
                 set-rule)               fn_set_rule_url "$2" ;;
