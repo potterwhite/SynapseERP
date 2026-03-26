@@ -126,16 +126,36 @@ class DatabaseAdapter(PMBackendAdapter):
     # ------------------------------------------------------------------
 
     def list_projects(self, *, status: str | None = None, tags: list[str] | None = None) -> list[dict[str, Any]]:
+        """
+        Return a list of serialised project dicts.
+
+        Tag filtering strategy (Phase 5.9):
+          - PostgreSQL: native JSONField @> containment operator (server-side, index-friendly).
+                        Each tag is ANDed via Q(tags__contains=[tag]).
+          - SQLite:     Python-layer list comprehension (backward compatible for dev).
+                        SQLite's JSON1 extension does not support @> on JSONField.
+        """
+        from django.db import connection
+
         qs = Project.objects.prefetch_related("tasks", "tasks__time_entries")
         if status:
             qs = qs.filter(status=status)
-        # Note: JSONField __contains lookup is only supported on PostgreSQL.
-        # For SQLite compatibility, we filter in Python after the queryset is evaluated.
-        # On PostgreSQL this is still efficient because the Python filter runs on the
-        # already-status-filtered result set, which is typically small.
+
+        if tags and connection.vendor == "postgresql":
+            # Native PostgreSQL JSON containment: project.tags must include ALL given tags.
+            # Django translates Q(tags__contains=[tag]) → tags @> '["tag"]'::jsonb
+            from django.db.models import Q
+            q = Q()
+            for tag in tags:
+                q &= Q(tags__contains=[tag])
+            qs = qs.filter(q)
+            return [self._project_to_dict(p) for p in qs]
+
+        # SQLite (dev): fetch all rows then filter in Python.
+        # This is acceptable because dev data sets are small.
         result = [self._project_to_dict(p) for p in qs]
         if tags:
-            # AND semantics: project must have ALL specified tags
+            # AND semantics: project must contain ALL specified tags
             result = [
                 d for d in result
                 if all(t in (d.get("tags") or []) for t in tags)
