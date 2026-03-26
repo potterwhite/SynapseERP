@@ -1,7 +1,15 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-26 (Phase 5.6 ✅ 完成并验证，5.7 权限系统规划中)
+> 最后更新 / Last updated: 2026-03-26 (Phase 5.6 ✅ 完成，5.7 JWT 权限系统规划中)
+> 当前分支 / Branch: `feature/phase5-productization`
 > 当前分支 / Branch: `main`
+>
+> **⚠️ FOR AI AGENTS — 快速入门：**
+> 1. 先读此文件（你在这里）
+> 2. 再读 `plan/13_codebase_map.md` — 代码库全景图，替代全盘扫描
+> 3. 如在实现 Phase 5.7：读 `plan/14_phase57_plan.md`
+> 4. 其他文档按需查阅（见下方文档地图）
+> **每次修改代码后，同步更新 `plan/13_codebase_map.md` 的对应章节。**
 
 ---
 
@@ -118,7 +126,7 @@
 |         | 深色模式 + 主题持久化 / Dark mode + theme persistence (localStorage) | |
 |         | 前端 Project CRUD 表单（新建 / 编辑 / 删除）/ Frontend Project Create-Edit-Delete modal | |
 |         | ⚠️ Bug 修复：NTooltip trigger slot 用法错误导致白屏 / Fix: NTooltip trigger slot crash (white screen) | ✅ 已修复 |
-| **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ |
+| **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ 待开始 Pending |
 |         | JWT 认证替代 Django Session / JWT auth replacing Django Session | |
 |         | 用户角色（admin / editor / viewer）/ User roles (admin / editor / viewer) | |
 |         | 自定义登录/注册页面 / Custom login/register pages | |
@@ -173,8 +181,12 @@ docs/architecture/
 │   │                                    REST API request/response contracts
 │   ├── 11_obsidian_parsing_rules.md     VaultReader/Writer 正则 + 路径规则
 │   │                                    VaultReader/Writer regex + path rules
-│   └── 12_frontend_config.md            Vite / TS / Router / Pinia 精确配置
-│                                        Vite / TS / Router / Pinia exact config
+│   ├── 12_frontend_config.md            Vite / TS / Router / Pinia 精确配置
+│   │                                    Vite / TS / Router / Pinia exact config
+│   ├── 13_codebase_map.md              ⭐ AI Agent 专用代码库地图 (Phase 5.6 状态)
+│   │                                    AI Agent codebase quick reference — READ BEFORE SCANNING
+│   └── 14_phase57_plan.md              ⭐ Phase 5.7 JWT 权限系统实施计划
+│                                        JWT auth + roles + tag-based access — step-by-step plan
 │
 ├── background/                          当前有效的架构决策 / Active architectural decisions
 │   ├── 02_obsidian_integration_design.md Obsidian ↔ Synapse 数据模型映射 / Data model mapping
@@ -193,8 +205,10 @@ docs/architecture/
 
 ### 推荐阅读路线 / Recommended Reading Path
 
+- **AI Agent 快速上手（必读）/ AI Agent quick start (required):** `plan/13_codebase_map.md`
 - **新人入门（5 分钟）/ Newcomer (5 min):** `background/08_final_tech_stack.md` → `background/09_architecture_vision.md`
 - **开始编码 / Start coding:** `plan/09_implementation_plan.md` → `plan/10_api_spec.md`
+- **继续 Phase 5.7 / Continue Phase 5.7:** `plan/14_phase57_plan.md`（含逐步实施清单）
 - **PM 模块开发 / PM module dev:** `plan/11_obsidian_parsing_rules.md` + `background/02_obsidian_integration_design.md`
 - **深度历史 / Deep history:** `background/archived/` 目录，看一遍即可 / read once if curious
 
