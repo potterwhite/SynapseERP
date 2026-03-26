@@ -283,6 +283,11 @@ staticfiles/
 synapse.service
 synapse_nginx.conf
 
+# Docker environment files — contain secrets, never commit
+.env.docker
+.env.docker.*
+!.env.docker.example
+
 # --- IDE and AI tool directories ---
 # These are local editor/tooling configs, not part of the project source.
 .vscode/

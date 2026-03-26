@@ -8,8 +8,8 @@
 ## 1. Reading Order (every session)
 
 1. **This file** — understand how to work in this repo
-2. **[`reference/codebase_map.md`](reference/codebase_map.md)** — full codebase structure (replaces scanning, saves 50% time)
-3. **[`progress.md`](progress.md)** — current Phase status and active tasks
+2. **[`codebase_map.md`](codebase_map.md)** — full codebase structure (replaces scanning, saves 50% time)
+3. **[`../2-progress/progress.md`](../2-progress/progress.md)** — current Phase status and active tasks
 4. **Relevant reference doc** — only if your task requires it (API spec, Obsidian rules, etc.)
 
 ---
@@ -27,7 +27,7 @@
 - Never commit broken code or failing tests
 
 ### Documentation
-- After modifying any file listed in `reference/codebase_map.md`, update that file in the same commit
+- After modifying any file listed in `codebase_map.md`, update that file in the same commit
 - When a Phase step is completed, update the status in `progress.md`
 
 ---
