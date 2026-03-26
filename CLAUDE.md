@@ -34,6 +34,41 @@ cd frontend && npm run dev      # Vite dev server
 cd frontend && npm run build    # Production build (vue-tsc + vite)
 ```
 
+### Docker Compose (Phase 5.9)
+
+```bash
+# First-time setup:
+cp .env.docker.example .env.docker
+# Edit .env.docker: set DJANGO_SECRET_KEY and DB_PASSWORD
+
+./synapse docker:up              # Build images + start all services (postgres + backend + nginx)
+./synapse docker:down            # Stop all services (volumes preserved)
+./synapse docker:logs            # Tail all service logs
+./synapse docker:logs backend    # Tail backend logs only
+./synapse docker:shell           # Open shell in backend container
+
+# Create admin user (first-time):
+./synapse docker:shell
+# Inside container: python manage.py createsuperuser
+```
+
+**Docker services:**
+- `postgres` — PostgreSQL 16 (data persisted in `postgres_data` volume)
+- `backend` — Django/Gunicorn on :8000 (internal only, not exposed to host)
+- `nginx` — Nginx on :80 (public), serves Vue SPA + proxies `/api/` to backend
+
+**Docker environment variables** — stored in `.env.docker` (gitignored):
+
+| Variable | Required | Default | Notes |
+|----------|----------|---------|-------|
+| `DJANGO_SECRET_KEY` | ✅ | — | Long random string |
+| `DB_PASSWORD` | ✅ | — | PostgreSQL password |
+| `DB_NAME` | — | `synapse_db` | |
+| `DB_USER` | — | `synapse_user` | |
+| `NGINX_PORT` | — | `80` | Change if port 80 is taken |
+| `GUNICORN_WORKERS` | — | `3` | |
+| `OBSIDIAN_VAULT_PATH` | — | — | Optional vault sync |
+
 ### Production
 ```bash
 sudo ./synapse deploy      # Interactive deployment: Nginx + Gunicorn + Systemd
@@ -119,7 +154,22 @@ Key architectural decision docs are in `docs/architecture/background/`. The API 
 
 ## Current Development Status
 
-**Current Phase: 5.7 ✅ Complete → Working on Phase 5.8 or 5.9**
+**Current Phase: 5.9 ✅ Complete → Next: Phase 5.8 (Plugin API)**
+
+### Phase 5.9 — PostgreSQL + Docker Compose (COMPLETE)
+
+All Phase 5.9 deliverables implemented:
+
+- **`psycopg2-binary`** added to `requirements.txt`
+- **`get_db_config()`** in `settings.py`: `DB_ENGINE` env var selects SQLite (dev default) or PostgreSQL (Docker/prod). Backward compatible — `./synapse run` unchanged.
+- **`docker/Dockerfile`**: Python 3.12-slim + Gunicorn; `pip install -e backend/` for synapse_* importability
+- **`docker/entrypoint.sh`**: pure-Python TCP probe waits for PostgreSQL → migrate → collectstatic → gunicorn
+- **`docker/Dockerfile.nginx`**: multi-stage build (Node 20 builds Vue → Nginx Alpine serves static files)
+- **`docker/nginx/nginx.conf`**: proxy to backend, static file serving, Vue SPA history-mode fallback
+- **`docker-compose.yml`**: 3-service stack (postgres + backend + nginx); `static_volume` shared between backend (write) and nginx (read-only)
+- **`.env.docker.example`**: template with all required/optional variables documented
+- **`synapse docker:*`**: `docker:build/up/down/logs/shell` commands added to orchestrator
+- **`db_adapter.py`**: PostgreSQL native JSONField `@>` operator for tag filtering (SQLite Python fallback kept)
 
 ### Phase 5.7 — Permission System + Multi-user (COMPLETE)
 
@@ -138,8 +188,6 @@ All Phase 5.7 deliverables are implemented and verified (build passes, `django c
 - **Sidebar**: "User Management" link visible only to admins.
 - **UsersView**: `views/admin/UsersView.vue` — full CRUD table for admin.
 
-### Next: Phase 5.8 or 5.9
+### Next: Phase 5.8
 
-Decide together with the user which to tackle next:
 - **5.8**: Plugin API framework (`SynapseModule` base class + MCP/AI agent interface)
-- **5.9**: PostgreSQL migration + Docker Compose deployment (planned to be done together)

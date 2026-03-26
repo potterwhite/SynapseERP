@@ -8,7 +8,7 @@
 > **Maintenance rule:** Any AI agent that modifies a file listed here MUST update
 > the relevant section in this document in the same commit/session.
 >
-> Last updated: 2026-03-26 (reflects Phase 5.7 complete state)
+> Last updated: 2026-03-26 (reflects Phase 5.9 complete state)
 
 ---
 
@@ -26,7 +26,7 @@ SynapseERP.git/
 │   │   └── synapse_pm/        ⭐ Project Management (core module)
 │   ├── synapse_project/       Django project config (settings, urls, wsgi)
 │   ├── manage.py
-│   ├── requirements.txt
+│   ├── requirements.txt       ← psycopg2-binary added (Phase 5.9)
 │   └── .env                   (gitignored, auto-created by ./synapse prepare)
 ├── frontend/                  Vue 3 SPA (TypeScript + Vite 6)
 │   ├── src/                   All frontend source
@@ -35,7 +35,15 @@ SynapseERP.git/
 ├── docs/
 │   └── architecture/          ← YOU ARE HERE
 ├── synapse                    Unified CLI orchestrator (./synapse <cmd>)
-├── docker/                    Docker configs (Phase 5.9, pending)
+├── docker/                    Docker configs (Phase 5.9 ✅)
+│   ├── Dockerfile             Backend: Python 3.12-slim + Gunicorn
+│   ├── Dockerfile.nginx       Multi-stage: Node builds Vue → Nginx serves static
+│   ├── entrypoint.sh          Wait for PG → migrate → collectstatic → gunicorn
+│   └── nginx/
+│       └── nginx.conf         Proxy /api/ to backend, serve SPA, /static/ volume
+├── docker-compose.yml         3-service stack: postgres + backend + nginx
+├── .dockerignore              Excludes .venv, node_modules, db.sqlite3, docs/ etc.
+├── .env.docker.example        Docker env var template (copy to .env.docker)
 └── CLAUDE.md                  Instructions for Claude Code sessions
 ```
 
@@ -47,7 +55,7 @@ SynapseERP.git/
 
 | File | Purpose |
 |------|---------|
-| `settings.py` | All settings. Reads from `.env`. Key: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `OBSIDIAN_VAULT_PATH`, `OBSIDIAN_SYNC_ENABLED`. DRF uses `JWTAuthentication` (primary) + `SessionAuthentication` (for /admin/). `SIMPLE_JWT` config: 60min access, 7day refresh, rotate. |
+| `settings.py` | All settings. Reads from `.env`. Key: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `OBSIDIAN_VAULT_PATH`, `OBSIDIAN_SYNC_ENABLED`. DRF uses `JWTAuthentication` (primary) + `SessionAuthentication` (for /admin/). `SIMPLE_JWT` config: 60min access, 7day refresh, rotate. **Phase 5.9**: `get_db_config()` function — `DB_ENGINE=django.db.backends.postgresql` switches to PostgreSQL (requires `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`). Default remains SQLite for local dev. |
 | `urls.py` | Root URL: mounts `/admin/`, `/api/`, `/i18n/` |
 | `api_urls.py` | API root: includes `synapse_auth.urls` (first), `synapse_api.urls`, `synapse_pm.urls`, `synapse_attendance.api_urls`, `synapse_bom_analyzer.api_urls` |
 
@@ -350,6 +358,13 @@ SIMPLE_JWT = {
 ./synapse dev:migrate      # makemigrations + migrate
 ./synapse dev:test         # Django test suite
 ./synapse superuser        # Create superuser
+
+# Docker Compose (Phase 5.9) — reads .env.docker by default
+./synapse docker:up        # Build images + start all services (postgres+backend+nginx)
+./synapse docker:down      # Stop all services (volumes preserved)
+./synapse docker:logs      # Tail all logs  | docker:logs backend  (one service)
+./synapse docker:shell     # Open shell in backend container (for createsuperuser etc.)
+./synapse docker:build     # Build images only (without starting)
 
 # Single test
 cd backend && ../.venv/bin/python manage.py test synapse_pm.tests.TestClass.test_method

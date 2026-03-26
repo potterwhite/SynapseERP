@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> **最后更新 / Last updated**: 2026-03-26 (Phase 5.7 ✅ 完成，Phase 5.9 🔄 进行中)
+> **最后更新 / Last updated**: 2026-03-26 (Phase 5.9 ✅ 完成，Phase 5.8 待开始)
 > **当前分支 / Branch**: `main`
 > **目标受众 / Target Audience**: AI Agents + 项目团队
 
@@ -265,7 +265,7 @@ docs/architecture/
 │   ├── 12_frontend_config.md        Vite / TS / Router / Pinia
 │   ├── 13_codebase_map.md           ⭐ AI Agent 代码库地图 (必读)
 │   ├── 14_phase57_plan.md           ✅ Phase 5.7 JWT + 权限系统 (已完成)
-│   └── 15_phase59_plan.md           🔄 Phase 5.9 PostgreSQL + Docker (进行中)
+│   └── 15_phase59_plan.md           ✅ Phase 5.9 PostgreSQL + Docker (已完成)
 │
 ├── background/        当前有效的架构决策 / Active architectural decisions
 │   ├── 02_obsidian_integration_design.md
@@ -384,7 +384,7 @@ cat docs/architecture/plan/15_phase59_plan.md | head -50
 | **5.6** | UI/UX 全面升级 | ✅ 完成 Done |
 | **5.7** | 权限系统 + 多用户 | ✅ 完成 Done |
 | **5.8** | Plugin API 框架 | ⏳ 待开始 Pending |
-| **5.9** | PostgreSQL 迁移 + Docker Compose | 🔄 进行中 In Progress |
+| **5.9** | PostgreSQL 迁移 + Docker Compose | ✅ 完成 Done |
 
 ---
 
