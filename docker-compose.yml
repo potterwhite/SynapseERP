@@ -59,13 +59,17 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST:     postgres
       DB_PORT:     5432
-      # Optional: Obsidian vault sync (mount the vault path as a volume if needed)
+      # Optional: Obsidian vault sync (mount the vault path as a bind-mount below)
       OBSIDIAN_VAULT_PATH: ${OBSIDIAN_VAULT_PATH:-}
       # Gunicorn worker count (default 3; raise for high traffic)
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-3}
     volumes:
       # staticfiles written by collectstatic — shared with nginx container
       - static_volume:/app/backend/staticfiles
+      # Optional Obsidian vault bind-mount.
+      # Uncomment the line below AND set OBSIDIAN_VAULT_PATH in .env.docker
+      # to enable vault sync. The host path must exist before running docker compose up.
+      # - ${OBSIDIAN_VAULT_PATH:-/tmp/vault_disabled}:/vault:ro
     # backend is NOT exposed to the host; Nginx proxies to it internally
 
   nginx:

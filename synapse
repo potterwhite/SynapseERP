@@ -344,11 +344,32 @@ fn_docker_logs() {
 }
 
 fn_docker_shell() {
-    # Opens an interactive shell in the backend container.
+    # Opens an interactive shell in the backend container, starting in /app/backend.
     # Usage: ./synapse docker:shell [service]   (default: backend)
+    # Tries bash first; falls back to sh (Alpine images only have sh).
     local service="${1:-backend}"
-    fn_log "🐚 Opening shell in '$service' container..." "blue"
-    docker compose --env-file ".env.docker" exec "$service" /bin/sh
+    fn_log "🐚 Opening shell in '$service' container (workdir: /app/backend)..." "blue"
+    docker compose --env-file ".env.docker" exec \
+        --workdir /app/backend "$service" bash 2>/dev/null \
+        || docker compose --env-file ".env.docker" exec \
+        --workdir /app/backend "$service" sh
+}
+
+fn_docker_manage() {
+    # Run a Django management command inside the backend container.
+    # Usage: ./synapse docker:manage createsuperuser
+    #        ./synapse docker:manage migrate
+    #        ./synapse docker:manage shell
+    if [ -z "$1" ]; then
+        fn_log "Usage: ./synapse docker:manage <management_command> [args...]" "yellow"
+        fn_log "Examples:" "yellow"
+        fn_log "  ./synapse docker:manage createsuperuser" "yellow"
+        fn_log "  ./synapse docker:manage migrate" "yellow"
+        fn_log "  ./synapse docker:manage shell" "yellow"
+        exit 1
+    fi
+    docker compose --env-file ".env.docker" exec \
+        --workdir /app/backend backend python manage.py "$@"
 }
 
 # --- Deployment ---
@@ -528,11 +549,13 @@ fn_show_help() {
     echo "  dev:compilemessages Compile .mo translation files"
     echo ""
     echo "━━━ Docker Compose (Phase 5.9) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  docker:build [env]   Build Docker images (default env file: .env.docker)"
-    echo "  docker:up [env]      Build + start all services (postgres + backend + nginx)"
-    echo "  docker:down [env]    Stop all services (volumes are preserved)"
-    echo "  docker:logs [svc]    Tail logs (all services, or one: backend/nginx/postgres)"
-    echo "  docker:shell [svc]   Open shell in a container (default: backend)"
+    echo "  docker:build [env]        Build Docker images (default env file: .env.docker)"
+    echo "  docker:up [env]           Build + start all services (postgres + backend + nginx)"
+    echo "  docker:down [env]         Stop all services (volumes are preserved)"
+    echo "  docker:logs [svc]         Tail logs (all services, or one: backend/nginx/postgres)"
+    echo "  docker:shell [svc]        Open shell in a container (default: backend, workdir: /app/backend)"
+    echo "  docker:manage <cmd>       Run Django management command in backend container"
+    echo "                            e.g. docker:manage createsuperuser"
     echo ""
     echo "━━━ Deployment ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  deploy              (Requires sudo) Automated production deployment"
@@ -567,6 +590,7 @@ main() {
                 docker:down)            fn_docker_down "$2" ;;
                 docker:logs)            fn_docker_logs "$2" ;;
                 docker:shell)           fn_docker_shell "$2" ;;
+                docker:manage)          fn_docker_manage "${@:2}" ;;
                 deploy)                 fn_deploy ;;
                 superuser)              fn_create_superuser ;;
                 set-rule)               fn_set_rule_url "$2" ;;
