@@ -1,8 +1,14 @@
 # 前端配置文件精确定义
 
+> **⚠️ SETUP REFERENCE ONLY — FOR AI AGENTS**
+> This file describes the initial frontend project setup (now complete).
+> The project uses `npm` (not `pnpm`) in practice.
+> For current frontend file structure and patterns, see `13_codebase_map.md`.
+> Only read this file if you need to understand historical project init decisions.
+>
 > 日期：2026-03-21
-> 状态：实现规格
-> 用途：提供给开发者/AI 的精确前端项目配置
+> 状态：初始化完成（历史参考）
+> 用途：前端项目初始化配置记录
 
 ---
 

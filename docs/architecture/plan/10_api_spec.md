@@ -1,7 +1,12 @@
 # API 接口规格说明书
 
+> **⚠️ PARTIALLY OUTDATED — FOR AI AGENTS**
+> The authentication section (1.2) describes Django Session auth which was
+> replaced by JWT in Phase 5.7. For current auth endpoints, see `13_codebase_map.md`
+> Section 3 (All REST API Endpoints). All PM/attendance/BOM endpoints remain valid.
+>
 > 日期：2026-03-21
-> 状态：实现规格
+> 状态：实现规格（认证部分已过时）
 > 用途：提供给开发者/AI 的精确 API 契约
 
 ---
