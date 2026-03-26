@@ -1,5 +1,59 @@
 - **改完就把下面的checkbox checked**
 
+Mar26.2026 18:35
+- [x] docker:up就出错（第一个 bug）
+    ```bash
+                                    0.0s
+    => => exporting layers                                                                  0.0s
+    => => writing image sha256:7fc63e5e9ca4b805d3b7e7fbbb7825b45b92b1adbbfb5832bf69c1bf9a5  0.0s
+    => => naming to docker.io/library/synapseerpgit-backend                                 0.0s
+    => [backend] resolving provenance for metadata file                                     0.0s
+    ------
+    > [nginx builder 6/6] RUN npm run build:
+    0.265
+    0.265 > frontend@0.9.0-alpha build
+    0.265 > vue-tsc -b && vite build
+    0.265
+    5.358 src/components/pm/GanttChart.vue(100,5): error TS6133: 'ganttInstance' is declared but its value is never read.
+    ------
+    [+] up 0/2
+    ⠙ Image synapseerpgit-backend Building                                                  19.3s
+    ⠙ Image synapseerpgit-nginx   Building                                                  19.3s
+    Dockerfile.nginx:25
+
+    --------------------
+
+    23 |     # Copy full frontend source and build
+
+    24 |     COPY frontend/ ./
+
+    25 | >>> RUN npm run build
+
+    26 |     # Vite output: /app/dist/index.html + /app/dist/assets/
+
+    27 |
+
+    --------------------
+
+    target nginx: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 2
+
+
+    ❌ Build failed. If you see an EOF or timeout error when pulling images:
+    This is usually caused by an unstable Docker registry mirror.
+    Fix options:
+    1. Retry immediately: ./synapse docker:up  (mirrors are often transient)
+    2. Remove unstable mirrors from Docker Desktop → Settings → Docker Engine
+        (remove the 'registry-mirrors' key from daemon.json, then restart Docker)
+    3. Pull the base images manually first:
+        docker pull python:3.12-slim && docker pull node:20-alpine && docker pull postgres:16-alpine && docker pull nginx:alpine
+    james@Anastasia:~/Development/python/SynapseERP.git$
+
+
+    ```
+- [x] 你有没有替我把所有显示在frontend的string都加上t()呢？你直接替我做完所有的i18n的工作，验证好。commit
+- [ ] 你帮我写一个完整的md出来：介绍我们的这套docs系统，我要给另一个项目注入，让它的ai agent assitant可以像我们一样，读取docs,而不是全盘扫描。就是这一套给claude code准备的系统，另一个项目的ai助手可以看见就立刻完全明白做什么。如果有必要可以把我们的文件附带进去，演示给对方的ai agent助手。我完全信任。
+
+
 Mar26.2026 17:30
 - [x] 我要加入synapse shell auto completion，要放在哪里，什么时候操作最合理，最不产生用户的认知负担，你就做。
 - [x] 我还是新建一个project，然后export to vault，还是没用，如下

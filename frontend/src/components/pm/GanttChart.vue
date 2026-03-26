@@ -32,7 +32,7 @@ SOFTWARE.
     <!-- Toolbar -->
     <n-flex justify="space-between" align="center" style="margin-bottom: 12px;">
       <n-flex gap="8" align="center">
-        <n-text depth="3" style="font-size: 13px;">View:</n-text>
+        <n-text depth="3" style="font-size: 13px;">{{ t('gantt.view') }}</n-text>
         <n-button-group>
           <n-button
             v-for="v in VIEW_MODES"
@@ -45,7 +45,7 @@ SOFTWARE.
       </n-flex>
       <n-flex gap="8" align="center">
         <n-text v-if="tasks.length" depth="3" style="font-size: 13px;">
-          {{ tasks.length }} tasks
+          {{ t('gantt.tasks_count', { n: tasks.length }) }}
         </n-text>
         <slot name="toolbar-extra" />
       </n-flex>
@@ -57,7 +57,7 @@ SOFTWARE.
     <!-- Empty state -->
     <n-empty
       v-if="!tasks.length && !loading"
-      description="No tasks to display"
+      :description="t('gantt.no_tasks')"
       style="padding: 48px 0;"
     />
     <n-spin
@@ -69,6 +69,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NButton, NButtonGroup, NFlex, NEmpty, NSpin, NText } from 'naive-ui'
 import Gantt from 'frappe-gantt'
 // Import CSS via explicit path — frappe-gantt's package.json exports field
@@ -97,7 +98,7 @@ const emit = defineEmits<{
 
 const containerRef = ref<HTMLElement | null>(null)
 const currentView = ref<ViewMode>(props.initialView)
-let ganttInstance: InstanceType<typeof Gantt> | null = null
+const { t } = useI18n()
 
 // Debounce date-change to avoid rapid-fire dialog during drag
 let dateChangeTimer: ReturnType<typeof setTimeout> | null = null
@@ -123,7 +124,7 @@ function buildGantt() {
 
   const frappeTasks = props.tasks.map(toFrappeTask)
 
-  ganttInstance = new Gantt(containerRef.value, frappeTasks, {
+  new Gantt(containerRef.value, frappeTasks, {
     view_mode: currentView.value,
     date_format: 'YYYY-MM-DD',
     // Always scroll to today on initial render so the chart shows the current
@@ -161,7 +162,6 @@ watch(() => props.tasks, () => nextTick(buildGantt), { deep: true })
 
 onUnmounted(() => {
   if (dateChangeTimer) clearTimeout(dateChangeTimer)
-  ganttInstance = null
 })
 </script>
 

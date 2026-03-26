@@ -22,10 +22,10 @@ SOFTWARE.
 
 <template>
   <div>
-    <n-h2 style="margin-bottom: 20px;">Attendance Analyzer</n-h2>
+    <n-h2 style="margin-bottom: 20px;">{{ t('attendance.title') }}</n-h2>
 
     <!-- Upload card -->
-    <n-card v-if="!result" title="Upload Attendance File" style="max-width: 600px;">
+    <n-card v-if="!result" :title="t('attendance.upload_card_title')" style="max-width: 600px;">
       <n-upload
         ref="uploadRef"
         accept=".xlsx,.xls"
@@ -36,8 +36,8 @@ SOFTWARE.
         <n-upload-dragger>
           <n-flex vertical align="center" style="padding: 24px 0; gap: 8px;">
             <n-icon :component="CloudUploadIcon" size="48" depth="3" />
-            <n-text>Click or drag an Excel file here</n-text>
-            <n-text depth="3" style="font-size: 12px;">.xlsx / .xls</n-text>
+            <n-text>{{ t('attendance.drop_hint') }}</n-text>
+            <n-text depth="3" style="font-size: 12px;">{{ t('attendance.drop_formats') }}</n-text>
           </n-flex>
         </n-upload-dragger>
       </n-upload>
@@ -49,7 +49,7 @@ SOFTWARE.
           :disabled="!selectedFile"
           @click="handleAnalyze"
         >
-          Analyze
+          {{ t('attendance.analyze_btn') }}
         </n-button>
       </n-flex>
 
@@ -59,28 +59,28 @@ SOFTWARE.
     <!-- Result panel -->
     <template v-else>
       <n-flex justify="space-between" align="center" style="margin-bottom: 16px;" :wrap="false">
-        <n-text><b>{{ result.filename }}</b> — analysis complete</n-text>
+        <n-text><b>{{ result.filename }}</b> — {{ t('attendance.analysis_complete') }}</n-text>
         <n-flex gap="8">
           <n-button size="small" @click="downloadReport('detailed', 'zh-hans')">
             <template #icon><n-icon :component="DownloadIcon" /></template>
-            详细报告 (ZH)
+            {{ t('attendance.download_detailed_zh') }}
           </n-button>
           <n-button size="small" @click="downloadReport('detailed', 'en')">
             <template #icon><n-icon :component="DownloadIcon" /></template>
-            Detailed (EN)
+            {{ t('attendance.download_detailed_en') }}
           </n-button>
           <n-button size="small" @click="downloadReport('public', 'zh-hans')">
-            公开报告
+            {{ t('attendance.download_public') }}
           </n-button>
           <n-button type="primary" ghost size="small" @click="reset">
-            New Analysis
+            {{ t('attendance.new_analysis') }}
           </n-button>
         </n-flex>
       </n-flex>
 
       <n-tabs v-model:value="activeTab" type="segment" size="small" style="margin-bottom: 16px;">
-        <n-tab-pane name="detailed" tab="Detailed Report" />
-        <n-tab-pane name="public" tab="Public Report" />
+        <n-tab-pane name="detailed" :tab="t('attendance.tab_detailed')" />
+        <n-tab-pane name="public" :tab="t('attendance.tab_public')" />
       </n-tabs>
 
       <ReportTable
@@ -93,6 +93,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NAlert, NButton, NCard, NFlex, NH2, NIcon, NTabs, NTabPane,
   NText, NUpload, NUploadDragger,
@@ -120,6 +121,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const result = ref<AnalysisResult | null>(null)
 const activeTab = ref<'detailed' | 'public'>('detailed')
+const { t } = useI18n()
 
 const activeReport = computed<ReportData>(() => {
   const r = result.value
@@ -145,7 +147,7 @@ async function handleAnalyze() {
     })
     result.value = data
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Analysis failed'
+    error.value = e instanceof Error ? e.message : t('common.unknown_error')
   } finally {
     loading.value = false
   }

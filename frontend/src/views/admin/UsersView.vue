@@ -10,10 +10,10 @@ Allows creating, editing (role + allowed_tags), and deleting users.
   <div>
     <!-- Page header -->
     <n-flex justify="space-between" align="center" style="margin-bottom: 20px;">
-      <n-h2 style="margin: 0;">User Management</n-h2>
+      <n-h2 style="margin: 0;">{{ t('users.title') }}</n-h2>
       <n-button type="primary" @click="openCreateModal">
         <template #icon><n-icon><PersonAddOutline /></n-icon></template>
-        New User
+        {{ t('users.new_user') }}
       </n-button>
     </n-flex>
 
@@ -31,44 +31,44 @@ Allows creating, editing (role + allowed_tags), and deleting users.
     <n-modal
       v-model:show="modalVisible"
       preset="card"
-      :title="editingUser ? 'Edit User' : 'New User'"
+      :title="editingUser ? t('users.edit_user') : t('users.new_user')"
       style="max-width: 480px;"
       :segmented="true"
     >
       <n-form ref="formRef" :model="formData" :rules="formRules" label-placement="left" label-width="110px">
         <template v-if="!editingUser">
-          <n-form-item label="Username" path="username">
-            <n-input v-model:value="formData.username" placeholder="e.g. alice" />
+          <n-form-item :label="t('users.form.username_label')" path="username">
+            <n-input v-model:value="formData.username" :placeholder="t('users.form.username_placeholder')" />
           </n-form-item>
-          <n-form-item label="Email" path="email">
-            <n-input v-model:value="formData.email" placeholder="alice@example.com (optional)" />
+          <n-form-item :label="t('users.form.email_label')" path="email">
+            <n-input v-model:value="formData.email" :placeholder="t('users.form.email_placeholder')" />
           </n-form-item>
-          <n-form-item label="Password" path="password">
-            <n-input v-model:value="formData.password" type="password" show-password-on="click" placeholder="Min. 8 characters" />
+          <n-form-item :label="t('users.form.password_label')" path="password">
+            <n-input v-model:value="formData.password" type="password" show-password-on="click" :placeholder="t('users.form.password_placeholder')" />
           </n-form-item>
         </template>
 
-        <n-form-item label="Role" path="role">
+        <n-form-item :label="t('users.form.role_label')" path="role">
           <n-select
             v-model:value="formData.role"
             :options="roleOptions"
-            placeholder="Select role"
+            :placeholder="t('users.form.role_placeholder')"
           />
         </n-form-item>
 
-        <n-form-item label="Allowed Tags" path="allowed_tags">
+        <n-form-item :label="t('users.form.tags_label')" path="allowed_tags">
           <n-dynamic-tags v-model:value="formData.allowed_tags" />
         </n-form-item>
         <n-text depth="3" style="font-size: 12px; margin-left: 110px; margin-top: -8px; display: block;">
-          Leave empty to deny access to all tagged projects. Untagged projects are always visible.
+          {{ t('users.form.tags_hint') }}
         </n-text>
       </n-form>
 
       <template #action>
         <n-space justify="end">
-          <n-button @click="modalVisible = false">Cancel</n-button>
+          <n-button @click="modalVisible = false">{{ t('common.cancel') }}</n-button>
           <n-button type="primary" :loading="saving" @click="handleSave">
-            {{ editingUser ? 'Save Changes' : 'Create User' }}
+            {{ editingUser ? t('users.save_changes') : t('users.create_user') }}
           </n-button>
         </n-space>
       </template>
@@ -77,7 +77,8 @@ Allows creating, editing (role + allowed_tags), and deleting users.
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NDataTable, NButton, NModal, NForm, NFormItem, NInput, NSelect,
   NSpace, NFlex, NH2, NIcon, NText, NDynamicTags,
@@ -91,6 +92,7 @@ import type { User, UserRole } from '@/types/auth'
 
 const message = useMessage()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 // ── State ──────────────────────────────────────────────────────────────────
 const users = ref<User[]>([])
@@ -109,25 +111,25 @@ const formData = ref({
 })
 
 // ── Config ─────────────────────────────────────────────────────────────────
-const roleOptions = [
-  { label: 'Admin — full access', value: 'admin' },
-  { label: 'Editor — read/write (tag-filtered)', value: 'editor' },
-  { label: 'Viewer — read-only (tag-filtered)', value: 'viewer' },
-]
+const roleOptions = computed(() => [
+  { label: t('users.roles.admin_desc'), value: 'admin' },
+  { label: t('users.roles.editor_desc'), value: 'editor' },
+  { label: t('users.roles.viewer_desc'), value: 'viewer' },
+])
 
-const formRules: FormRules = {
-  username: [{ required: true, message: 'Username is required', trigger: 'blur' }],
-  password: [{ required: true, min: 8, message: 'Password must be at least 8 characters', trigger: 'blur' }],
-  role: [{ required: true, message: 'Role is required', trigger: 'change' }],
-}
+const formRules = computed<FormRules>(() => ({
+  username: [{ required: true, message: t('users.username_required'), trigger: 'blur' }],
+  password: [{ required: true, min: 8, message: t('users.password_required'), trigger: 'blur' }],
+  role: [{ required: true, message: t('users.role_required'), trigger: 'change' }],
+}))
 
 // ── Table columns ──────────────────────────────────────────────────────────
-const columns: DataTableColumns<User> = [
-  { title: 'ID', key: 'id', width: 60 },
-  { title: 'Username', key: 'username' },
-  { title: 'Email', key: 'email', render: (row) => row.email || '—' },
+const columns = computed<DataTableColumns<User>>(() => [
+  { title: t('users.columns.id'), key: 'id', width: 60 },
+  { title: t('users.columns.username'), key: 'username' },
+  { title: t('users.columns.email'), key: 'email', render: (row) => row.email || '—' },
   {
-    title: 'Role',
+    title: t('users.columns.role'),
     key: 'role',
     render: (row) => {
       const colorMap: Record<string, string> = {
@@ -141,12 +143,12 @@ const columns: DataTableColumns<User> = [
     },
   },
   {
-    title: 'Allowed Tags',
+    title: t('users.columns.allowed_tags'),
     key: 'allowed_tags',
-    render: (row) => (row.allowed_tags?.length ? row.allowed_tags.join(', ') : '— (all untagged)'),
+    render: (row) => (row.allowed_tags?.length ? row.allowed_tags.join(', ') : t('users.all_untagged')),
   },
   {
-    title: 'Actions',
+    title: t('users.columns.actions'),
     key: 'actions',
     width: 100,
     render: (row) =>
@@ -168,7 +170,7 @@ const columns: DataTableColumns<User> = [
         ],
       }),
   },
-]
+])
 
 // ── Data loading ───────────────────────────────────────────────────────────
 async function loadUsers() {
@@ -177,7 +179,7 @@ async function loadUsers() {
     const res = await userApi.list()
     users.value = res.data
   } catch (err: unknown) {
-    message.error(err instanceof Error ? err.message : 'Failed to load users')
+    message.error(err instanceof Error ? err.message : t('users.load_error'))
   } finally {
     loading.value = false
   }
@@ -228,7 +230,7 @@ async function handleSave() {
         allowed_tags: formData.value.allowed_tags,
         email: formData.value.email,
       })
-      message.success('User updated')
+      message.success(t('users.update_success'))
     } else {
       await userApi.create({
         username: formData.value.username,
@@ -237,12 +239,12 @@ async function handleSave() {
         role: formData.value.role,
         allowed_tags: formData.value.allowed_tags,
       })
-      message.success('User created')
+      message.success(t('users.create_success'))
     }
     modalVisible.value = false
     await loadUsers()
   } catch (err: unknown) {
-    message.error(err instanceof Error ? err.message : 'Save failed')
+    message.error(err instanceof Error ? err.message : t('users.save_error'))
   } finally {
     saving.value = false
   }
@@ -250,13 +252,13 @@ async function handleSave() {
 
 // ── Delete ─────────────────────────────────────────────────────────────────
 async function handleDelete(user: User) {
-  if (!confirm(`Delete user "${user.username}"? This cannot be undone.`)) return
+  if (!confirm(t('users.delete_confirm', { name: user.username }))) return
   try {
     await userApi.delete(user.id)
-    message.success(`User "${user.username}" deleted`)
+    message.success(t('users.delete_success', { name: user.username }))
     await loadUsers()
   } catch (err: unknown) {
-    message.error(err instanceof Error ? err.message : 'Delete failed')
+    message.error(err instanceof Error ? err.message : t('users.delete_error'))
   }
 }
 

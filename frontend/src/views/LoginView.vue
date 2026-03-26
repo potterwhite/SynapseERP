@@ -14,7 +14,7 @@ Replaces the Django admin login redirect that was used in Phase ≤5.6.
           <!-- Logo / Title -->
           <div class="login-header">
             <n-h2 style="margin: 0;">SynapseERP</n-h2>
-            <n-text depth="3" style="font-size: 13px;">v0.9.0-alpha</n-text>
+            <n-text depth="3" style="font-size: 13px;">{{ appStore.appVersion }}</n-text>
           </div>
 
           <!-- Error alert -->
@@ -29,21 +29,21 @@ Replaces the Django admin login redirect that was used in Phase ≤5.6.
 
           <!-- Login form -->
           <n-form ref="formRef" :model="formData" :rules="rules" @submit.prevent="handleLogin">
-            <n-form-item path="username" label="Username">
+            <n-form-item path="username" :label="t('login.username_label')">
               <n-input
                 v-model:value="formData.username"
-                placeholder="Enter username"
+                :placeholder="t('login.username_placeholder')"
                 :disabled="loading"
                 @keydown.enter="handleLogin"
               />
             </n-form-item>
 
-            <n-form-item path="password" label="Password">
+            <n-form-item path="password" :label="t('login.password_label')">
               <n-input
                 v-model:value="formData.password"
                 type="password"
                 show-password-on="click"
-                placeholder="Enter password"
+                :placeholder="t('login.password_placeholder')"
                 :disabled="loading"
                 @keydown.enter="handleLogin"
               />
@@ -56,7 +56,7 @@ Replaces the Django admin login redirect that was used in Phase ≤5.6.
               style="margin-top: 8px;"
               @click="handleLogin"
             >
-              Login
+              {{ t('login.btn') }}
             </n-button>
           </n-form>
 
@@ -66,14 +66,14 @@ Replaces the Django admin login redirect that was used in Phase ≤5.6.
               <template #icon>
                 <n-icon><component :is="appStore.theme === 'dark' ? SunnyOutline : MoonOutline" /></n-icon>
               </template>
-              {{ appStore.theme === 'dark' ? 'Light mode' : 'Dark mode' }}
+              {{ appStore.theme === 'dark' ? t('login.light_mode') : t('login.dark_mode') }}
             </n-button>
           </div>
 
           <!-- Registration link -->
           <div style="text-align: center; margin-top: 12px;">
             <n-button text @click="router.push('/register')">
-              No account yet? Create one
+              {{ t('login.no_account') }}
             </n-button>
           </div>
         </div>
@@ -85,6 +85,7 @@ Replaces the Django admin login redirect that was used in Phase ≤5.6.
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   NConfigProvider,
   NMessageProvider,
@@ -106,6 +107,7 @@ import { useAppStore } from '@/stores/app'
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const { t } = useI18n()
 
 const naiveTheme = computed(() => appStore.theme === 'dark' ? darkTheme : null)
 
@@ -119,8 +121,8 @@ const formData = ref({
 })
 
 const rules: FormRules = {
-  username: [{ required: true, message: 'Username is required', trigger: 'blur' }],
-  password: [{ required: true, message: 'Password is required', trigger: 'blur' }],
+  username: [{ required: true, message: t('login.username_required'), trigger: 'blur' }],
+  password: [{ required: true, message: t('login.password_required'), trigger: 'blur' }],
 }
 
 async function handleLogin() {
@@ -141,7 +143,7 @@ async function handleLogin() {
     const redirect = (router.currentRoute.value.query.redirect as string) || '/'
     router.push(redirect)
   } catch (err: unknown) {
-    errorMsg.value = err instanceof Error ? err.message : 'Login failed. Please try again.'
+    errorMsg.value = err instanceof Error ? err.message : t('auth.login_failed')
   } finally {
     loading.value = false
   }

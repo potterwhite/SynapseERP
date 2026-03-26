@@ -44,6 +44,7 @@ SOFTWARE.
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { NMenu, NIcon, NDivider } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import {
@@ -64,6 +65,7 @@ const emit = defineEmits<{ (e: 'navigate'): void }>()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const activeKey = computed(() => {
   const path = route.path
@@ -83,38 +85,38 @@ function renderIcon(icon: unknown) {
 const menuOptions = computed<MenuOption[]>(() => {
   const items: MenuOption[] = [
     {
-      label: 'Dashboard',
+      label: t('nav.dashboard'),
       key: 'dashboard',
       icon: renderIcon(DashboardIcon),
     },
     {
-      label: 'Project Management',
+      label: t('nav.projects'),
       key: 'pm',
       icon: renderIcon(PMIcon),
       children: [
         {
-          label: 'Projects',
+          label: t('nav.projects'),
           key: 'pm-projects',
         },
         {
-          label: 'Gantt Chart',
+          label: t('nav.gantt'),
           key: 'pm-gantt',
           icon: renderIcon(GanttIcon),
         },
         {
-          label: 'Obsidian Sync',
+          label: t('nav.sync'),
           key: 'pm-sync',
           icon: renderIcon(SyncIcon),
         },
       ],
     },
     {
-      label: 'Attendance',
+      label: t('nav.attendance'),
       key: 'attendance',
       icon: renderIcon(AttendanceIcon),
     },
     {
-      label: 'BOM Analyzer',
+      label: t('nav.bom'),
       key: 'bom',
       icon: renderIcon(BOMIcon),
     },
@@ -123,7 +125,7 @@ const menuOptions = computed<MenuOption[]>(() => {
   // Admin-only: User Management link
   if (authStore.isAdmin) {
     items.push({
-      label: 'User Management',
+      label: t('nav.users'),
       key: 'admin-users',
       icon: renderIcon(UsersIcon),
     })

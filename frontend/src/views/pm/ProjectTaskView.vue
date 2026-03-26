@@ -26,7 +26,7 @@ SOFTWARE.
     <n-flex align="center" gap="8" style="margin-bottom: 20px;">
       <n-button text @click="router.push('/pm')">
         <template #icon><n-icon :component="BackIcon" /></template>
-        All Projects
+        {{ t('tasks.all_projects') }}
       </n-button>
       <n-text depth="3">/</n-text>
       <n-text v-if="project">{{ project.name }}</n-text>
@@ -37,12 +37,12 @@ SOFTWARE.
     <n-result
       v-if="store.selectedProjectError || store.tasksError"
       status="error"
-      title="Failed to load project data"
-      :description="store.selectedProjectError || store.tasksError || 'Unknown error'"
+      :title="t('common.unknown_error')"
+      :description="store.selectedProjectError || store.tasksError || t('common.unknown_error')"
       style="padding: 48px 0;"
     >
       <template #footer>
-        <n-button @click="load">Retry</n-button>
+        <n-button @click="load">{{ t('common.retry') }}</n-button>
       </template>
     </n-result>
 
@@ -55,9 +55,9 @@ SOFTWARE.
             <n-text depth="3" style="font-size: 12px;">{{ project.full_name }}</n-text>
           </div>
           <n-flex gap="16" align="center">
-            <n-statistic label="Tasks" :value="project.task_stats?.total ?? 0" style="text-align: center;" />
-            <n-statistic label="Done" :value="project.task_stats?.done ?? 0" style="text-align: center;" />
-            <n-statistic label="Hours" :value="project.total_hours ?? 0" style="text-align: center;" />
+            <n-statistic :label="t('tasks.columns.task')" :value="project.task_stats?.total ?? 0" style="text-align: center;" />
+            <n-statistic :label="t('tasks.status.done')" :value="project.task_stats?.done ?? 0" style="text-align: center;" />
+            <n-statistic :label="t('projects.columns.hours')" :value="project.total_hours ?? 0" style="text-align: center;" />
             <n-progress
               type="circle"
               :percentage="Math.round((project.task_stats?.completion_rate ?? 0) * 100)"
@@ -83,7 +83,7 @@ SOFTWARE.
         />
         <n-input
           v-model:value="taskSearch"
-          placeholder="Search tasks…"
+          :placeholder="t('tasks.search_placeholder')"
           clearable
           style="width: 200px;"
           @update:value="onTaskFilter"
@@ -98,11 +98,11 @@ SOFTWARE.
           @click="confirmBulkDeleteTasks"
         >
           <template #icon><n-icon :component="DeleteIcon" /></template>
-          Delete ({{ checkedTaskKeys.length }})
+          {{ t('tasks.delete_selected', { n: checkedTaskKeys.length }) }}
         </n-button>
         <n-button type="primary" @click="openCreateModal">
           <template #icon><n-icon :component="AddIcon" /></template>
-          New Task
+          {{ t('tasks.new_task') }}
         </n-button>
       </n-flex>
 
@@ -121,13 +121,13 @@ SOFTWARE.
 
     <!-- Task detail drawer (read-only + edit button) -->
     <n-drawer v-model:show="drawerOpen" :width="560" placement="right">
-      <n-drawer-content :title="store.selectedTask?.name ?? 'Task Detail'" closable>
+      <n-drawer-content :title="store.selectedTask?.name ?? t('tasks.edit_task')" closable>
         <template v-if="store.selectedTask">
           <!-- Edit bar at the top of drawer -->
           <n-flex justify="flex-end" style="margin-bottom: 12px;">
             <n-button size="small" @click="openEditModal(store.selectedTask!)">
               <template #icon><n-icon :component="EditIcon" /></template>
-              Edit Task
+              {{ t('tasks.edit_task') }}
             </n-button>
           </n-flex>
           <TaskDetail :task="store.selectedTask" />
@@ -135,7 +135,7 @@ SOFTWARE.
         <n-result
           v-else-if="store.selectedTaskError"
           status="error"
-          title="Failed to load task"
+          :title="t('common.unknown_error')"
           :description="store.selectedTaskError"
         />
         <n-spin
@@ -148,7 +148,7 @@ SOFTWARE.
     <!-- Create / Edit Task Modal -->
     <n-modal
       v-model:show="taskModalOpen"
-      :title="taskModalMode === 'create' ? 'New Task' : 'Edit Task'"
+      :title="taskModalMode === 'create' ? t('tasks.new_task') : t('tasks.edit_task')"
       preset="card"
       style="width: 560px;"
       :mask-closable="false"
@@ -161,19 +161,19 @@ SOFTWARE.
         label-width="120px"
         require-mark-placement="right-hanging"
       >
-        <n-form-item label="Task Name" path="name">
-          <n-input v-model:value="taskForm.name" placeholder="Enter task name" />
+        <n-form-item :label="t('tasks.form.name_label')" path="name">
+          <n-input v-model:value="taskForm.name" :placeholder="t('tasks.form.name_placeholder')" />
         </n-form-item>
 
-        <n-form-item label="Status" path="status">
+        <n-form-item :label="t('tasks.form.status_label')" path="status">
           <n-select v-model:value="taskForm.status" :options="taskStatusOptions.slice(1)" />
         </n-form-item>
 
-        <n-form-item label="Priority" path="priority">
+        <n-form-item :label="t('tasks.form.priority_label')" path="priority">
           <n-select v-model:value="taskForm.priority" :options="taskPriorityOptions.slice(1)" />
         </n-form-item>
 
-        <n-form-item label="Deadline" path="deadline">
+        <n-form-item :label="t('tasks.form.deadline_label')" path="deadline">
           <n-date-picker
             v-model:formatted-value="taskForm.deadline"
             value-format="yyyy-MM-dd"
@@ -183,31 +183,31 @@ SOFTWARE.
           />
         </n-form-item>
 
-        <n-form-item label="Est. Hours" path="estimated_hours">
+        <n-form-item :label="t('tasks.form.est_hours_label')" path="estimated_hours">
           <n-input-number
             v-model:value="taskForm.estimated_hours"
             :min="0"
             :step="0.5"
             style="width: 100%;"
-            placeholder="e.g. 8"
+            :placeholder="t('tasks.form.est_hours_placeholder')"
           />
         </n-form-item>
 
-        <n-form-item label="Description" path="description">
+        <n-form-item :label="t('tasks.form.description_label')" path="description">
           <n-input
             v-model:value="taskForm.description"
             type="textarea"
             :rows="4"
-            placeholder="Task description (written to vault)"
+            :placeholder="t('tasks.form.description_placeholder')"
           />
         </n-form-item>
       </n-form>
 
       <template #footer>
         <n-flex justify="flex-end" gap="8">
-          <n-button @click="taskModalOpen = false">Cancel</n-button>
+          <n-button @click="taskModalOpen = false">{{ t('common.cancel') }}</n-button>
           <n-button type="primary" :loading="taskSaving" @click="submitTaskForm">
-            {{ taskModalMode === 'create' ? 'Create' : 'Save' }}
+            {{ taskModalMode === 'create' ? t('common.create') : t('common.save') }}
           </n-button>
         </n-flex>
       </template>
@@ -219,6 +219,7 @@ SOFTWARE.
 import { ref, computed, h, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMessage, useDialog } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
 import {
   NButton, NCard, NDataTable, NDatePicker, NDrawer, NDrawerContent, NFlex, NForm,
   NFormItem, NH3, NIcon, NInput, NInputNumber, NModal, NProgress, NResult,
@@ -235,6 +236,7 @@ const router = useRouter()
 const route = useRoute()
 const message = useMessage()
 const dialog = useDialog()
+const { t } = useI18n()
 
 // --- Drawer state ---
 const drawerOpen = ref(false)
@@ -265,9 +267,9 @@ const taskForm = ref({
 })
 
 const taskFormRules: FormRules = {
-  name: [{ required: true, message: 'Task name is required', trigger: 'blur' }],
-  status: [{ required: true, message: 'Status is required', trigger: 'change' }],
-  priority: [{ required: true, message: 'Priority is required', trigger: 'change' }],
+  name: [{ required: true, message: t('tasks.form.name_required'), trigger: 'blur' }],
+  status: [{ required: true, message: t('tasks.form.status_required'), trigger: 'change' }],
+  priority: [{ required: true, message: t('tasks.form.priority_required'), trigger: 'change' }],
 }
 
 // ---
@@ -279,20 +281,20 @@ const projectId = computed(() => {
 
 const project = computed(() => store.selectedProject)
 
-const taskStatusOptions = [
-  { label: 'All Statuses', value: 'all' },
-  { label: 'To Do', value: 'todo' },
-  { label: 'In Progress', value: 'doing' },
-  { label: 'Done', value: 'done' },
-  { label: 'Cancelled', value: 'cancelled' },
-]
+const taskStatusOptions = computed(() => [
+  { label: t('tasks.status.all'), value: 'all' },
+  { label: t('tasks.status.todo'), value: 'todo' },
+  { label: t('tasks.status.doing'), value: 'doing' },
+  { label: t('tasks.status.done'), value: 'done' },
+  { label: t('tasks.status.cancelled'), value: 'cancelled' },
+])
 
-const taskPriorityOptions = [
-  { label: 'All Priorities', value: 'all' },
-  { label: 'High', value: 'high' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Low', value: 'low' },
-]
+const taskPriorityOptions = computed(() => [
+  { label: t('tasks.priority.all'), value: 'all' },
+  { label: t('tasks.priority.high'), value: 'high' },
+  { label: t('tasks.priority.medium'), value: 'medium' },
+  { label: t('tasks.priority.low'), value: 'low' },
+])
 
 const filteredTasks = computed(() => {
   let tasks = store.tasks
@@ -310,10 +312,10 @@ const filteredTasks = computed(() => {
 })
 
 // --- Columns ---
-const taskColumns: DataTableColumns<Task> = [
+const taskColumns = computed<DataTableColumns<Task>>(() => [
   { type: 'selection' },
   {
-    title: 'Task',
+    title: t('tasks.columns.task'),
     key: 'name',
     render(row) {
       return h('div', {
@@ -324,7 +326,7 @@ const taskColumns: DataTableColumns<Task> = [
     },
   },
   {
-    title: 'Status',
+    title: t('tasks.columns.status'),
     key: 'status',
     width: 120,
     render(row) {
@@ -332,7 +334,10 @@ const taskColumns: DataTableColumns<Task> = [
         todo: 'default', doing: 'info', done: 'success', cancelled: 'error',
       }
       const labelMap: Record<string, string> = {
-        todo: 'To Do', doing: 'In Progress', done: 'Done', cancelled: 'Cancelled',
+        todo: t('tasks.status.todo'),
+        doing: t('tasks.status.doing'),
+        done: t('tasks.status.done'),
+        cancelled: t('tasks.status.cancelled'),
       }
       return h(NTag, { type: typeMap[row.status] ?? 'default', size: 'small', bordered: false }, {
         default: () => labelMap[row.status] ?? row.status,
@@ -340,7 +345,7 @@ const taskColumns: DataTableColumns<Task> = [
     },
   },
   {
-    title: 'Priority',
+    title: t('tasks.columns.priority'),
     key: 'priority',
     width: 90,
     render(row) {
@@ -353,7 +358,7 @@ const taskColumns: DataTableColumns<Task> = [
     },
   },
   {
-    title: 'Deadline',
+    title: t('tasks.columns.deadline'),
     key: 'deadline',
     width: 110,
     sorter: (a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? ''),
@@ -364,7 +369,7 @@ const taskColumns: DataTableColumns<Task> = [
     },
   },
   {
-    title: 'Est / Actual',
+    title: t('tasks.columns.est_actual'),
     key: 'hours',
     width: 110,
     render(row) {
@@ -397,7 +402,7 @@ const taskColumns: DataTableColumns<Task> = [
       ])
     },
   },
-]
+])
 
 // --- Actions ---
 
@@ -413,20 +418,20 @@ function onTaskFilter() {
 
 function confirmDeleteTask(task: Task) {
   dialog.warning({
-    title: 'Delete Task',
-    content: `Delete "${task.name}"? This sets the task status to cancelled and cannot be undone.`,
-    positiveText: 'Delete',
-    negativeText: 'Cancel',
+    title: t('tasks.delete_confirm_title'),
+    content: t('tasks.delete_confirm_content', { name: task.name }),
+    positiveText: t('common.delete'),
+    negativeText: t('common.cancel'),
     onPositiveClick: async () => {
       try {
         await store.deleteTask(task.uuid)
         if (drawerOpen.value && store.selectedTask?.uuid === task.uuid) {
           drawerOpen.value = false
         }
-        message.success(`Task "${task.name}" deleted`)
+        message.success(t('tasks.delete_success', { name: task.name }))
         await load()
       } catch (err: unknown) {
-        message.error(err instanceof Error ? err.message : 'Delete failed')
+        message.error(err instanceof Error ? err.message : t('common.unknown_error'))
       }
     },
   })
@@ -436,19 +441,19 @@ async function confirmBulkDeleteTasks() {
   const count = checkedTaskKeys.value.length
   if (!count) return
   dialog.warning({
-    title: `Delete ${count} Task${count > 1 ? 's' : ''}`,
-    content: `Delete ${count} selected task${count > 1 ? 's' : ''}? This cannot be undone.`,
-    positiveText: `Delete ${count}`,
-    negativeText: 'Cancel',
+    title: t('tasks.bulk_delete_confirm_title', { count }),
+    content: t('tasks.bulk_delete_confirm_content', { count }),
+    positiveText: t('tasks.delete_selected', { n: count }),
+    negativeText: t('common.cancel'),
     onPositiveClick: async () => {
       bulkTaskDeleting.value = true
       try {
         await store.bulkDeleteTasks(checkedTaskKeys.value as string[])
         checkedTaskKeys.value = []
-        message.success(`${count} task${count > 1 ? 's' : ''} deleted`)
+        message.success(t('tasks.bulk_delete_success', { count }))
         await load()
       } catch (err: unknown) {
-        message.error(err instanceof Error ? err.message : 'Bulk delete failed')
+        message.error(err instanceof Error ? err.message : t('common.unknown_error'))
       } finally {
         bulkTaskDeleting.value = false
       }
@@ -504,7 +509,7 @@ async function submitTaskForm() {
         estimated_hours: taskForm.value.estimated_hours,
         description: taskForm.value.description,
       })
-      message.success('Task created and written to vault')
+      message.success(t('tasks.create_success'))
     } else {
       if (!editingTaskUuid.value) return
       await store.updateTaskInStore(editingTaskUuid.value, {
@@ -519,11 +524,11 @@ async function submitTaskForm() {
       if (drawerOpen.value && store.selectedTask?.uuid === editingTaskUuid.value) {
         await store.fetchTask(editingTaskUuid.value)
       }
-      message.success('Task updated and written to vault')
+      message.success(t('tasks.update_success'))
     }
     taskModalOpen.value = false
   } catch (e) {
-    message.error(e instanceof Error ? e.message : 'Save failed')
+    message.error(e instanceof Error ? e.message : t('common.unknown_error'))
   } finally {
     taskSaving.value = false
   }

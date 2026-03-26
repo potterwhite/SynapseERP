@@ -22,10 +22,10 @@ SOFTWARE.
 
 <template>
   <div>
-    <n-h2 style="margin-bottom: 20px;">BOM Analyzer</n-h2>
+    <n-h2 style="margin-bottom: 20px;">{{ t('bom.title') }}</n-h2>
 
     <!-- Upload card -->
-    <n-card v-if="!result" title="Upload BOM Files" style="max-width: 640px;">
+    <n-card v-if="!result" :title="t('bom.upload_card_title')" style="max-width: 640px;">
       <n-upload
         ref="uploadRef"
         accept=".xlsx,.xls"
@@ -36,9 +36,9 @@ SOFTWARE.
         <n-upload-dragger>
           <n-flex vertical align="center" style="padding: 24px 0; gap: 8px;">
             <n-icon :component="CloudUploadIcon" size="48" depth="3" />
-            <n-text>Click or drag one or more BOM Excel files here</n-text>
+            <n-text>{{ t('bom.drop_hint') }}</n-text>
             <n-text depth="3" style="font-size: 12px;">
-              .xlsx / .xls · Multiple files supported
+              {{ t('bom.drop_formats') }}
             </n-text>
           </n-flex>
         </n-upload-dragger>
@@ -51,7 +51,7 @@ SOFTWARE.
           :disabled="selectedFiles.length === 0"
           @click="handleAnalyze"
         >
-          Aggregate &amp; Analyze
+          {{ t('bom.analyze_btn') }}
         </n-button>
       </n-flex>
 
@@ -62,18 +62,18 @@ SOFTWARE.
     <template v-else>
       <n-flex justify="space-between" align="center" style="margin-bottom: 16px;" :wrap="false">
         <n-flex vertical gap="2">
-          <n-text style="font-weight: 500;">Aggregation complete</n-text>
+          <n-text style="font-weight: 500;">{{ t('bom.aggregation_complete') }}</n-text>
           <n-text depth="3" style="font-size: 12px;">
-            Files: {{ result.filenames.join(', ') }}
+            {{ t('bom.files_label') }} {{ result.filenames.join(', ') }}
           </n-text>
         </n-flex>
         <n-flex gap="8">
           <n-button size="small" @click="downloadReport">
             <template #icon><n-icon :component="DownloadIcon" /></template>
-            Download Excel
+            {{ t('bom.download_excel') }}
           </n-button>
           <n-button type="primary" ghost size="small" @click="reset">
-            New Analysis
+            {{ t('bom.new_analysis') }}
           </n-button>
         </n-flex>
       </n-flex>
@@ -84,7 +84,7 @@ SOFTWARE.
         type="warning"
         style="margin-bottom: 12px;"
       >
-        {{ suspiciousCount }} suspicious item(s) detected (highlighted in yellow).
+        {{ t('bom.suspicious_warning', { count: suspiciousCount }) }}
       </n-alert>
 
       <ReportTable
@@ -97,6 +97,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NAlert, NButton, NCard, NFlex, NH2, NIcon,
   NText, NUpload, NUploadDragger,
@@ -129,6 +130,7 @@ const selectedFiles = ref<File[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const result = ref<AnalysisResult | null>(null)
+const { t } = useI18n()
 
 const suspiciousCount = computed(
   () => result.value?.report.rows.filter(r => r.is_suspicious).length ?? 0
@@ -152,7 +154,7 @@ async function handleAnalyze() {
     })
     result.value = data
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Analysis failed'
+    error.value = e instanceof Error ? e.message : t('common.unknown_error')
   } finally {
     loading.value = false
   }

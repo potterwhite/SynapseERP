@@ -30,21 +30,21 @@ SOFTWARE.
 
     <!-- Meta grid -->
     <n-descriptions :column="2" label-placement="top" bordered size="small" style="margin-bottom: 20px;">
-      <n-descriptions-item label="Project">{{ task.project.name }}</n-descriptions-item>
-      <n-descriptions-item label="UUID">
+      <n-descriptions-item :label="t('task_detail.project')">{{ task.project.name }}</n-descriptions-item>
+      <n-descriptions-item :label="t('task_detail.uuid')">
         <n-text code style="font-size: 11px;">{{ task.uuid }}</n-text>
       </n-descriptions-item>
-      <n-descriptions-item label="Created">{{ task.created ?? '—' }}</n-descriptions-item>
-      <n-descriptions-item label="Deadline">
+      <n-descriptions-item :label="t('task_detail.created')">{{ task.created ?? '—' }}</n-descriptions-item>
+      <n-descriptions-item :label="t('task_detail.deadline')">
         <span v-if="task.deadline" :style="overdue ? 'color: #d03050;' : ''">
-          {{ task.deadline }}{{ overdue ? ' ⚠ overdue' : '' }}
+          {{ task.deadline }}{{ overdue ? t('task_detail.overdue') : '' }}
         </span>
         <span v-else style="color: var(--n-text-color-3);">—</span>
       </n-descriptions-item>
-      <n-descriptions-item label="Estimated">
+      <n-descriptions-item :label="t('task_detail.estimated')">
         {{ task.estimated_hours != null ? `${task.estimated_hours}h` : '—' }}
       </n-descriptions-item>
-      <n-descriptions-item label="Actual">
+      <n-descriptions-item :label="t('task_detail.actual')">
         <n-text :type="overtimeType">{{ task.actual_hours }}h</n-text>
       </n-descriptions-item>
     </n-descriptions>
@@ -52,7 +52,7 @@ SOFTWARE.
     <!-- Dependency list -->
     <template v-if="task.depends_on.length">
       <n-divider title-placement="left" style="margin: 12px 0 8px;">
-        <n-text depth="3" style="font-size: 12px;">Depends On</n-text>
+        <n-text depth="3" style="font-size: 12px;">{{ t('task_detail.depends_on') }}</n-text>
       </n-divider>
       <n-flex wrap gap="6" style="margin-bottom: 16px;">
         <n-tag
@@ -69,7 +69,7 @@ SOFTWARE.
     <!-- Time log -->
     <n-divider title-placement="left" style="margin: 12px 0 8px;">
       <n-text depth="3" style="font-size: 12px;">
-        Time Log ({{ task.time_entries.length }} entries · {{ task.actual_hours }}h total)
+        {{ t('task_detail.time_log', { count: task.time_entries.length, hours: task.actual_hours }) }}
       </n-text>
     </n-divider>
 
@@ -82,17 +82,17 @@ SOFTWARE.
         striped
       />
     </template>
-    <n-empty v-else description="No time entries yet" size="small" style="padding: 16px 0;" />
+    <n-empty v-else :description="t('task_detail.no_time_entries')" size="small" style="padding: 16px 0;" />
 
     <!-- Vault path (collapsed by default) -->
     <template v-if="task.vault_path">
       <n-divider style="margin: 16px 0 8px;" />
       <n-collapse>
-        <n-collapse-item title="Vault info" name="vault">
+        <n-collapse-item :title="t('task_detail.vault_info')" name="vault">
           <n-text code style="font-size: 11px; word-break: break-all;">{{ task.vault_path }}</n-text>
           <br />
           <n-text depth="3" style="font-size: 11px;">
-            Last synced: {{ task.synced_at ? new Date(task.synced_at).toLocaleString() : '—' }}
+            {{ t('task_detail.last_synced') }} {{ task.synced_at ? new Date(task.synced_at).toLocaleString() : '—' }}
           </n-text>
         </n-collapse-item>
       </n-collapse>
@@ -102,6 +102,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { computed, h } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NCollapse, NCollapseItem, NDataTable, NDescriptions, NDescriptionsItem,
   NDivider, NEmpty, NFlex, NTag, NText,
@@ -110,6 +111,7 @@ import type { DataTableColumns } from 'naive-ui'
 import type { Task, TimeEntry } from '@/types/pm'
 
 const props = defineProps<{ task: Task }>()
+const { t } = useI18n()
 
 const overdue = computed(() => {
   if (!props.task.deadline) return false
@@ -123,7 +125,10 @@ const overtimeType = computed(() => {
 
 const statusLabel = computed(() => {
   const map: Record<string, string> = {
-    todo: 'To Do', doing: 'In Progress', done: 'Done', cancelled: 'Cancelled',
+    todo: t('task_detail.status.todo'),
+    doing: t('task_detail.status.doing'),
+    done: t('task_detail.status.done'),
+    cancelled: t('task_detail.status.cancelled'),
   }
   return map[props.task.status] ?? props.task.status
 })
@@ -138,14 +143,14 @@ const priorityType = computed((): 'default' | 'warning' | 'error' => {
   return map[props.task.priority] ?? 'default'
 })
 
-const timeColumns: DataTableColumns<TimeEntry> = [
+const timeColumns = computed<DataTableColumns<TimeEntry>>(() => [
   {
-    title: 'Date',
+    title: t('task_detail.col_date'),
     key: 'date',
     width: 100,
   },
   {
-    title: 'Time',
+    title: t('task_detail.col_time'),
     key: 'time',
     width: 110,
     render(row) {
@@ -154,7 +159,7 @@ const timeColumns: DataTableColumns<TimeEntry> = [
     },
   },
   {
-    title: 'Duration',
+    title: t('task_detail.col_duration'),
     key: 'duration_minutes',
     width: 80,
     render(row) {
@@ -164,11 +169,11 @@ const timeColumns: DataTableColumns<TimeEntry> = [
     },
   },
   {
-    title: 'Description',
+    title: t('task_detail.col_description'),
     key: 'description',
     ellipsis: { tooltip: true },
   },
-]
+])
 </script>
 
 <style scoped>

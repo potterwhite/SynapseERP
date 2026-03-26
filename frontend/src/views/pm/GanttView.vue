@@ -24,13 +24,13 @@ SOFTWARE.
   <div>
     <!-- Header -->
     <n-flex justify="space-between" align="center" style="margin-bottom: 20px;">
-      <n-h2 style="margin: 0;">Gantt Chart</n-h2>
+      <n-h2 style="margin: 0;">{{ t('gantt.title') }}</n-h2>
       <n-flex gap="8" :wrap="false">
         <!-- Project filter -->
         <n-select
           v-model:value="selectedProjectId"
           :options="projectOptions"
-          placeholder="All projects"
+          :placeholder="t('gantt.all_projects')"
           clearable
           style="width: 200px;"
           @update:value="onProjectChange"
@@ -43,7 +43,7 @@ SOFTWARE.
           @click="handleSync"
         >
           <template #icon><n-icon :component="SyncIcon" /></template>
-          Sync
+          {{ t('projects.sync_vault') }}
         </n-button>
       </n-flex>
     </n-flex>
@@ -52,7 +52,7 @@ SOFTWARE.
     <n-result
       v-if="loadError"
       status="error"
-      title="Failed to load Gantt data"
+      :title="t('gantt.load_error')"
       :description="loadError"
       style="padding: 48px 0;"
     />
@@ -69,7 +69,7 @@ SOFTWARE.
 
     <!-- Task detail drawer (click on bar) -->
     <n-drawer v-model:show="drawerOpen" :width="560" placement="right">
-      <n-drawer-content :title="store.selectedTask?.name ?? 'Task Detail'" closable>
+      <n-drawer-content :title="store.selectedTask?.name ?? t('tasks.edit_task')" closable>
         <TaskDetail v-if="store.selectedTask" :task="store.selectedTask" />
         <n-spin
           v-else-if="store.selectedTaskLoading"
@@ -79,7 +79,7 @@ SOFTWARE.
     </n-drawer>
 
     <!-- Date-change confirmation dialog -->
-    <n-modal v-model:show="confirmOpen" preset="dialog" title="Update Task Dates?">
+    <n-modal v-model:show="confirmOpen" preset="dialog" :title="t('gantt.update_dates_title')">
       <template v-if="pendingChange">
         <n-text>
           Move <b>{{ pendingChange.task.name }}</b> to<br />
@@ -87,8 +87,8 @@ SOFTWARE.
         </n-text>
       </template>
       <template #action>
-        <n-button @click="confirmOpen = false">Cancel</n-button>
-        <n-button type="primary" :loading="saving" @click="confirmDateChange">Confirm</n-button>
+        <n-button @click="confirmOpen = false">{{ t('common.cancel') }}</n-button>
+        <n-button type="primary" :loading="saving" @click="confirmDateChange">{{ t('common.confirm') }}</n-button>
       </template>
     </n-modal>
   </div>
@@ -96,6 +96,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NButton, NCard, NDrawer, NDrawerContent, NFlex, NH2,
   NIcon, NModal, NResult, NSelect, NSpin, NText,
@@ -112,6 +113,7 @@ import TaskDetail from '@/views/pm/TaskDetail.vue'
 const store = usePmStore()
 const appStore = useAppStore()
 const message = useMessage()
+const { t } = useI18n()
 
 const loading = ref(false)
 const loadError = ref<string | null>(null)
@@ -142,7 +144,7 @@ async function loadGantt(projectId?: number | null) {
     const { data } = await pmApi.listGanttTasks(projectId ?? undefined)
     ganttTasks.value = data.tasks
   } catch (e) {
-    loadError.value = e instanceof Error ? e.message : 'Unknown error'
+    loadError.value = e instanceof Error ? e.message : t('common.unknown_error')
   } finally {
     loading.value = false
   }
@@ -172,10 +174,10 @@ async function confirmDateChange() {
     await pmApi.updateTask(task.id, {
       deadline: fmtDate(end),
     })
-    message.success('Task dates updated')
+    message.success(t('gantt.update_success'))
     await loadGantt(selectedProjectId.value)
   } catch (e) {
-    message.error(e instanceof Error ? e.message : 'Update failed')
+    message.error(e instanceof Error ? e.message : t('gantt.update_failed'))
   } finally {
     saving.value = false
     confirmOpen.value = false

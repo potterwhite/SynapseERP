@@ -24,7 +24,7 @@ SOFTWARE.
   <n-modal
     v-model:show="visible"
     preset="card"
-    :title="isEdit ? 'Edit Project' : 'New Project'"
+    :title="isEdit ? t('project_form.edit_title') : t('project_form.create_title')"
     style="width: 520px; max-width: 96vw;"
     :mask-closable="!saving"
     :closable="!saving"
@@ -38,16 +38,16 @@ SOFTWARE.
       label-width="100px"
       require-mark-placement="right-hanging"
     >
-      <n-form-item label="Name" path="name">
+      <n-form-item :label="t('project_form.name_label')" path="name">
         <n-input
           v-model:value="form.name"
-          placeholder="Project name"
+          :placeholder="t('project_form.name_placeholder')"
           :disabled="saving"
           @keydown.enter.prevent="submit"
         />
       </n-form-item>
 
-      <n-form-item label="Status" path="status">
+      <n-form-item :label="t('project_form.status_label')" path="status">
         <n-select
           v-model:value="form.status"
           :options="statusOptions"
@@ -55,7 +55,7 @@ SOFTWARE.
         />
       </n-form-item>
 
-      <n-form-item label="Deadline" path="deadline">
+      <n-form-item :label="t('project_form.deadline_label')" path="deadline">
         <n-date-picker
           v-model:value="deadlineTs"
           type="date"
@@ -66,7 +66,7 @@ SOFTWARE.
         />
       </n-form-item>
 
-      <n-form-item label="Tags" path="tags">
+      <n-form-item :label="t('project_form.tags_label')" path="tags">
         <n-dynamic-tags
           v-model:value="form.tags"
           :disabled="saving"
@@ -76,9 +76,9 @@ SOFTWARE.
 
     <template #footer>
       <n-flex justify="end" gap="8">
-        <n-button :disabled="saving" @click="visible = false">Cancel</n-button>
+        <n-button :disabled="saving" @click="visible = false">{{ t('common.cancel') }}</n-button>
         <n-button type="primary" :loading="saving" @click="submit">
-          {{ isEdit ? 'Save Changes' : 'Create Project' }}
+          {{ isEdit ? t('common.save') : t('common.create') }}
         </n-button>
       </n-flex>
     </template>
@@ -87,6 +87,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NModal, NForm, NFormItem, NInput, NSelect, NDatePicker,
   NDynamicTags, NButton, NFlex, useMessage,
@@ -119,6 +120,7 @@ const isEdit = computed(() => !!props.project)
 
 const store = usePmStore()
 const message = useMessage()
+const { t } = useI18n()
 const formRef = ref<FormInst | null>(null)
 const saving = ref(false)
 
@@ -149,15 +151,15 @@ function onDeadlineChange(ts: number | null) {
   }
 }
 
-const statusOptions = [
-  { label: 'Active', value: 'active' },
-  { label: 'On Hold', value: 'on_hold' },
-  { label: 'Archived', value: 'archived' },
-]
+const statusOptions = computed(() => [
+  { label: t('projects.status.active'), value: 'active' },
+  { label: t('projects.status.on_hold'), value: 'on_hold' },
+  { label: t('projects.status.archived'), value: 'archived' },
+])
 
-const rules: FormRules = {
-  name: [{ required: true, message: 'Project name is required', trigger: 'blur' }],
-}
+const rules = computed<FormRules>(() => ({
+  name: [{ required: true, message: t('project_form.name_required'), trigger: 'blur' }],
+}))
 
 // Populate form when editing
 watch(
@@ -197,7 +199,7 @@ async function submit() {
         deadline: form.value.deadline,
         tags: form.value.tags,
       })
-      message.success('Project updated')
+      message.success(t('common.save'))
     } else {
       saved = await store.createProject({
         name: form.value.name,
@@ -205,12 +207,12 @@ async function submit() {
         deadline: form.value.deadline,
         tags: form.value.tags,
       })
-      message.success('Project created')
+      message.success(t('common.create'))
     }
     emit('saved', saved)
     visible.value = false
   } catch (err: unknown) {
-    message.error(err instanceof Error ? err.message : 'Failed to save project')
+    message.error(err instanceof Error ? err.message : t('common.unknown_error'))
   } finally {
     saving.value = false
   }

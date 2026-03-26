@@ -22,7 +22,7 @@ SOFTWARE.
 
 <template>
   <div class="sync-settings">
-    <n-page-header title="Obsidian Sync" subtitle="Bidirectional sync between the database and your Obsidian vault">
+    <n-page-header :title="t('sync.title')" :subtitle="t('sync.subtitle')">
       <template #extra>
         <n-space>
           <n-button
@@ -34,7 +34,7 @@ SOFTWARE.
             <template #icon>
               <n-icon><CloudDownloadOutline /></n-icon>
             </template>
-            Import from Vault
+            {{ t('sync.import_btn') }}
           </n-button>
           <n-button
             :loading="exporting"
@@ -44,7 +44,7 @@ SOFTWARE.
             <template #icon>
               <n-icon><CloudUploadOutline /></n-icon>
             </template>
-            Export to Vault
+            {{ t('sync.export_btn') }}
           </n-button>
         </n-space>
       </template>
@@ -52,12 +52,12 @@ SOFTWARE.
 
     <n-divider />
 
-    <!-- Import filter card — shown before status cards for discoverability -->
+    <!-- Import filter card -->
     <n-card size="small" style="margin-bottom: 16px;">
       <template #header>
         <n-flex align="center" gap="8">
           <n-icon :component="FilterIcon" />
-          <span>Import Filter (optional)</span>
+          <span>{{ t('sync.filter_card_title') }}</span>
         </n-flex>
       </template>
       <n-flex vertical gap="8">
@@ -70,18 +70,12 @@ SOFTWARE.
         >
           <template #suffix>
             <n-text depth="3" style="font-size: 12px; white-space: nowrap;">
-              comma-separated
+              {{ t('sync.filter_suffix') }}
             </n-text>
           </template>
         </n-input>
         <!-- Persistent hint — always visible -->
-        <n-text depth="3" style="font-size: 12px; line-height: 1.6;">
-          Enter one or more keywords separated by commas. Only projects whose name contains
-          <b>at least one</b> keyword will be imported.
-          Leave empty to import <b>all</b> projects from the vault.
-          <br />
-          Example: <n-text code>AI, Quantitative, Demo</n-text>
-        </n-text>
+        <n-text depth="3" style="font-size: 12px; line-height: 1.6;" v-html="t('sync.filter_hint')" />
       </n-flex>
     </n-card>
 
@@ -89,31 +83,31 @@ SOFTWARE.
     <n-grid :cols="5" :x-gap="16" :y-gap="16" class="status-cards">
       <n-gi>
         <n-card size="small">
-          <n-statistic label="Sync Status">
+          <n-statistic :label="t('sync.status_card')">
             <template #prefix>
               <n-icon
                 :component="syncConfig?.sync_enabled ? CheckmarkCircleOutline : CloseCircleOutline"
                 :color="syncConfig?.sync_enabled ? '#18a058' : '#d03050'"
               />
             </template>
-            {{ syncConfig?.sync_enabled ? 'Enabled' : 'Disabled' }}
+            {{ syncConfig?.sync_enabled ? t('sync.status_enabled') : t('sync.status_disabled') }}
           </n-statistic>
         </n-card>
       </n-gi>
       <n-gi>
         <n-card size="small">
-          <n-statistic label="Projects in DB" :value="syncStatus?.db_projects ?? 0" />
+          <n-statistic :label="t('sync.db_projects')" :value="syncStatus?.db_projects ?? 0" />
         </n-card>
       </n-gi>
       <n-gi>
         <n-card size="small">
-          <n-statistic label="Tasks in DB" :value="syncStatus?.db_tasks ?? 0" />
+          <n-statistic :label="t('sync.db_tasks')" :value="syncStatus?.db_tasks ?? 0" />
         </n-card>
       </n-gi>
       <n-gi>
         <n-card size="small">
           <n-statistic
-            label="Projects in Vault"
+            :label="t('sync.vault_projects')"
             :value="syncStatus?.vault_projects ?? '—'"
           />
         </n-card>
@@ -121,7 +115,7 @@ SOFTWARE.
       <n-gi>
         <n-card size="small">
           <n-statistic
-            label="Tasks in Vault"
+            :label="t('sync.vault_tasks')"
             :value="syncStatus?.vault_tasks ?? '—'"
           />
         </n-card>
@@ -131,16 +125,16 @@ SOFTWARE.
     <!-- Sync timestamps -->
     <n-grid :cols="2" :x-gap="16" :y-gap="16" style="margin-top: 16px;">
       <n-gi>
-        <n-card size="small" title="Last Import (vault → DB)">
+        <n-card size="small" :title="t('sync.last_import')">
           <n-text :depth="syncStatus?.last_import_at ? 1 : 3">
-            {{ syncStatus?.last_import_at ? formatDatetime(syncStatus.last_import_at) : 'Never synced' }}
+            {{ syncStatus?.last_import_at ? formatDatetime(syncStatus.last_import_at) : t('sync.never_synced') }}
           </n-text>
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card size="small" title="Last Export (DB → vault)">
+        <n-card size="small" :title="t('sync.last_export')">
           <n-text :depth="syncStatus?.last_export_at ? 1 : 3">
-            {{ syncStatus?.last_export_at ? formatDatetime(syncStatus.last_export_at) : 'Never exported' }}
+            {{ syncStatus?.last_export_at ? formatDatetime(syncStatus.last_export_at) : t('sync.never_exported') }}
           </n-text>
         </n-card>
       </n-gi>
@@ -148,14 +142,14 @@ SOFTWARE.
 
     <n-divider />
 
-    <!-- Auto-sync (Phase 5.5) -->
-    <n-card title="Auto-Sync (Vault Watcher)">
+    <!-- Auto-sync -->
+    <n-card :title="t('sync.auto_sync_title')">
       <template #header-extra>
         <n-tag
           :type="watcherInfo?.watchdog_available ? 'success' : 'warning'"
           size="small"
         >
-          {{ watcherInfo?.watchdog_available ? 'watchdog installed' : 'watchdog not installed' }}
+          {{ watcherInfo?.watchdog_available ? t('sync.watchdog_installed') : t('sync.watchdog_missing') }}
         </n-tag>
       </template>
 
@@ -165,32 +159,29 @@ SOFTWARE.
         :show-icon="true"
         style="margin-bottom: 12px;"
       >
-        <template #header>watchdog not installed</template>
+        <template #header>{{ t('sync.watchdog_missing') }}</template>
         Run <n-text code>pip install "watchdog>=4.0"</n-text> or
         <n-text code>./synapse prepare</n-text> to enable auto-sync.
       </n-alert>
 
       <n-descriptions :column="1" label-placement="left" label-style="width:160px" size="small">
-        <n-descriptions-item label="How it works">
-          The vault watcher monitors your Obsidian vault for file changes
-          and automatically runs an incremental import after a 5-second debounce window —
-          no manual button click needed.
+        <n-descriptions-item :label="t('sync.watcher_how_label')">
+          {{ t('sync.watcher_how_desc') }}
         </n-descriptions-item>
-        <n-descriptions-item label="Start command">
+        <n-descriptions-item :label="t('sync.watcher_cmd_label')">
           <n-text code>{{ watcherInfo?.start_command ?? './synapse vault:watch' }}</n-text>
           <n-text depth="3" style="margin-left: 8px; font-size: 12px;">
-            (already included in <n-text code>./synapse run:all</n-text> when vault is configured)
+            {{ t('sync.watcher_cmd_note') }}
           </n-text>
         </n-descriptions-item>
-        <n-descriptions-item label="Custom debounce">
+        <n-descriptions-item :label="t('sync.watcher_debounce_label')">
           <n-text code>./synapse vault:watch 3</n-text>
           <n-text depth="3" style="margin-left: 8px; font-size: 12px;">
-            (3-second debounce, useful on fast machines)
+            {{ t('sync.watcher_debounce_note') }}
           </n-text>
         </n-descriptions-item>
-        <n-descriptions-item label="Production">
-          Add a second Systemd unit pointing to
-          <n-text code>manage.py vault_watch</n-text> alongside the Gunicorn unit.
+        <n-descriptions-item :label="t('sync.watcher_prod_label')">
+          {{ t('sync.watcher_prod_desc') }}
         </n-descriptions-item>
       </n-descriptions>
     </n-card>
@@ -198,75 +189,75 @@ SOFTWARE.
     <n-divider />
 
     <!-- Vault path configuration -->
-    <n-card title="Vault Path Configuration">
+    <n-card :title="t('sync.vault_path_title')">
       <template #header-extra>
         <n-tag :type="syncConfig?.sync_enabled ? 'success' : 'warning'" size="small">
-          {{ syncConfig?.sync_enabled ? 'Active' : 'Not configured' }}
+          {{ syncConfig?.sync_enabled ? t('sync.vault_path_active') : t('sync.vault_path_not_configured') }}
         </n-tag>
       </template>
 
       <n-form label-placement="left" label-width="180px">
-        <n-form-item label="Dynamic Vault Path">
+        <n-form-item :label="t('sync.vault_path_label')">
           <n-space vertical style="width: 100%;">
             <n-input
               v-model:value="editVaultPath"
-              placeholder="/absolute/path/to/your/obsidian/vault"
+              :placeholder="t('sync.vault_path_placeholder')"
               clearable
               @keydown.enter="saveVaultPath"
             />
             <n-space>
               <n-button type="primary" size="small" :loading="savingPath" @click="saveVaultPath">
-                Save
+                {{ t('sync.vault_path_save') }}
               </n-button>
               <n-button size="small" :disabled="!syncConfig?.vault_path" @click="clearVaultPath">
-                Clear (use .env)
+                {{ t('sync.vault_path_clear') }}
               </n-button>
             </n-space>
             <n-text depth="3" style="font-size: 12px;">
-              Set here to override the .env value. Leave empty to use OBSIDIAN_VAULT_PATH from .env.
+              {{ t('sync.vault_path_hint') }}
             </n-text>
           </n-space>
         </n-form-item>
 
-        <n-form-item label=".env OBSIDIAN_VAULT_PATH">
+        <n-form-item :label="t('sync.env_path_label')">
           <n-text :depth="syncConfig?.env_vault_path ? 1 : 3" style="font-family: monospace;">
-            {{ syncConfig?.env_vault_path ?? '(not set)' }}
+            {{ syncConfig?.env_vault_path ?? t('common.none') }}
           </n-text>
         </n-form-item>
 
-        <n-form-item label="Effective Vault Path">
+        <n-form-item :label="t('sync.effective_path_label')">
           <n-text
             :type="syncConfig?.sync_enabled ? 'success' : 'warning'"
             style="font-family: monospace; word-break: break-all;"
           >
-            {{ syncConfig?.effective_vault_path ?? '(none — sync disabled)' }}
+            {{ syncConfig?.effective_vault_path ?? t('sync.effective_path_none') }}
           </n-text>
         </n-form-item>
       </n-form>
     </n-card>
 
     <!-- Last sync result -->
-    <n-card v-if="lastResult" title="Last Sync Result" style="margin-top: 16px;">
+    <n-card v-if="lastResult" :title="t('sync.result_title')" style="margin-top: 16px;">
       <n-descriptions :column="3" label-placement="left" bordered size="small">
-        <n-descriptions-item label="Mode">
+        <n-descriptions-item :label="t('sync.result_mode')">
           <n-tag :type="lastResult.mode === 'import' ? 'info' : 'warning'" size="small">
             {{ lastResult.mode }}
           </n-tag>
         </n-descriptions-item>
-        <n-descriptions-item label="Duration">{{ lastResult.duration_ms }}ms</n-descriptions-item>
-        <n-descriptions-item label="Status">
+        <n-descriptions-item :label="t('sync.result_duration')">{{ lastResult.duration_ms }}ms</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_status')">
           <n-tag type="success" size="small">{{ lastResult.status }}</n-tag>
         </n-descriptions-item>
-        <n-descriptions-item label="Projects Created">{{ lastResult.projects_created }}</n-descriptions-item>
-        <n-descriptions-item label="Projects Updated">{{ lastResult.projects_updated }}</n-descriptions-item>
-        <n-descriptions-item label="Tasks Created">{{ lastResult.tasks_created }}</n-descriptions-item>
-        <n-descriptions-item label="Tasks Updated">{{ lastResult.tasks_updated }}</n-descriptions-item>
-        <n-descriptions-item label="Time Entries Created">{{ lastResult.time_entries_created }}</n-descriptions-item>
-        <n-descriptions-item label="Skipped">{{ lastResult.skipped }}</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_projects_created')">{{ lastResult.projects_created }}</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_projects_updated')">{{ lastResult.projects_updated }}</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_tasks_created')">{{ lastResult.tasks_created }}</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_tasks_updated')">{{ lastResult.tasks_updated }}</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_time_entries')">{{ lastResult.time_entries_created }}</n-descriptions-item>
+        <n-descriptions-item :label="t('sync.result_skipped')">{{ lastResult.skipped }}</n-descriptions-item>
       </n-descriptions>
       <template v-if="lastResult.errors && lastResult.errors.length > 0">
         <n-divider />
-        <n-alert type="warning" title="Sync Errors">
+        <n-alert type="warning" :title="t('sync.sync_errors')">
           <ul style="margin: 0; padding-left: 16px;">
             <li v-for="(err, i) in lastResult.errors" :key="i">{{ err }}</li>
           </ul>
@@ -278,6 +269,7 @@ SOFTWARE.
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   NPageHeader, NButton, NIcon, NSpace, NDivider,
   NCard, NGrid, NGi, NStatistic, NText, NTag, NAlert,
@@ -337,6 +329,7 @@ interface WatcherInfo {
 // ─── State ───────────────────────────────────────────────────────────────────
 
 const message = useMessage()
+const { t } = useI18n()
 
 const syncStatus = ref<SyncStatus | null>(null)
 const syncConfig = ref<SyncConfig | null>(null)
@@ -353,8 +346,8 @@ const importFilterFocused = ref(false)
 
 const importFilterPlaceholder = computed(() =>
   importFilterFocused.value
-    ? 'e.g. AI, Quantitative, Demo  ← separate multiple keywords with commas'
-    : 'Filter by project name keywords (leave empty = import all)'
+    ? t('sync.filter_placeholder_focus')
+    : t('sync.filter_placeholder_blur')
 )
 
 // ─── Load data ───────────────────────────────────────────────────────────────
@@ -371,7 +364,7 @@ async function loadStatus() {
     watcherInfo.value = watcherRes.data
     editVaultPath.value = configRes.data.vault_path ?? ''
   } catch (err: unknown) {
-    message.error('Failed to load sync status: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    message.error(t('sync.load_failed', { error: err instanceof Error ? err.message : t('common.unknown_error') }))
   }
 }
 
@@ -393,10 +386,10 @@ async function triggerImport() {
 
     const res = await client.post<SyncResult>('/pm/sync/trigger/', payload)
     lastResult.value = res.data
-    message.success(`Import complete: ${res.data.tasks_created} tasks created, ${res.data.tasks_updated} updated`)
+    message.success(t('sync.import_success', { tasks_created: res.data.tasks_created, tasks_updated: res.data.tasks_updated }))
     await loadStatus()
   } catch (err: unknown) {
-    message.error('Import failed: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    message.error(t('sync.import_failed', { error: err instanceof Error ? err.message : t('common.unknown_error') }))
   } finally {
     importing.value = false
   }
@@ -409,10 +402,10 @@ async function triggerExport() {
   try {
     const res = await client.post<SyncResult>('/pm/sync/trigger/', { mode: 'export' })
     lastResult.value = res.data
-    message.success(`Export complete: ${res.data.tasks_created} files created, ${res.data.tasks_updated} updated`)
+    message.success(t('sync.export_success', { tasks_created: res.data.tasks_created, tasks_updated: res.data.tasks_updated }))
     await loadStatus()
   } catch (err: unknown) {
-    message.error('Export failed: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    message.error(t('sync.export_failed', { error: err instanceof Error ? err.message : t('common.unknown_error') }))
   } finally {
     exporting.value = false
   }
@@ -427,10 +420,10 @@ async function saveVaultPath() {
       vault_path: editVaultPath.value.trim(),
     })
     syncConfig.value = res.data
-    message.success('Vault path saved')
+    message.success(t('sync.path_saved'))
     await loadStatus()
   } catch (err: unknown) {
-    message.error('Failed to save vault path: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    message.error(t('sync.path_save_failed', { error: err instanceof Error ? err.message : t('common.unknown_error') }))
   } finally {
     savingPath.value = false
   }

@@ -47,7 +47,7 @@ SOFTWARE.
     <n-grid :cols="4" :x-gap="16" :y-gap="16" responsive="screen" :item-responsive="true" style="margin-bottom: 28px;">
       <n-gi span="4 s:2 m:1">
         <n-card size="small" class="stat-card" hoverable @click="router.push('/pm')">
-          <n-statistic label="Total Projects" :value="pmStats?.total_projects ?? 0">
+          <n-statistic :label="t('stat.total_projects')" :value="pmStats?.total_projects ?? 0">
             <template #prefix>
               <n-icon :component="FolderIcon" color="#2080f0" style="margin-right: 4px;" />
             </template>
@@ -56,7 +56,7 @@ SOFTWARE.
       </n-gi>
       <n-gi span="4 s:2 m:1">
         <n-card size="small" class="stat-card" hoverable @click="router.push('/pm')">
-          <n-statistic label="Active Projects" :value="pmStats?.active_projects ?? 0">
+          <n-statistic :label="t('stat.active_projects')" :value="pmStats?.active_projects ?? 0">
             <template #prefix>
               <n-icon :component="PlayIcon" color="#18a058" style="margin-right: 4px;" />
             </template>
@@ -65,7 +65,7 @@ SOFTWARE.
       </n-gi>
       <n-gi span="4 s:2 m:1">
         <n-card size="small" class="stat-card" hoverable @click="router.push('/pm')">
-          <n-statistic label="Total Tasks" :value="pmStats?.total_tasks ?? 0">
+          <n-statistic :label="t('stat.total_tasks')" :value="pmStats?.total_tasks ?? 0">
             <template #prefix>
               <n-icon :component="CheckboxIcon" color="#f0a020" style="margin-right: 4px;" />
             </template>
@@ -74,7 +74,7 @@ SOFTWARE.
       </n-gi>
       <n-gi span="4 s:2 m:1">
         <n-card size="small" class="stat-card" hoverable @click="router.push('/pm')">
-          <n-statistic label="Hours Logged" :value="pmStats?.total_hours_logged ?? 0">
+          <n-statistic :label="t('stat.hours_logged')" :value="pmStats?.total_hours_logged ?? 0">
             <template #prefix>
               <n-icon :component="TimeIcon" color="#8a2be2" style="margin-right: 4px;" />
             </template>
@@ -85,7 +85,7 @@ SOFTWARE.
 
     <!-- ── Module Cards ───────────────────────────────────────────── -->
     <n-h3 style="margin: 0 0 16px; color: var(--n-text-color-2); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em;">
-      Tools
+      {{ t('dashboard.modules') }}
     </n-h3>
 
     <n-spin v-if="loading" style="display: flex; justify-content: center; padding: 48px;" />
@@ -93,7 +93,7 @@ SOFTWARE.
     <n-result
       v-else-if="error"
       status="error"
-      title="Failed to load dashboard"
+      :title="t('common.unknown_error')"
       :description="error"
     />
 
@@ -136,6 +136,7 @@ SOFTWARE.
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   NAlert, NSpin, NResult, NH2, NH3, NGrid, NGi, NCard,
   NStatistic, NFlex, NIcon, NText,
@@ -173,6 +174,7 @@ interface DashboardResponse {
 
 const router = useRouter()
 const md = new MarkdownIt()
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -231,7 +233,7 @@ onMounted(async () => {
     }
     // PM stats failure is non-critical — silently ignore
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Unknown error'
+    error.value = e instanceof Error ? e.message : t('common.unknown_error')
   } finally {
     loading.value = false
   }

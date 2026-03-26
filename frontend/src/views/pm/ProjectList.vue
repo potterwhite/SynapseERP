@@ -25,17 +25,17 @@ SOFTWARE.
     <!-- Header row: title + actions -->
     <n-flex justify="space-between" align="center" style="margin-bottom: 20px;">
       <n-flex align="center" gap="8">
-        <n-h2 style="margin: 0;">Project Management</n-h2>
+        <n-h2 style="margin: 0;">{{ t('projects.title') }}</n-h2>
         <!-- Meeting mode indicator badge -->
         <n-tag v-if="store.meetingMode" type="warning" size="small" round>
-          Meeting Mode
+          {{ t('projects.meeting_mode') }}
         </n-tag>
       </n-flex>
       <n-flex :wrap="false" gap="8">
         <!-- Search -->
         <n-input
           v-model:value="searchQuery"
-          placeholder="Search projects…"
+          :placeholder="t('projects.search_placeholder')"
           clearable
           style="width: 200px;"
           @update:value="onSearch"
@@ -59,7 +59,7 @@ SOFTWARE.
           :options="tagOptions"
           multiple
           clearable
-          placeholder="Filter by tag…"
+          :placeholder="t('projects.filter_tag')"
           style="min-width: 160px; max-width: 260px;"
           @update:value="onTagFilterChange"
         />
@@ -75,12 +75,12 @@ SOFTWARE.
               <template #icon>
                 <n-icon :component="store.meetingMode ? EyeOffIcon : EyeIcon" />
               </template>
-              {{ store.meetingMode ? 'Exit Meeting' : 'Meeting Mode' }}
+              {{ store.meetingMode ? t('projects.exit_meeting') : t('projects.meeting_mode') }}
             </n-button>
           </template>
           {{ store.meetingMode
-            ? 'Meeting mode active — personal projects are hidden'
-            : 'Meeting mode: hide projects tagged "personal"' }}
+            ? t('projects.meeting_mode_tip')
+            : t('projects.meeting_mode_hint') }}
         </n-tooltip>
 
         <n-button
@@ -91,13 +91,13 @@ SOFTWARE.
           @click="handleSync"
         >
           <template #icon><n-icon :component="SyncIcon" /></template>
-          Sync Vault
+          {{ t('projects.sync_vault') }}
         </n-button>
 
         <!-- New Project button -->
         <n-button type="primary" @click="openCreateModal">
           <template #icon><n-icon :component="AddIcon" /></template>
-          New Project
+          {{ t('projects.new_project') }}
         </n-button>
 
         <!-- Bulk delete button — appears only when rows are checked -->
@@ -108,7 +108,7 @@ SOFTWARE.
           @click="confirmBulkDelete"
         >
           <template #icon><n-icon :component="DeleteIcon" /></template>
-          Delete ({{ checkedRowKeys.length }})
+          {{ t('projects.delete_selected', { n: checkedRowKeys.length }) }}
         </n-button>
       </n-flex>
     </n-flex>
@@ -116,16 +116,16 @@ SOFTWARE.
     <!-- Stats bar -->
     <n-grid v-if="store.stats" :cols="4" :x-gap="16" style="margin-bottom: 24px;">
       <n-gi>
-        <n-statistic label="Total Projects" :value="store.stats.total_projects" />
+        <n-statistic :label="t('projects.stats.total_projects')" :value="store.stats.total_projects" />
       </n-gi>
       <n-gi>
-        <n-statistic label="Active" :value="store.stats.active_projects" />
+        <n-statistic :label="t('projects.stats.active')" :value="store.stats.active_projects" />
       </n-gi>
       <n-gi>
-        <n-statistic label="Total Tasks" :value="store.stats.total_tasks" />
+        <n-statistic :label="t('projects.stats.total_tasks')" :value="store.stats.total_tasks" />
       </n-gi>
       <n-gi>
-        <n-statistic label="Hours Logged" :value="store.stats.total_hours_logged" />
+        <n-statistic :label="t('projects.stats.hours_logged')" :value="store.stats.total_hours_logged" />
       </n-gi>
     </n-grid>
 
@@ -133,7 +133,7 @@ SOFTWARE.
     <n-result
       v-if="store.projectsError"
       status="error"
-      title="Failed to load projects"
+      :title="t('projects.load_error')"
       :description="store.projectsError"
       style="padding: 48px 0;"
     />
@@ -159,7 +159,7 @@ SOFTWARE.
       :width="560"
       placement="right"
     >
-      <n-drawer-content :title="store.selectedTask?.name ?? 'Task Detail'" closable>
+      <n-drawer-content :title="store.selectedTask?.name ?? t('tasks.edit_task')" closable>
         <TaskDetail v-if="store.selectedTask" :task="store.selectedTask" />
         <n-spin v-else-if="store.selectedTaskLoading" style="display:flex;justify-content:center;padding:48px;" />
       </n-drawer-content>
@@ -177,6 +177,7 @@ SOFTWARE.
 <script setup lang="ts">
 import { ref, computed, h, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   NButton, NDataTable, NDrawer, NDrawerContent, NFlex, NGrid, NGi,
   NH2, NIcon, NInput, NResult, NSelect, NSpin, NStatistic,
@@ -204,6 +205,7 @@ const appStore = useAppStore()
 const router = useRouter()
 const message = useMessage()
 const dialog = useDialog()
+const { t } = useI18n()
 
 const searchQuery = ref('')
 const statusFilter = ref<'active' | 'archived' | 'on_hold' | 'all'>('active')
@@ -235,17 +237,17 @@ function onProjectSaved(_project: Project) {
 
 async function confirmDelete(row: Project) {
   dialog.warning({
-    title: 'Delete Project',
-    content: `Are you sure you want to delete "${row.name}"? This action cannot be undone.`,
-    positiveText: 'Delete',
-    negativeText: 'Cancel',
+    title: t('projects.delete_confirm_title'),
+    content: t('projects.delete_confirm_content', { name: row.name }),
+    positiveText: t('common.delete'),
+    negativeText: t('common.cancel'),
     onPositiveClick: async () => {
       try {
         await store.deleteProject(row.id)
-        message.success(`Project "${row.name}" deleted`)
+        message.success(t('projects.delete_success', { name: row.name }))
         store.fetchStats()
       } catch (err: unknown) {
-        message.error(err instanceof Error ? err.message : 'Delete failed')
+        message.error(err instanceof Error ? err.message : t('common.unknown_error'))
       }
     },
   })
@@ -255,19 +257,19 @@ async function confirmBulkDelete() {
   const count = checkedRowKeys.value.length
   if (!count) return
   dialog.warning({
-    title: `Delete ${count} Project${count > 1 ? 's' : ''}`,
-    content: `Are you sure you want to delete ${count} selected project${count > 1 ? 's' : ''}? This action cannot be undone.`,
-    positiveText: `Delete ${count}`,
-    negativeText: 'Cancel',
+    title: t('projects.bulk_delete_confirm_title', { count }),
+    content: t('projects.bulk_delete_confirm_content', { count }),
+    positiveText: t('projects.delete_selected', { n: count }),
+    negativeText: t('common.cancel'),
     onPositiveClick: async () => {
       bulkDeleting.value = true
       try {
         await store.bulkDeleteProjects(checkedRowKeys.value as number[])
-        message.success(`${count} project${count > 1 ? 's' : ''} deleted`)
+        message.success(t('projects.bulk_delete_success', { count }))
         checkedRowKeys.value = []
         store.fetchStats()
       } catch (err: unknown) {
-        message.error(err instanceof Error ? err.message : 'Bulk delete failed')
+        message.error(err instanceof Error ? err.message : t('common.unknown_error'))
       } finally {
         bulkDeleting.value = false
       }
@@ -277,12 +279,12 @@ async function confirmBulkDelete() {
 
 const pmBackend = computed(() => appStore.pmBackend)
 
-const statusOptions = [
-  { label: 'Active', value: 'active' },
-  { label: 'Archived', value: 'archived' },
-  { label: 'On Hold', value: 'on_hold' },
-  { label: 'All', value: 'all' },
-]
+const statusOptions = computed(() => [
+  { label: t('projects.status.active'), value: 'active' },
+  { label: t('projects.status.archived'), value: 'archived' },
+  { label: t('projects.status.on_hold'), value: 'on_hold' },
+  { label: t('projects.status.all'), value: 'all' },
+])
 
 /** Build tag options from store.allTags */
 const tagOptions = computed(() =>
@@ -299,7 +301,7 @@ const pagination = computed(() => ({
 const columns: DataTableColumns<Project> = [
   { type: 'selection' },
   {
-    title: 'Project',
+    title: () => t('projects.columns.project'),
     key: 'name',
     sorter: 'default',
     render(row) {
@@ -326,7 +328,7 @@ const columns: DataTableColumns<Project> = [
     },
   },
   {
-    title: 'Status',
+    title: () => t('projects.columns.status'),
     key: 'status',
     width: 110,
     render(row) {
@@ -341,7 +343,7 @@ const columns: DataTableColumns<Project> = [
     },
   },
   {
-    title: 'Tasks',
+    title: () => t('projects.columns.tasks'),
     key: 'task_stats',
     width: 180,
     render(row) {
@@ -365,7 +367,7 @@ const columns: DataTableColumns<Project> = [
     },
   },
   {
-    title: 'Hours',
+    title: () => t('projects.columns.hours'),
     key: 'total_hours',
     width: 90,
     sorter: (a, b) => a.total_hours - b.total_hours,
@@ -374,7 +376,7 @@ const columns: DataTableColumns<Project> = [
     },
   },
   {
-    title: 'Deadline',
+    title: () => t('projects.columns.deadline'),
     key: 'deadline',
     width: 110,
     sorter: (a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? ''),
@@ -389,7 +391,7 @@ const columns: DataTableColumns<Project> = [
     },
   },
   {
-    title: 'Last Sync',
+    title: () => t('projects.columns.last_sync'),
     key: 'synced_at',
     width: 130,
     render(row) {
