@@ -125,6 +125,9 @@ fn_prepare_env() {
     fi
 
     fn_log "🎉 Preparation complete! Run './synapse run' to start the backend." "green"
+    fn_log "" ""
+    fn_log "💡 Tip: enable tab-completion for this script:" "yellow"
+    fn_log "   eval \"\$(./synapse completion)\"   # add to ~/.bashrc or ~/.zshrc" "yellow"
 }
 
 fn_run_backend() {
@@ -573,6 +576,7 @@ fn_show_help() {
     echo "━━━ Utilities ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  superuser           Create a new Django admin user"
     echo "  set-rule [URL]      Set or clear the remote attendance rules URL"
+    echo "  completion [bash|zsh]  Print shell completion script and setup instructions"
     echo ""
     echo "━━━ Development ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  dev:migrate         Run makemigrations + migrate"
@@ -597,6 +601,113 @@ fn_show_help() {
     echo ""
 }
 
+# --- Shell completion ---
+
+# All top-level commands used for completion
+_SYNAPSE_COMMANDS=(
+    prepare clean
+    run frontend:run run:all vault:watch
+    frontend:init frontend:build
+    superuser set-rule completion
+    dev:migrate dev:test dev:makemessages dev:compilemessages
+    docker:build docker:up docker:down docker:clean docker:logs docker:shell docker:manage
+    deploy
+    help
+)
+
+fn_print_bash_completion() {
+    cat <<'BASH_COMPLETION'
+# bash completion for ./synapse
+# Source this file or add the eval line to your ~/.bashrc
+_synapse_completions() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local commands="prepare clean run frontend:run run:all vault:watch frontend:init frontend:build superuser set-rule completion dev:migrate dev:test dev:makemessages dev:compilemessages docker:build docker:up docker:down docker:clean docker:logs docker:shell docker:manage deploy help"
+    COMPREPLY=($(compgen -W "${commands}" -- "${cur}"))
+}
+complete -F _synapse_completions synapse
+complete -F _synapse_completions ./synapse
+BASH_COMPLETION
+}
+
+fn_print_zsh_completion() {
+    cat <<'ZSH_COMPLETION'
+# zsh completion for ./synapse
+# Source this file or add the eval line to your ~/.zshrc
+_synapse() {
+    local -a commands
+    commands=(
+        'prepare:One-time setup: venv, deps, migrate, npm'
+        'clean:Destructive reset of .venv, DB, node_modules'
+        'run:Start Django backend dev server (port 8000)'
+        'frontend\:run:Start Vue frontend dev server (port 5173)'
+        'run\:all:Start backend + frontend + vault watcher'
+        'vault\:watch:Watch Obsidian vault and auto-sync'
+        'frontend\:init:Scaffold the Vue 3 + TypeScript project'
+        'frontend\:build:Build frontend for production'
+        'superuser:Create a new Django admin user'
+        'set-rule:Set or clear the remote attendance rules URL'
+        'completion:Print shell completion script'
+        'dev\:migrate:Run makemigrations + migrate'
+        'dev\:test:Run the Django test suite'
+        'dev\:makemessages:Update .po translation source files'
+        'dev\:compilemessages:Compile .mo translation files'
+        'docker\:build:Build Docker images'
+        'docker\:up:Build + start all services'
+        'docker\:down:Stop and remove containers'
+        'docker\:clean:Destroy containers + volumes + images'
+        'docker\:logs:Tail service logs'
+        'docker\:shell:Open shell in a container'
+        'docker\:manage:Run Django management command in container'
+        'deploy:Automated production deployment (requires sudo)'
+        'help:Show this help message'
+    )
+    _describe 'synapse commands' commands
+}
+compdef _synapse synapse
+compdef _synapse ./synapse
+ZSH_COMPLETION
+}
+
+fn_completion() {
+    local shell="${1:-}"
+
+    # Auto-detect shell if not specified
+    if [ -z "$shell" ]; then
+        if [ -n "$ZSH_VERSION" ]; then
+            shell="zsh"
+        else
+            shell="bash"
+        fi
+    fi
+
+    case "$shell" in
+        bash)
+            fn_log "# ── Bash completion for ./synapse ──────────────────────────────" "blue"
+            fn_log "# To enable permanently, add this line to ~/.bashrc:" "yellow"
+            fn_log "#   eval \"\$($(pwd)/synapse completion bash)\"" "yellow"
+            fn_log "# Or source a saved file:" "yellow"
+            fn_log "#   ./synapse completion bash > ~/.synapse_completion.sh" "yellow"
+            fn_log "#   echo 'source ~/.synapse_completion.sh' >> ~/.bashrc" "yellow"
+            echo ""
+            fn_print_bash_completion
+            ;;
+        zsh)
+            fn_log "# ── Zsh completion for ./synapse ───────────────────────────────" "blue"
+            fn_log "# To enable permanently, add this line to ~/.zshrc:" "yellow"
+            fn_log "#   eval \"\$($(pwd)/synapse completion zsh)\"" "yellow"
+            fn_log "# Or source a saved file:" "yellow"
+            fn_log "#   ./synapse completion zsh > ~/.synapse_completion.zsh" "yellow"
+            fn_log "#   echo 'source ~/.synapse_completion.zsh' >> ~/.zshrc" "yellow"
+            echo ""
+            fn_print_zsh_completion
+            ;;
+        *)
+            fn_log "❌ Unknown shell: '$shell'. Supported: bash | zsh" "red"
+            exit 1
+            ;;
+    esac
+}
+
 # --- Main Dispatcher ---
 
 main() {
@@ -607,6 +718,7 @@ main() {
         prepare)        fn_prepare_env ;;
         clean)          fn_clean ;;
         frontend:init)  fn_frontend_init ;;
+        completion)     fn_completion "$2" ;;
         help|--help|-h) fn_show_help ;;
 
         # All other commands need the venv active
