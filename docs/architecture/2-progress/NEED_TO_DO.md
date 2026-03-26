@@ -1,5 +1,27 @@
 - **改完就把下面的checkbox checked**
 
+Mar26.2026 17:30
+- [x] 我要加入synapse shell auto completion，要放在哪里，什么时候操作最合理，最不产生用户的认知负担，你就做。
+- [x] 我还是新建一个project，然后export to vault，还是没用，如下
+    ```bash
+    Sync Status
+    Enabled
+    Projects in DB
+    27
+    Tasks in DB
+    93
+    Projects in Vault
+    26
+    Tasks in Vault
+    94
+    ```
+    而且，tasks in vault不论如何import总是比db里的tasks多一个
+- [x] Projects和tasks都需要批量删除按钮，目前tasks没有确认，但是project是没有的。
+- [x] 当前我点击gantt chart里的month,还是默认在2023~2024这个界面里，然后右边是today,因此就没有任何数据在这张甘特图里。
+- [x] import 的那个filter tags，能不能把hint写得更明显一些，例如当我在input里的时候，就一直有一段text提示和提醒呢？免得我都看不见后面是什么。
+- [x] 能不能把界面可以选择切换中英文（这个翻译要做好，做得低耦合，未来要加任何语言都容易）默认中文。
+
+
 Mar26.2026 16:15
 - [x] 我现在README里对版本的显示是动态的，但是你frontend里的代码加载版本却是写死的，我要求能够把版本唯一的写在一个地方，所有需要的文件或代码都去加载那个地方，唯一化。
 - [x] frontend目前只有日/周/月，没有年，还有我切换到月，就每次都是显示2023～2024,很奇怪。你帮我加入年，而且正确识别年份为当前运行的服务器所在的timezone。

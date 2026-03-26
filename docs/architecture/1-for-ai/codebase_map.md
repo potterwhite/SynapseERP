@@ -8,7 +8,7 @@
 > **Maintenance rule:** Any AI agent that modifies a file listed here MUST update
 > the relevant section in this document in the same commit/session.
 >
-> Last updated: 2026-03-26 (reflects Phase 5.9 complete state + bug fixes Mar26-16:15)
+> Last updated: 2026-03-26 (reflects Phase 5.9 complete state + bug fixes Mar26-17:30)
 
 ---
 
@@ -30,6 +30,9 @@ SynapseERP.git/
 │   └── .env                   (gitignored, auto-created by ./synapse prepare)
 ├── frontend/                  Vue 3 SPA (TypeScript + Vite 6)
 │   ├── src/                   All frontend source
+│   │   ├── i18n.ts            vue-i18n v9 instance; setLocale() persists to localStorage
+│   │   ├── locales/           zh-CN.ts + en-US.ts (plain TS objects, identical key structure)
+│   │   └── ...
 │   ├── package.json
 │   └── vite.config.ts
 ├── docs/
@@ -394,3 +397,5 @@ cd backend && ../.venv/bin/python manage.py test synapse_pm.tests.TestClass.test
 5. **JWT Auth Guard**: Single global `beforeEach` guard. `authChecked` flag prevents repeated `fetchCurrentUser()` calls. Failed 401 → `/login` (not `/admin/login/`). Axios interceptor auto-refreshes tokens on 401.
 
 6. **Tag Filtering (PM)**: Python-side list comprehension (`_filter_projects_by_access()` in `synapse_pm/api/views.py`) filters projects by user role + allowed_tags. Admin sees all. Phase 5.9 (PostgreSQL) will enable native SQL JSON containment queries.
+
+7. **i18n**: vue-i18n v9 (composition API). Instance in `src/i18n.ts`. Locale persisted to localStorage (`synapse_locale`). Default: `zh-CN`. Add languages by creating `src/locales/<lang>.ts` + registering in `i18n.ts` + adding option in `Header.vue`.
