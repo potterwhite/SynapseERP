@@ -1,5 +1,16 @@
 - **改完就把下面的checkbox checked**
 
+Mar26.2026 19:30
+- [ ] 当我用month的时候，还是显示2023~2024，这个一直没解决
+- [ ] 能不能设置有left and right button to control previous and next day/week/month/year
+- [ ] 在year的时候，会卡住，请给一个widget来提醒用户，”因数据量大（请写你真实的原因），正在加载“
+- [ ] 版本号还是没有办法解决，我提个全面的要求，不论是python还是ts或js,我需要版本号能够使用google-release-please进行自动设置，然后到底在哪些文件里需要设置数字的版本号，我需要清楚的被告知。目前我还是觉得很混乱，我根本没有v0.9.0-alpha，但是那个界面一直显示这个，很讨厌。
+- [ ] 在welcome back的后面，显示一下user的称呼，例如admin,就welcome back dear admin（写得更formal一些，显得更有AI的感觉）
+- [ ] import from vault，依然是有一个task不能被导入进来，非常烦恼，你至少可以告诉我是哪里出问题。
+- [ ] 用docker方式怎么看log？我要看到底有什么后台错误提示，有外部命令可以看吗？
+- [ ] gantt chart能不能识别放大缩小呢（scroll of mouse to zoom in and zoom out），会从year -> day or reverse
+
+
 Mar26.2026 18:35
 - [x] docker:up就出错（第一个 bug）
     ```bash
