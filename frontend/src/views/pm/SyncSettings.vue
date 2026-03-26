@@ -25,12 +25,6 @@ SOFTWARE.
     <n-page-header title="Obsidian Sync" subtitle="Bidirectional sync between the database and your Obsidian vault">
       <template #extra>
         <n-space>
-          <n-input
-            v-model:value="importNameFilter"
-            placeholder="Filter projects by name keywords (comma separated, optional)"
-            clearable
-            style="width: 340px;"
-          />
           <n-button
             type="primary"
             :loading="importing"
@@ -57,6 +51,39 @@ SOFTWARE.
     </n-page-header>
 
     <n-divider />
+
+    <!-- Import filter card — shown before status cards for discoverability -->
+    <n-card size="small" style="margin-bottom: 16px;">
+      <template #header>
+        <n-flex align="center" gap="8">
+          <n-icon :component="FilterIcon" />
+          <span>Import Filter (optional)</span>
+        </n-flex>
+      </template>
+      <n-flex vertical gap="8">
+        <n-input
+          v-model:value="importNameFilter"
+          clearable
+          :placeholder="importFilterPlaceholder"
+          @focus="importFilterFocused = true"
+          @blur="importFilterFocused = false"
+        >
+          <template #suffix>
+            <n-text depth="3" style="font-size: 12px; white-space: nowrap;">
+              comma-separated
+            </n-text>
+          </template>
+        </n-input>
+        <!-- Persistent hint — always visible -->
+        <n-text depth="3" style="font-size: 12px; line-height: 1.6;">
+          Enter one or more keywords separated by commas. Only projects whose name contains
+          <b>at least one</b> keyword will be imported.
+          Leave empty to import <b>all</b> projects from the vault.
+          <br />
+          Example: <n-text code>AI, Quantitative, Demo</n-text>
+        </n-text>
+      </n-flex>
+    </n-card>
 
     <!-- Status cards -->
     <n-grid :cols="5" :x-gap="16" :y-gap="16" class="status-cards">
@@ -250,11 +277,12 @@ SOFTWARE.
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   NPageHeader, NButton, NIcon, NSpace, NDivider,
   NCard, NGrid, NGi, NStatistic, NText, NTag, NAlert,
   NForm, NFormItem, NInput, NDescriptions, NDescriptionsItem,
+  NFlex,
   useMessage,
 } from 'naive-ui'
 import {
@@ -262,6 +290,7 @@ import {
   CloudUploadOutline,
   CheckmarkCircleOutline,
   CloseCircleOutline,
+  FunnelOutline as FilterIcon,
 } from '@vicons/ionicons5'
 import client from '@/api/client'
 
@@ -320,6 +349,13 @@ const savingPath = ref(false)
 const editVaultPath = ref('')
 // Optional project name filter for import (comma-separated keywords)
 const importNameFilter = ref('')
+const importFilterFocused = ref(false)
+
+const importFilterPlaceholder = computed(() =>
+  importFilterFocused.value
+    ? 'e.g. AI, Quantitative, Demo  ← separate multiple keywords with commas'
+    : 'Filter by project name keywords (leave empty = import all)'
+)
 
 // ─── Load data ───────────────────────────────────────────────────────────────
 
