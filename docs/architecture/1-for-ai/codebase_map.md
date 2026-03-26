@@ -8,7 +8,7 @@
 > **Maintenance rule:** Any AI agent that modifies a file listed here MUST update
 > the relevant section in this document in the same commit/session.
 >
-> Last updated: 2026-03-26 (reflects Phase 5.9 complete state + bug fixes Mar26-17:30)
+> Last updated: 2026-03-26 (i18n complete + ai_docs_system_template added)
 
 ---
 
@@ -36,7 +36,18 @@ SynapseERP.git/
 │   ├── package.json
 │   └── vite.config.ts
 ├── docs/
-│   └── architecture/          ← YOU ARE HERE
+│   └── architecture/
+│       ├── 1-for-ai/              ← AI agent reads these first
+│       │   ├── guide.md           ← Session rules + commit format
+│       │   ├── codebase_map.md    ← THIS FILE
+│       │   ├── api_spec.md        ← Full REST API reference
+│       │   ├── obsidian_parsing_rules.md
+│       │   ├── frontend_config.md
+│       │   └── ai_docs_system_template.md  ← Portable template for other projects
+│       ├── 2-progress/            ← Project tracking
+│       │   ├── progress.md        ← Phase status + roadmap
+│       │   └── NEED_TO_DO.md     ← Active bug/task backlog (checkbox format)
+│       └── 3-highlights/          ← Architecture vision + design decisions
 ├── synapse                    Unified CLI orchestrator (./synapse <cmd>)
 ├── docker/                    Docker configs (Phase 5.9 ✅)
 │   ├── Dockerfile             Backend: Python 3.12-slim + Gunicorn
