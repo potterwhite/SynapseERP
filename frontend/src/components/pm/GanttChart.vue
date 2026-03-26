@@ -78,7 +78,7 @@ import Gantt from 'frappe-gantt'
 import '/node_modules/frappe-gantt/dist/frappe-gantt.css'
 import type { GanttTask } from '@/types/pm'
 
-const VIEW_MODES = ['Day', 'Week', 'Month'] as const
+const VIEW_MODES = ['Day', 'Week', 'Month', 'Year'] as const
 type ViewMode = (typeof VIEW_MODES)[number]
 
 const props = withDefaults(defineProps<{
@@ -126,6 +126,9 @@ function buildGantt() {
   ganttInstance = new Gantt(containerRef.value, frappeTasks, {
     view_mode: currentView.value,
     date_format: 'YYYY-MM-DD',
+    // Always scroll to today on initial render so the chart shows the current
+    // date region regardless of when the tasks were created.
+    scroll_to: 'today',
     on_click: (fTask: { id: string }) => {
       const orig = props.tasks.find(t => t.id === fTask.id)
       if (orig) emit('task-click', orig)

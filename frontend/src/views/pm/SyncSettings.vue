@@ -25,6 +25,12 @@ SOFTWARE.
     <n-page-header title="Obsidian Sync" subtitle="Bidirectional sync between the database and your Obsidian vault">
       <template #extra>
         <n-space>
+          <n-input
+            v-model:value="importNameFilter"
+            placeholder="Filter projects by name keywords (comma separated, optional)"
+            clearable
+            style="width: 340px;"
+          />
           <n-button
             type="primary"
             :loading="importing"
@@ -53,7 +59,7 @@ SOFTWARE.
     <n-divider />
 
     <!-- Status cards -->
-    <n-grid :cols="3" :x-gap="16" :y-gap="16" class="status-cards">
+    <n-grid :cols="5" :x-gap="16" :y-gap="16" class="status-cards">
       <n-gi>
         <n-card size="small">
           <n-statistic label="Sync Status">
@@ -75,6 +81,22 @@ SOFTWARE.
       <n-gi>
         <n-card size="small">
           <n-statistic label="Tasks in DB" :value="syncStatus?.db_tasks ?? 0" />
+        </n-card>
+      </n-gi>
+      <n-gi>
+        <n-card size="small">
+          <n-statistic
+            label="Projects in Vault"
+            :value="syncStatus?.vault_projects ?? '—'"
+          />
+        </n-card>
+      </n-gi>
+      <n-gi>
+        <n-card size="small">
+          <n-statistic
+            label="Tasks in Vault"
+            :value="syncStatus?.vault_tasks ?? '—'"
+          />
         </n-card>
       </n-gi>
     </n-grid>
@@ -252,6 +274,8 @@ interface SyncStatus {
   last_export_at: string | null
   db_projects: number
   db_tasks: number
+  vault_projects: number | null
+  vault_tasks: number | null
 }
 
 interface SyncConfig {
@@ -294,6 +318,8 @@ const importing = ref(false)
 const exporting = ref(false)
 const savingPath = ref(false)
 const editVaultPath = ref('')
+// Optional project name filter for import (comma-separated keywords)
+const importNameFilter = ref('')
 
 // ─── Load data ───────────────────────────────────────────────────────────────
 
@@ -320,7 +346,16 @@ onMounted(loadStatus)
 async function triggerImport() {
   importing.value = true
   try {
-    const res = await client.post<SyncResult>('/pm/sync/trigger/', { mode: 'import' })
+    // Parse comma-separated name filter into a list; empty string means no filter.
+    const nameFilter = importNameFilter.value
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+
+    const payload: Record<string, unknown> = { mode: 'import' }
+    if (nameFilter.length > 0) payload.name_filter = nameFilter
+
+    const res = await client.post<SyncResult>('/pm/sync/trigger/', payload)
     lastResult.value = res.data
     message.success(`Import complete: ${res.data.tasks_created} tasks created, ${res.data.tasks_updated} updated`)
     await loadStatus()

@@ -1,5 +1,12 @@
 - **改完就把下面的checkbox checked**
 
+Mar26.2026 16:15
+- [x] 我现在README里对版本的显示是动态的，但是你frontend里的代码加载版本却是写死的，我要求能够把版本唯一的写在一个地方，所有需要的文件或代码都去加载那个地方，唯一化。
+- [x] frontend目前只有日/周/月，没有年，还有我切换到月，就每次都是显示2023～2024,很奇怪。你帮我加入年，而且正确识别年份为当前运行的服务器所在的timezone。
+- [x] 我为了安全，希望从obsidian vault进来的所有projects,能够按照tags来过滤，当然，默认是all，或者我也可以输入tags，有这个tags的我才拉进来。
+- [x] 我尝试export to vault，报错：Export failed: [Errno 30] Read-only file system: '/vault/1_PROJECT/2025.15_Project_AI_Quantitative_HardCore_Demo/tasks/task_测试看看有没有.md.tmp'这是为啥？
+- [x] 当前以db为绝对核心，当然我也希望在obsidian sync这个page里显示当前obsidian有几个projects，几个tasks, 当然，不要是消耗大量cpu和内存。你看看能做吗？必须消耗轮训的话告诉我，我来做选择是否要做。
+
 
 Mar26.2026 15:30
 - [x] .env.docker加入gitignore
@@ -7,7 +14,7 @@ Mar26.2026 15:30
 - [x] 00_INDEX.md的navigation居然还有9个大类，实在太多了，我的要求是做成多叉树，最多不超过4个大类，可以有子类。然后在文件命名和文件夹的设置上，也体现层级关系。就按照我之前说的：三个大类，to ai/dev progress/项目亮点。
 - [x] NEED_TO_DO.md也不能放在顶层，看能不能归入其中一大类里。
 - [x] 你在00_INDEX里做3张表格，每张就是体现一个大类。非常清晰。
-- [ ] 我看见虽然我写了ai agent不要全盘扫描，但是你一开始context=0的时候还是查看了大量的src files,然后写了好几个长篇的md到/tmp下面，是不是代表我的prompt对你优先级不够，你并没有按照我的说法来做呢？我需不需要整个claude.md重写，甚至删掉它呢？因为我用00_INDEX来取代？看我的整个00_INDEX的文档集合就够了，根本不需要看代码（实际解决才需要直接进去）
+- [x] 我看见虽然我写了ai agent不要全盘扫描，但是你一开始context=0的时候还是查看了大量的src files,然后写了好几个长篇的md到/tmp下面，是不是代表我的prompt对你优先级不够，你并没有按照我的说法来做呢？我需不需要整个claude.md重写，甚至删掉它呢？因为我用00_INDEX来取代？看我的整个00_INDEX的文档集合就够了，根本不需要看代码（实际解决才需要直接进去）
 
 
 Mar26.2026 14:50

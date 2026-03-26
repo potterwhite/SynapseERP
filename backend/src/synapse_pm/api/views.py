@@ -407,13 +407,21 @@ def sync_trigger(request: Request) -> Response:
     mode: str = request.data.get("mode", "import")
     full: bool = bool(request.data.get("full", False))
     dry_run: bool = bool(request.data.get("dry_run", False))
+    # name_filter: optional list of project-name keywords for import
+    name_filter_raw = request.data.get("name_filter", None)
+    name_filter: list[str] | None = None
+    if isinstance(name_filter_raw, list):
+        name_filter = [str(k) for k in name_filter_raw if str(k).strip()]
+    elif isinstance(name_filter_raw, str) and name_filter_raw.strip():
+        # Accept comma-separated string for convenience
+        name_filter = [k.strip() for k in name_filter_raw.split(",") if k.strip()]
 
     t0 = time.monotonic()
     try:
         if mode == "export":
             result = svc.export_to_vault(dry_run=dry_run)
         else:
-            result = svc.import_from_vault(full=full, dry_run=dry_run)
+            result = svc.import_from_vault(full=full, dry_run=dry_run, name_filter=name_filter)
     except Exception as exc:
         return Response(
             {"status": "error", "detail": str(exc)},

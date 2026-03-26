@@ -169,6 +169,7 @@ class ObsidianSyncService:
         *,
         full: bool = False,
         dry_run: bool = False,
+        name_filter: list[str] | None = None,
     ) -> SyncResult:
         """
         Import projects, tasks, and time entries from the vault into the DB.
@@ -179,8 +180,12 @@ class ObsidianSyncService:
           - New records (no UUID match in DB)    → always import.
 
         Args:
-            full:    If True, ignore mtime cache and re-parse every file.
-            dry_run: If True, compute changes but do not write to DB.
+            full:        If True, ignore mtime cache and re-parse every file.
+            dry_run:     If True, compute changes but do not write to DB.
+            name_filter: Optional list of keywords. When provided, only projects
+                         whose ``full_name`` contains at least one keyword
+                         (case-insensitive) are imported.  Defaults to None
+                         (import all projects).
 
         Returns:
             SyncResult with statistics.
@@ -206,6 +211,20 @@ class ObsidianSyncService:
         # --------------------------------------------------------------
         vault_projects = reader.scan_projects()
         logger.info("import_from_vault: found %d project directories", len(vault_projects))
+
+        # Optional name filter: keep only projects whose full_name contains
+        # at least one of the provided keywords (case-insensitive).
+        if name_filter:
+            lower_keywords = [kw.lower() for kw in name_filter if kw.strip()]
+            if lower_keywords:
+                vault_projects = [
+                    vp for vp in vault_projects
+                    if any(kw in vp["full_name"].lower() for kw in lower_keywords)
+                ]
+                logger.info(
+                    "import_from_vault: filtered to %d projects by name_filter=%r",
+                    len(vault_projects), name_filter,
+                )
 
         for vp in vault_projects:
             mtime: float = vp["vault_mtime"]
@@ -557,6 +576,13 @@ class ObsidianSyncService:
         db_project_count = Project.objects.count() if enabled else 0
         db_task_count = Task.objects.count() if enabled else 0
 
+        # Lightweight vault scan: count project dirs and task .md files
+        # using os.scandir only (no file parsing, no I/O beyond directory listing).
+        vault_project_count: int | None = None
+        vault_task_count: int | None = None
+        if enabled and vault_path:
+            vault_project_count, vault_task_count = self._count_vault_items(vault_path)
+
         return {
             "enabled": enabled,
             "vault_path": vault_path,
@@ -564,4 +590,48 @@ class ObsidianSyncService:
             "last_export_at": last_export_at,
             "db_projects": db_project_count,
             "db_tasks": db_task_count,
+            "vault_projects": vault_project_count,
+            "vault_tasks": vault_task_count,
         }
+
+    @staticmethod
+    def _count_vault_items(vault_root: str) -> tuple[int, int]:
+        """
+        Count project directories and task .md files in the vault without
+        parsing any file content.  Uses os.scandir for minimal I/O.
+
+        Scans:
+          - 1_PROJECT/*/          → project dirs
+          - 4_ARCHIVE/Completed_Projects/*/  → archived project dirs
+          - {project_dir}/tasks/*.md          → task files (by extension only)
+
+        Returns (project_count, task_count).
+        """
+        project_dirs: list[str] = []
+
+        for base in [
+            os.path.join(vault_root, "1_PROJECT"),
+            os.path.join(vault_root, "4_ARCHIVE", "Completed_Projects"),
+        ]:
+            if not os.path.isdir(base):
+                continue
+            try:
+                for entry in os.scandir(base):
+                    if entry.is_dir():
+                        project_dirs.append(entry.path)
+            except OSError:
+                pass
+
+        task_count = 0
+        for proj_dir in project_dirs:
+            tasks_dir = os.path.join(proj_dir, "tasks")
+            if not os.path.isdir(tasks_dir):
+                continue
+            try:
+                for entry in os.scandir(tasks_dir):
+                    if entry.is_file() and entry.name.endswith(".md"):
+                        task_count += 1
+            except OSError:
+                pass
+
+        return len(project_dirs), task_count

@@ -8,7 +8,7 @@
 > **Maintenance rule:** Any AI agent that modifies a file listed here MUST update
 > the relevant section in this document in the same commit/session.
 >
-> Last updated: 2026-03-26 (reflects Phase 5.9 complete state)
+> Last updated: 2026-03-26 (reflects Phase 5.9 complete state + bug fixes Mar26-16:15)
 
 ---
 
@@ -234,6 +234,8 @@ frontend/src/
 ├── stores/
 │   ├── app.ts          Theme ('light'|'dark' → localStorage key 'synapse_theme'),
 │   │                   sidebarCollapsed, pmBackend, vaultConnected, fetchHealth()
+│   │                   appVersion: initialised from __APP_VERSION__ (build-time constant
+│   │                   read from backend/__init__.py); overwritten by /api/health/ on load.
 │   ├── auth.ts         user{id,username,email,role,allowed_tags,is_superuser},
 │   │                   isAuthenticated, isAdmin(computed), isEditor(computed).
 │   │                   login(u,p), logout(), fetchCurrentUser()→bool, clearAuth().
@@ -245,18 +247,23 @@ frontend/src/
 │   ├── api.ts          PaginatedResponse<T>, ApiError
 │   ├── auth.ts         User, UserRole types (Phase 5.7)
 │   └── pm.ts           Project, Task, TimeEntry, PmStats interfaces
+├── vite-env.d.ts       TypeScript declaration for __APP_VERSION__ build-time constant.
 ├── router/
 │   └── index.ts        Routes + JWT guard. Public routes: /login (meta.public=true).
 │                       Guard: checks isAuthenticated, calls fetchCurrentUser() once.
 │                       On fail: redirect to /login?redirect=<path> (NOT /admin/login/).
 │                       Admin guard: meta.requiresAdmin=true → non-admins → /dashboard.
 ├── components/
-│   └── layout/
-│       ├── AppLayout.vue  NConfigProvider(theme) + NLayoutSider(desktop) +
-│       │                  NDrawer(mobile). Mobile breakpoint: 768px.
-│       ├── Header.vue     Logo, theme toggle, user info (username + role badge),
-│       │                  logout button. Role badge: admin=red, editor=orange, viewer=default.
-│       └── Sidebar.vue    NMenu. "User Management" item visible only when authStore.isAdmin.
+│   ├── layout/
+│   │   ├── AppLayout.vue  NConfigProvider(theme) + NLayoutSider(desktop) +
+│   │   │                  NDrawer(mobile). Mobile breakpoint: 768px.
+│   │   ├── Header.vue     Logo, theme toggle, user info (username + role badge),
+│   │   │                  logout button. Role badge: admin=red, editor=orange, viewer=default.
+│   │   │                  Version: appStore.appVersion (initially __APP_VERSION__).
+│   │   └── Sidebar.vue    NMenu. "User Management" item visible only when authStore.isAdmin.
+│   └── pm/
+│       └── GanttChart.vue  frappe-gantt wrapper. VIEW_MODES: Day/Week/Month/Year.
+│                           scroll_to: 'today' ensures chart always starts at current date.
 └── views/
     ├── LoginView.vue       ⭐ Custom JWT login page (Phase 5.7). Naive UI card, dark mode.
     ├── Dashboard.vue       PM stats row + module cards + notification markdown
@@ -266,7 +273,9 @@ frontend/src/
     │   ├── ProjectTaskView.vue Task list for a project + TaskDetail drawer
     │   ├── GanttView.vue   frappe-gantt integration
     │   ├── TaskDetail.vue  Task detail side drawer
-    │   ├── SyncSettings.vue Vault sync config + watcher info
+    │   ├── SyncSettings.vue Vault sync config + watcher info.
+    │   │                   Import has optional name-filter input (comma-separated keywords).
+    │   │                   Status cards show DB counts + vault counts (vault_projects/vault_tasks).
     │   └── ProjectFormModal.vue Create/Edit project (name/status/deadline/tags)
     ├── admin/
     │   └── UsersView.vue   ⭐ User management CRUD (Phase 5.7, admin only)

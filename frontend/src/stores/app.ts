@@ -42,7 +42,9 @@ export const useAppStore = defineStore('app', () => {
   // Mirrors backend SYNAPSE_PM_BACKEND setting; fetched from /api/health/
   const pmBackend = ref<'vault' | 'database'>('database')
   const vaultConnected = ref(false)
-  const appVersion = ref<string>('')
+  // Version — primary source: /api/health/ (runtime); fallback: __APP_VERSION__ (build-time)
+  // __APP_VERSION__ is injected by vite.config.ts from backend/src/synapse/__init__.py
+  const appVersion = ref<string>(`v${__APP_VERSION__}`)
 
   function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value

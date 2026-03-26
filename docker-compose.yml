@@ -69,10 +69,11 @@ services:
     volumes:
       # staticfiles written by collectstatic — shared with nginx container
       - static_volume:/app/backend/staticfiles
-      # Obsidian vault bind-mount (read-only).
+      # Obsidian vault bind-mount (read-write).
       # When OBSIDIAN_VAULT_PATH is set in .env.docker, the host directory is mounted
       # at /vault inside the container. When not set, /tmp is used as a harmless placeholder.
-      - ${OBSIDIAN_VAULT_PATH:-/tmp}:/vault:ro
+      # Read-write is required to support "Export to Vault" (DB → vault file creation/update).
+      - ${OBSIDIAN_VAULT_PATH:-/tmp}:/vault
     # backend is NOT exposed to the host; Nginx proxies to it internally
 
   nginx:

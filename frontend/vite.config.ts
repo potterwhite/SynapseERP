@@ -20,11 +20,38 @@
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { resolve, join } from 'path'
+import { readFileSync } from 'fs'
+
+// ---------------------------------------------------------------------------
+// Version — single source of truth: backend/src/synapse/__init__.py
+// ---------------------------------------------------------------------------
+// Parse __version__ = "x.y.z" from the Python package init file.
+// This is injected at build-time as __APP_VERSION__ so the frontend always
+// shows the same version string as the backend, without an API call.
+function readBackendVersion(): string {
+  try {
+    const initPath = join(__dirname, '../backend/src/synapse/__init__.py')
+    const content = readFileSync(initPath, 'utf-8')
+    const match = content.match(/__version__\s*=\s*["']([^"']+)["']/)
+    if (match) return match[1]
+  } catch {
+    // fallback — should not happen in normal development
+  }
+  return '0.0.0'
+}
+
+const APP_VERSION = readBackendVersion()
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
+
+  // Inject the version read from backend/__init__.py as a build-time constant.
+  // Usage in Vue/TS: declare const __APP_VERSION__: string (see src/env.d.ts)
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
 
   resolve: {
     alias: {
