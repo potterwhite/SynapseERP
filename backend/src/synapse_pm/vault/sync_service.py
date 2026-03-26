@@ -510,8 +510,17 @@ class ObsidianSyncService:
                         logger.debug("  Skipped (vault newer): %s", task.name)
 
                 else:
-                    # No vault file exists yet — create one
-                    if not dry_run and project.vault_path and os.path.isdir(project.vault_path):
+                    # No vault file exists yet — create one.
+                    # For projects created in DB (no vault_path), derive the target
+                    # directory from the project's full_name under 1_PROJECT/.
+                    # The writer's _find_tasks_dir will create the dir if absent.
+                    target_project_path = project.vault_path
+                    if not target_project_path or not os.path.isdir(target_project_path):
+                        # Derive path: vault_root/1_PROJECT/<full_name>
+                        candidate = os.path.join(vault_root, "1_PROJECT", project.full_name)
+                        target_project_path = candidate
+
+                    if not dry_run:
                         try:
                             write_result = writer.create_task_file({
                                 "uuid": str(task.uuid),
@@ -528,6 +537,10 @@ class ObsidianSyncService:
                             task.vault_mtime = os.path.getmtime(write_result["vault_path"])
                             task.synced_at = now
                             task.save(update_fields=["vault_path", "vault_mtime", "synced_at"])
+                            # If the project had no vault_path, update it now
+                            if not project.vault_path or not os.path.isdir(project.vault_path):
+                                project.vault_path = target_project_path
+                                project.save(update_fields=["vault_path"])
                         except Exception as exc:
                             logger.error("Failed to create vault file for task %s: %s", task.name, exc)
                             result.errors.append(f"Export failed for '{task.name}': {exc}")
@@ -629,8 +642,20 @@ class ObsidianSyncService:
                 continue
             try:
                 for entry in os.scandir(tasks_dir):
-                    if entry.is_file() and entry.name.endswith(".md"):
-                        task_count += 1
+                    if not (entry.is_file() and entry.name.endswith(".md")):
+                        continue
+                    # Only count files that actually contain a task_uuid field.
+                    # This avoids counting hand-created .md files that the importer
+                    # skips (no UUID), which would cause a permanent off-by-one
+                    # between "Tasks in Vault" and "Tasks in DB".
+                    # We read only the first 512 bytes (frontmatter is always at top).
+                    try:
+                        with open(entry.path, "r", encoding="utf-8", errors="ignore") as fh:
+                            head = fh.read(512)
+                        if "task_uuid" in head:
+                            task_count += 1
+                    except OSError:
+                        pass
             except OSError:
                 pass
 
