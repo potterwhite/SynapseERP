@@ -10,7 +10,9 @@
 from django.urls import path, include
 
 urlpatterns = [
-    # synapse_api handles: GET /api/health/ and GET /api/dashboard/
+    # Auth: /api/auth/* — login, logout, refresh, me, user management (Phase 5.7)
+    path("auth/", include("synapse_auth.urls")),
+    # Core: GET /api/health/ and GET /api/dashboard/ (auth/me/ moved to synapse_auth)
     path("", include("synapse_api.urls")),
     # PM module: /api/pm/*
     path("pm/", include("synapse_pm.urls")),

@@ -119,22 +119,27 @@ Key architectural decision docs are in `docs/architecture/background/`. The API 
 
 ## Current Development Status
 
-**Current Phase: 5.6 ✅ Complete → Working on Phase 5.7**
+**Current Phase: 5.7 ✅ Complete → Working on Phase 5.8 or 5.9**
 
-### Phase 5.6 — UI/UX Overhaul (COMPLETE)
+### Phase 5.7 — Permission System + Multi-user (COMPLETE)
 
-All Phase 5.6 deliverables are implemented and working:
+All Phase 5.7 deliverables are implemented and verified (build passes, `django check` 0 issues):
 
-- **Dark mode**: `NConfigProvider` wired to Pinia `theme` store; moon/sun toggle in Header; preference persisted to `localStorage` (key: `synapse_theme`)
-- **Responsive layout**: mobile breakpoint (768px) in `AppLayout`; desktop shows `NLayoutSider`, mobile uses `NDrawer` + hamburger icon; `Sidebar` emits `navigate` to close drawer
-- **Dashboard redesign**: PM quick-stats row (total projects, active, total tasks, hours logged); module cards with icons and color accents; loads stats in parallel with dashboard data
-- **Project CRUD**: `ProjectFormModal.vue` (name/status/deadline/tags); "New Project" button + edit/delete action column in `ProjectList`; backend `DELETE /api/pm/projects/{id}/` added; store methods `createProject`, `updateProject`, `deleteProject`
+- **JWT auth**: `djangorestframework-simplejwt` installed. `POST /api/auth/login/` returns `{access, refresh, user}`. `POST /api/auth/refresh/` rotates tokens (7-day lifetime). `POST /api/auth/logout/` blacklists refresh token.
+- **`synapse_auth` app**: New Django app at `backend/src/synapse_auth/`. `UserProfile` model (role + allowed_tags). Signal auto-creates profile on User save; superusers always get `role='admin'`.
+- **User roles**: `admin` / `editor` / `viewer`. Custom permission classes: `IsAdminRole`, `IsEditorOrAbove` in `synapse_auth/permissions.py`.
+- **User management API**: `GET/POST /api/auth/users/`, `GET/PATCH/DELETE /api/auth/users/{id}/` (admin only).
+- **Tag-based access**: `_filter_projects_by_access()` in `synapse_pm/api/views.py`. Admins see all; editors/viewers see untagged projects + projects matching `allowed_tags`.
+- **Frontend JWT client**: `api/client.ts` — JWT Bearer token, auto-refresh on 401, `synapse:session-expired` event on full expiry.
+- **Auth store**: `stores/auth.ts` — `login()`, `logout()`, `fetchCurrentUser()→bool`, `isAdmin`/`isEditor` computed.
+- **Custom login page**: `views/LoginView.vue` — Naive UI card, dark mode compatible, replaces Django admin redirect.
+- **JWT router guard**: `router/index.ts` — redirects to `/login` (not `/admin/login/`), admin-only route guard.
+- **Header**: username chip + role badge (red=admin, orange=editor, default=viewer) + logout button.
+- **Sidebar**: "User Management" link visible only to admins.
+- **UsersView**: `views/admin/UsersView.vue` — full CRUD table for admin.
 
-**Bug fixed**: `NTooltip` in `Header.vue` was using `content` prop + default slot instead of `#trigger` named slot, causing `[vueuc/follower]: slot[default] should have exactly one child` crash and full white screen on load.
+### Next: Phase 5.8 or 5.9
 
-### Next: Phase 5.7 — Permission System + Multi-user
-
-- JWT auth replacing Django Session
-- User roles (admin / editor / viewer)
-- Custom login/register pages
-- Tag-based project access control
+Decide together with the user which to tackle next:
+- **5.8**: Plugin API framework (`SynapseModule` base class + MCP/AI agent interface)
+- **5.9**: PostgreSQL migration + Docker Compose deployment (planned to be done together)

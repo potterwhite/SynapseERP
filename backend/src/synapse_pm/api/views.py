@@ -40,6 +40,39 @@ from ..serializers import (
 )
 
 
+def _filter_projects_by_access(projects: list, request: Request) -> list:
+    """
+    Filter a list of serialised project dicts based on the request user's role/tags.
+
+    Rules (Phase 5.7):
+      - admin (or superuser): sees ALL projects
+      - editor/viewer: sees projects where project['tags'] is empty
+                       OR any project tag is in user.profile.allowed_tags
+      - users without a profile (legacy): treated as viewer with no tags (sees untagged only)
+    """
+    user = request.user
+    if user.is_superuser:
+        return projects
+    try:
+        profile = user.profile
+        if profile.effective_role == "admin":
+            return projects
+        allowed = set(profile.allowed_tags or [])
+    except Exception:
+        # No profile — only untagged projects
+        allowed = set()
+
+    filtered = []
+    for p in projects:
+        project_tags = p.get("tags") or []
+        # Untagged projects are visible to all authenticated users
+        if not project_tags:
+            filtered.append(p)
+        elif allowed.intersection(project_tags):
+            filtered.append(p)
+    return filtered
+
+
 # ---------------------------------------------------------------------------
 # Projects
 # ---------------------------------------------------------------------------
@@ -80,6 +113,9 @@ def project_list(request: Request) -> Response:
     )
 
     projects = adapter.list_projects(status=filter_status, tags=filter_tags)
+
+    # Phase 5.7: apply tag-based access control per user role
+    projects = _filter_projects_by_access(projects, request)
 
     # Additional in-memory filters (small data sets — no SQL needed yet)
     search = request.query_params.get("search", "").lower().strip()
@@ -146,6 +182,11 @@ def project_detail(request: Request, project_id: int) -> Response:
     # GET
     project = adapter.get_project(project_id)
     if project is None:
+        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Phase 5.7: check tag-based access for this specific project
+    visible = _filter_projects_by_access([project], request)
+    if not visible:
         return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
     # Attach task list

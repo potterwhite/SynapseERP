@@ -8,7 +8,7 @@
 > **Maintenance rule:** Any AI agent that modifies a file listed here MUST update
 > the relevant section in this document in the same commit/session.
 >
-> Last updated: 2026-03-26 (reflects Phase 5.6 complete state)
+> Last updated: 2026-03-26 (reflects Phase 5.7 complete state)
 
 ---
 
@@ -47,16 +47,42 @@ SynapseERP.git/
 
 | File | Purpose |
 |------|---------|
-| `settings.py` | All settings. Reads from `.env`. Key: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `OBSIDIAN_VAULT_PATH`, `OBSIDIAN_SYNC_ENABLED`. DRF uses `SessionAuthentication` + `IsAuthenticated` by default. |
+| `settings.py` | All settings. Reads from `.env`. Key: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `OBSIDIAN_VAULT_PATH`, `OBSIDIAN_SYNC_ENABLED`. DRF uses `JWTAuthentication` (primary) + `SessionAuthentication` (for /admin/). `SIMPLE_JWT` config: 60min access, 7day refresh, rotate. |
 | `urls.py` | Root URL: mounts `/admin/`, `/api/`, `/i18n/` |
-| `api_urls.py` | API root: includes `synapse_api.urls`, `synapse_pm.urls`, `synapse_attendance.api_urls`, `synapse_bom_analyzer.api_urls` |
+| `api_urls.py` | API root: includes `synapse_auth.urls` (first), `synapse_api.urls`, `synapse_pm.urls`, `synapse_attendance.api_urls`, `synapse_bom_analyzer.api_urls` |
+
+### `backend/src/synapse_auth/` (JWT Auth + User Management — Phase 5.7)
+
+```
+synapse_auth/
+├── __init__.py
+├── apps.py         AppConfig — loads signals on ready()
+├── models.py       UserProfile (OneToOne→User, role, allowed_tags)
+├── signals.py      post_save signal: auto-creates UserProfile; superuser→admin role
+├── serializers.py  UserSerializer, UserCreateSerializer, UserUpdateSerializer
+├── views.py        login_view, logout_view, CustomTokenRefreshView, current_user,
+│                   user_list, user_detail
+├── urls.py         /auth/login/, /auth/logout/, /auth/refresh/, /auth/me/,
+│                   /auth/users/, /auth/users/{id}/
+└── permissions.py  IsAdminRole, IsEditorOrAbove
+```
+
+**UserProfile model:**
+```python
+UserProfile:
+  user: OneToOneField(User)
+  role: 'admin' | 'editor' | 'viewer'  (default: 'viewer')
+  allowed_tags: JSONField[list[str]]    (default: [])
+  created_at: DateTimeField
+  # Methods: effective_role (superuser always→admin), can_see_project(tags)
+```
 
 ### `backend/src/synapse_api/` (Core API)
 
 | File | Purpose |
 |------|---------|
-| `urls.py` | `GET /api/health/`, `GET /api/dashboard/`, `GET /api/auth/me/` |
-| `views.py` | `health_check` (AllowAny), `dashboard` (AllowAny), `current_user` (IsAuthenticated → returns `{id, username, email}`) |
+| `urls.py` | `GET /api/health/`, `GET /api/dashboard/`. Note: `auth/me/` was moved to `synapse_auth` in Phase 5.7. |
+| `views.py` | `health_check` (AllowAny), `dashboard` (AllowAny). `current_user` removed (now in `synapse_auth`). |
 
 ### `backend/src/synapse_pm/` (PM Module — most complex)
 
@@ -126,7 +152,13 @@ python-dotenv, PyYAML>=6.0
 |--------|------|------|-------------|
 | GET | `/api/health/` | None | Server health, version, PM backend mode |
 | GET | `/api/dashboard/` | None | Latest notification (markdown) + module list |
-| GET | `/api/auth/me/` | ✅ | Current user `{id, username, email}` |
+| POST | `/api/auth/login/` | None | JWT login → `{access, refresh, user}` |
+| POST | `/api/auth/refresh/` | None | Refresh access token (rotates refresh too) |
+| POST | `/api/auth/logout/` | ✅ | Blacklist refresh token |
+| GET | `/api/auth/me/` | ✅ | Current user `{id, username, email, role, allowed_tags}` |
+| GET | `/api/auth/users/` | admin | List all users |
+| POST | `/api/auth/users/` | admin | Create user |
+| GET/PATCH/DELETE | `/api/auth/users/{id}/` | admin | User detail / update role+tags / delete |
 
 ### PM Projects (`/api/pm/`)
 
@@ -185,50 +217,55 @@ python-dotenv, PyYAML>=6.0
 frontend/src/
 ├── api/
 │   ├── client.ts       Axios instance. baseURL='/api', withCredentials=true.
-│   │                   Request interceptor: attaches X-CSRFToken from cookie.
-│   │                   Response interceptor: normalises errors to Error(message).
+│   │                   Request interceptor: attaches JWT Bearer token from localStorage.
+│   │                   Response interceptor: on 401 auto-refresh, then retry.
+│   │                   On refresh failure: fires 'synapse:session-expired' custom event.
+│   │                   Exports: ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY constants.
+│   ├── auth.ts         Auth API calls: authApi.login/logout/me, userApi.list/get/create/update/delete
 │   └── pm.ts           All PM API call functions (pmApi.* wrappers)
 ├── stores/
 │   ├── app.ts          Theme ('light'|'dark' → localStorage key 'synapse_theme'),
 │   │                   sidebarCollapsed, pmBackend, vaultConnected, fetchHealth()
-│   ├── auth.ts         user{id,username,email}, isAuthenticated, fetchCurrentUser(),
-│   │                   clearAuth(). Phase 5.7: add role, JWT token management.
+│   ├── auth.ts         user{id,username,email,role,allowed_tags,is_superuser},
+│   │                   isAuthenticated, isAdmin(computed), isEditor(computed).
+│   │                   login(u,p), logout(), fetchCurrentUser()→bool, clearAuth().
+│   │                   Listens for 'synapse:session-expired' to clear state.
 │   └── pm.ts           projects, tasks, stats, tags, meetingMode, syncing.
 │                       createProject/updateProject/deleteProject,
 │                       fetchTags, syncVault, visibleProjects (computed).
 ├── types/
 │   ├── api.ts          PaginatedResponse<T>, ApiError
+│   ├── auth.ts         User, UserRole types (Phase 5.7)
 │   └── pm.ts           Project, Task, TimeEntry, PmStats interfaces
 ├── router/
-│   └── index.ts        Routes + global guard. Guard calls GET /api/auth/me/;
-│                       on 401 redirects to /admin/login/?next=/
-│                       Phase 5.7: replace with JWT guard + /login route.
+│   └── index.ts        Routes + JWT guard. Public routes: /login (meta.public=true).
+│                       Guard: checks isAuthenticated, calls fetchCurrentUser() once.
+│                       On fail: redirect to /login?redirect=<path> (NOT /admin/login/).
+│                       Admin guard: meta.requiresAdmin=true → non-admins → /dashboard.
 ├── components/
 │   └── layout/
 │       ├── AppLayout.vue  NConfigProvider(theme) + NLayoutSider(desktop) +
 │       │                  NDrawer(mobile). Mobile breakpoint: 768px.
-│       ├── Header.vue     Logo, theme toggle (moon/sun), version label.
-│       │                  Phase 5.7: add username + logout button.
-│       └── Sidebar.vue    NMenu with routes: Dashboard, PM, Attendance, BOM.
-│                          Phase 5.7: add Users link (admin only).
+│       ├── Header.vue     Logo, theme toggle, user info (username + role badge),
+│       │                  logout button. Role badge: admin=red, editor=orange, viewer=default.
+│       └── Sidebar.vue    NMenu. "User Management" item visible only when authStore.isAdmin.
 └── views/
+    ├── LoginView.vue       ⭐ Custom JWT login page (Phase 5.7). Naive UI card, dark mode.
     ├── Dashboard.vue       PM stats row + module cards + notification markdown
-    ├── LoginView.vue       (Phase 5.7 — TO CREATE) Custom JWT login page
-    ├── pm/
+    ├── pm/                 (unchanged from Phase 5.6)
     │   ├── PmIndex.vue     Route switcher: ProjectList ↔ ProjectTaskView
-    │   ├── ProjectList.vue Tag filter, meeting mode toggle, project table,
-    │   │                   New/Edit/Delete via ProjectFormModal
+    │   ├── ProjectList.vue Tag filter, meeting mode toggle, project table, CRUD modal
     │   ├── ProjectTaskView.vue Task list for a project + TaskDetail drawer
     │   ├── GanttView.vue   frappe-gantt integration
     │   ├── TaskDetail.vue  Task detail side drawer
     │   ├── SyncSettings.vue Vault sync config + watcher info
     │   └── ProjectFormModal.vue Create/Edit project (name/status/deadline/tags)
+    ├── admin/
+    │   └── UsersView.vue   ⭐ User management CRUD (Phase 5.7, admin only)
     ├── attendance/
     │   └── Upload.vue      Excel upload → analyze → download
-    ├── bom/
-    │   └── Upload.vue      Multi-file BOM upload → summary → download
-    └── admin/
-        └── UsersView.vue   (Phase 5.7 — TO CREATE) User management (admin only)
+    └── bom/
+        └── Upload.vue      Multi-file BOM upload → summary → download
 ```
 
 ### `frontend/vite.config.ts` — Dev Proxy
@@ -240,29 +277,29 @@ frontend/src/
 
 ---
 
-## 5. Authentication Flow
-
-### Current (Phase ≤5.6): Django Session Auth
+## 5. Authentication Flow (Phase 5.7 — JWT)
 
 ```
 1. Browser loads SPA → router.beforeEach fires
-2. GET /api/auth/me/ → 200 (session cookie present) → proceed
-3.                   → 401/403 → redirect to /admin/login/?next=/
-4. Django admin login sets session cookie
-5. All API calls include session cookie (withCredentials: true)
-6. Django CSRF: csrftoken cookie → X-CSRFToken header (unsafe methods)
-```
+2. authChecked=false: call authStore.fetchCurrentUser()
+   └─ Reads localStorage 'synapse_access_token'
+   └─ GET /api/auth/me/ with Bearer token
+      → 200: user + role loaded, proceed
+      → 401: Axios interceptor fires refresh attempt
+             POST /api/auth/refresh/ → new access token → retry
+             Still 401: clear tokens, fire 'synapse:session-expired'
+3. isAuthenticated=false → redirect { name: 'login', query: { redirect: to.fullPath } }
+4. /login page: POST /api/auth/login/ → { access, refresh, user }
+   → store tokens in localStorage → router.push(redirect || '/')
 
-### Phase 5.7: JWT Auth (replacing Session)
+Token storage keys:
+  'synapse_access_token'  — 60min, JWT Bearer
+  'synapse_refresh_token' — 7 days, rotated on each refresh call
 
-```
-1. Browser loads SPA → router.beforeEach fires
-2. Check localStorage for access token
-3. GET /api/auth/me/ with Bearer token → 200 → proceed
-4.                                      → 401 → try refresh token
-5.   POST /api/auth/refresh/ → 200 → new access token → retry
-6.                           → 401 → redirect to /login (custom Vue page)
-7. /login page → POST /api/auth/login/ → {access, refresh} → store in localStorage
+Role-based access:
+  admin  → sees ALL projects, can access /admin/users
+  editor → sees untagged projects + projects matching allowed_tags
+  viewer → same visibility as editor but read-only (write ops rejected by IsEditorOrAbove)
 ```
 
 ---
@@ -286,10 +323,18 @@ File: `backend/.env` (auto-generated, gitignored)
 ```python
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        # Phase 5.7: add JWTAuthentication
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # primary (Phase 5.7)
+        'rest_framework.authentication.SessionAuthentication',          # kept for /admin/
     ],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 ```
 
@@ -322,6 +367,6 @@ cd backend && ../.venv/bin/python manage.py test synapse_pm.tests.TestClass.test
 
 4. **Naive UI**: All UI components are from Naive UI. Always import from `naive-ui` directly (not auto-import plugin). Use `#trigger` slot for `NTooltip` (not `content` prop).
 
-5. **Vue Router Guard**: Single global `beforeEach` guard. `sessionVerified` flag prevents repeated auth checks.
+5. **JWT Auth Guard**: Single global `beforeEach` guard. `authChecked` flag prevents repeated `fetchCurrentUser()` calls. Failed 401 → `/login` (not `/admin/login/`). Axios interceptor auto-refreshes tokens on 401.
 
-6. **Tag Filtering**: Python-side list comprehension (not SQL JSONField query) because SQLite lacks native JSON containment. Phase 5.9 (PostgreSQL) will fix this.
+6. **Tag Filtering (PM)**: Python-side list comprehension (`_filter_projects_by_access()` in `synapse_pm/api/views.py`) filters projects by user role + allowed_tags. Admin sees all. Phase 5.9 (PostgreSQL) will enable native SQL JSON containment queries.

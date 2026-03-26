@@ -56,7 +56,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",  # enables logout/token invalidation
     # Synapse apps
+    "synapse_auth",   # Phase 5.7: JWT auth + user roles
     "synapse_api",
     "synapse_dashboard",
     "synapse_attendance",
@@ -118,12 +121,34 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.JSONParser",
         "rest_framework.parsers.MultiPartParser",
     ],
+    # Phase 5.7: JWT is the primary auth method.
+    # SessionAuthentication is kept for /admin/ Django admin compatibility.
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+}
+
+# --- JWT Settings (Phase 5.7) ---
+from datetime import timedelta
+SIMPLE_JWT = {
+    # Access token expires quickly to limit exposure window
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    # Refresh token is long-lived; rotated on every use
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    # Rotating refresh tokens: every refresh call issues a new refresh token
+    # and blacklists the old one. Requires token_blacklist app.
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    # Standard Bearer token scheme
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    # Include user_id and username in the token for debugging
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 # --- Custom Project Settings ---

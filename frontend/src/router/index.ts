@@ -1,28 +1,29 @@
 // Copyright (c) 2026 PotterWhite
+// MIT License — see LICENSE in the project root.
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Vue Router configuration (Phase 5.7 — JWT auth guard).
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// Guard flow:
+//   1. Public routes (/login) always pass through.
+//   2. For protected routes: check authStore.isAuthenticated.
+//      If not yet verified, call fetchCurrentUser() once (restores session from localStorage).
+//   3. If still unauthenticated: redirect to /login?redirect=<original path>.
+//   4. Admin-only routes (meta.requiresAdmin): redirect non-admins to dashboard.
 
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import client from '@/api/client'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
+  // ── Public routes ──────────────────────────────────────────────────────────
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: { public: true },
+  },
+
+  // ── Authenticated routes (AppLayout wrapper) ───────────────────────────────
   {
     path: '/',
     component: () => import('@/components/layout/AppLayout.vue'),
@@ -64,6 +65,13 @@ const routes: RouteRecordRaw[] = [
         name: 'bom',
         component: () => import('@/views/bom/Upload.vue'),
       },
+      // ── Admin-only routes ──────────────────────────────────────────────────
+      {
+        path: 'admin/users',
+        name: 'admin-users',
+        component: () => import('@/views/admin/UsersView.vue'),
+        meta: { requiresAdmin: true },
+      },
     ],
   },
 ]
@@ -73,28 +81,35 @@ const router = createRouter({
   routes,
 })
 
-// Global navigation guard: verify the user has an active Django session.
-// On any unrecognised 401/403 response, redirect to the Django admin login page.
-//
-// In development (Vite proxy), /admin is proxied to :8000, so the session
-// cookie is set on the same origin as the Vue SPA (localhost:5173).
-// In production, Nginx serves both the SPA and /admin from the same origin.
-//
-// next= points back to the SPA root (/) so Django redirects here after login.
-let sessionVerified = false
+// Global navigation guard — JWT-based (Phase 5.7)
+// authChecked prevents repeated fetchCurrentUser() calls during the same session
+let authChecked = false
 
-router.beforeEach(async () => {
-  if (sessionVerified) return true
+router.beforeEach(async (to) => {
+  // Public routes (e.g. /login) always pass through
+  if (to.meta.public) return true
 
-  try {
-    await client.get('/auth/me/')
-    sessionVerified = true
-    return true
-  } catch {
-    // Not authenticated — redirect to Django admin login (same-origin via proxy).
-    window.location.href = `/admin/login/?next=${encodeURIComponent('/')}`
-    return false
+  const authStore = useAuthStore()
+
+  // On the very first navigation, attempt to restore session from localStorage token
+  if (!authChecked) {
+    authChecked = true
+    if (!authStore.isAuthenticated) {
+      await authStore.fetchCurrentUser()
+    }
   }
+
+  // Not authenticated → redirect to Vue login page (preserves intended destination)
+  if (!authStore.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  // Admin-only guard
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    return { name: 'dashboard' }
+  }
+
+  return true
 })
 
 export default router

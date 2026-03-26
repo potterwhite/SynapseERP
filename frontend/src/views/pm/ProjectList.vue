@@ -167,7 +167,7 @@ import { useRouter } from 'vue-router'
 import {
   NButton, NDataTable, NDrawer, NDrawerContent, NFlex, NGrid, NGi,
   NH2, NIcon, NInput, NResult, NSelect, NSpin, NStatistic,
-  NTag, NProgress, NTooltip, NPopconfirm,
+  NTag, NProgress, NTooltip,
   useMessage, useDialog,
 } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'

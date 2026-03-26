@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-26 (Phase 5.6 ✅ 完成，5.7 JWT 权限系统规划中)
+> 最后更新 / Last updated: 2026-03-26 (Phase 5.7 ✅ 完成，5.8/5.9 待开始)
 > 当前分支 / Branch: `feature/phase5-productization`
 > 当前分支 / Branch: `main`
 >
@@ -126,7 +126,7 @@
 |         | 深色模式 + 主题持久化 / Dark mode + theme persistence (localStorage) | |
 |         | 前端 Project CRUD 表单（新建 / 编辑 / 删除）/ Frontend Project Create-Edit-Delete modal | |
 |         | ⚠️ Bug 修复：NTooltip trigger slot 用法错误导致白屏 / Fix: NTooltip trigger slot crash (white screen) | ✅ 已修复 |
-| **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ 待开始 Pending |
+| **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ✅ 完成 Done |
 |         | JWT 认证替代 Django Session / JWT auth replacing Django Session | |
 |         | 用户角色（admin / editor / viewer）/ User roles (admin / editor / viewer) | |
 |         | 自定义登录/注册页面 / Custom login/register pages | |

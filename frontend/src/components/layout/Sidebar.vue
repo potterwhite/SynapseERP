@@ -54,13 +54,16 @@ import {
   TimeOutline as AttendanceIcon,
   DocumentTextOutline as BOMIcon,
   SyncOutline as SyncIcon,
+  PeopleOutline as UsersIcon,
 } from '@vicons/ionicons5'
+import { useAuthStore } from '@/stores/auth'
 
 defineProps<{ collapsed: boolean }>()
 const emit = defineEmits<{ (e: 'navigate'): void }>()
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 
 const activeKey = computed(() => {
   const path = route.path
@@ -69,6 +72,7 @@ const activeKey = computed(() => {
   if (path.startsWith('/pm')) return 'pm-projects'
   if (path.startsWith('/attendance')) return 'attendance'
   if (path.startsWith('/bom')) return 'bom'
+  if (path.startsWith('/admin/users')) return 'admin-users'
   return 'dashboard'
 })
 
@@ -76,44 +80,57 @@ function renderIcon(icon: unknown) {
   return () => h(NIcon, null, { default: () => h(icon as never) })
 }
 
-const menuOptions: MenuOption[] = [
-  {
-    label: 'Dashboard',
-    key: 'dashboard',
-    icon: renderIcon(DashboardIcon),
-  },
-  {
-    label: 'Project Management',
-    key: 'pm',
-    icon: renderIcon(PMIcon),
-    children: [
-      {
-        label: 'Projects',
-        key: 'pm-projects',
-      },
-      {
-        label: 'Gantt Chart',
-        key: 'pm-gantt',
-        icon: renderIcon(GanttIcon),
-      },
-      {
-        label: 'Obsidian Sync',
-        key: 'pm-sync',
-        icon: renderIcon(SyncIcon),
-      },
-    ],
-  },
-  {
-    label: 'Attendance',
-    key: 'attendance',
-    icon: renderIcon(AttendanceIcon),
-  },
-  {
-    label: 'BOM Analyzer',
-    key: 'bom',
-    icon: renderIcon(BOMIcon),
-  },
-]
+const menuOptions = computed<MenuOption[]>(() => {
+  const items: MenuOption[] = [
+    {
+      label: 'Dashboard',
+      key: 'dashboard',
+      icon: renderIcon(DashboardIcon),
+    },
+    {
+      label: 'Project Management',
+      key: 'pm',
+      icon: renderIcon(PMIcon),
+      children: [
+        {
+          label: 'Projects',
+          key: 'pm-projects',
+        },
+        {
+          label: 'Gantt Chart',
+          key: 'pm-gantt',
+          icon: renderIcon(GanttIcon),
+        },
+        {
+          label: 'Obsidian Sync',
+          key: 'pm-sync',
+          icon: renderIcon(SyncIcon),
+        },
+      ],
+    },
+    {
+      label: 'Attendance',
+      key: 'attendance',
+      icon: renderIcon(AttendanceIcon),
+    },
+    {
+      label: 'BOM Analyzer',
+      key: 'bom',
+      icon: renderIcon(BOMIcon),
+    },
+  ]
+
+  // Admin-only: User Management link
+  if (authStore.isAdmin) {
+    items.push({
+      label: 'User Management',
+      key: 'admin-users',
+      icon: renderIcon(UsersIcon),
+    })
+  }
+
+  return items
+})
 
 const routeMap: Record<string, string> = {
   dashboard: '/',
@@ -122,6 +139,7 @@ const routeMap: Record<string, string> = {
   'pm-sync': '/pm/sync',
   attendance: '/attendance',
   bom: '/bom',
+  'admin-users': '/admin/users',
 }
 
 function handleMenuSelect(key: string) {
