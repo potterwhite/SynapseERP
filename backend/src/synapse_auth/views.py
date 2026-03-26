@@ -15,7 +15,51 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .models import UserProfile
 from .permissions import IsAdminRole
-from .serializers import UserCreateSerializer, UserSerializer, UserUpdateSerializer
+from .serializers import UserCreateSerializer, UserRegisterSerializer, UserSerializer, UserUpdateSerializer
+
+
+# ---------------------------------------------------------------------------
+# Self-registration (public)
+# ---------------------------------------------------------------------------
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def register_view(request: Request) -> Response:
+    """
+    POST /api/auth/register/
+
+    Public self-registration endpoint.  Anyone can create an account.
+    New users are always assigned role='viewer' with no allowed_tags.
+    Admins can later promote them via PATCH /api/auth/users/{id}/.
+
+    Request body:
+      { "username": "bob", "email": "bob@example.com",
+        "password": "s3cr3t!!", "password_confirm": "s3cr3t!!" }
+
+    Response 201:
+      {
+        "access":  "<jwt-access-token>",
+        "refresh": "<jwt-refresh-token>",
+        "user": { "id": 2, "username": "bob", "email": "bob@example.com",
+                  "role": "viewer", "allowed_tags": [] }
+      }
+
+    Response 400: validation errors (username taken, password mismatch, etc.)
+    """
+    ser = UserRegisterSerializer(data=request.data)
+    ser.is_valid(raise_exception=True)
+    user = ser.save()
+
+    # Issue JWT tokens immediately so the user is logged in after registration
+    refresh = RefreshToken.for_user(user)
+    return Response(
+        {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": UserSerializer(user).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 
 # ---------------------------------------------------------------------------

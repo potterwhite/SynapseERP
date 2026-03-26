@@ -15,6 +15,13 @@ export interface LoginPayload {
   password: string
 }
 
+export interface RegisterPayload {
+  username: string
+  email?: string
+  password: string
+  password_confirm: string
+}
+
 export interface LoginResponse {
   access: string
   refresh: string
@@ -33,6 +40,15 @@ export const authApi = {
    */
   login(payload: LoginPayload) {
     return client.post<LoginResponse>('/auth/login/', payload)
+  },
+
+  /**
+   * POST /api/auth/register/
+   * Public self-registration. New user is created with role='viewer'.
+   * Returns JWT tokens so the user is immediately logged in.
+   */
+  register(payload: RegisterPayload) {
+    return client.post<LoginResponse>('/auth/register/', payload)
   },
 
   /**

@@ -69,6 +69,13 @@ Replaces the Django admin login redirect that was used in Phase ≤5.6.
               {{ appStore.theme === 'dark' ? 'Light mode' : 'Dark mode' }}
             </n-button>
           </div>
+
+          <!-- Registration link -->
+          <div style="text-align: center; margin-top: 12px;">
+            <n-button text @click="router.push('/register')">
+              No account yet? Create one
+            </n-button>
+          </div>
         </div>
       </div>
     </n-message-provider>

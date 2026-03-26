@@ -108,3 +108,40 @@ class UserUpdateSerializer(serializers.Serializer):
         profile.save()
 
         return instance
+
+
+class UserRegisterSerializer(serializers.Serializer):
+    """
+    Used by POST /api/auth/register/ (public self-registration).
+    New users are always created with role='viewer' and no allowed_tags.
+    Admins can later promote them in the User Management page.
+    """
+
+    username = serializers.CharField(max_length=150)
+    email = serializers.EmailField(required=False, allow_blank=True, default="")
+    password = serializers.CharField(write_only=True, min_length=8)
+    password_confirm = serializers.CharField(write_only=True)
+
+    def validate_username(self, value: str) -> str:
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return value
+
+    def validate(self, data: dict) -> dict:
+        if data["password"] != data["password_confirm"]:
+            raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
+        return data
+
+    def create(self, validated_data: dict) -> User:
+        validated_data.pop("password_confirm")
+        password = validated_data.pop("password")
+
+        # All self-registered users start as viewer — admin promotes them later
+        user = User.objects.create_user(password=password, **validated_data)
+
+        # Signal auto-creates a profile; ensure role is viewer (not admin)
+        user.profile.role = UserProfile.Role.VIEWER
+        user.profile.allowed_tags = []
+        user.profile.save(update_fields=["role", "allowed_tags"])
+
+        return user
