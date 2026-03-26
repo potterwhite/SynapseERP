@@ -4,6 +4,7 @@ MIT License — see LICENSE in the project root.
 
 Top navigation bar.
 Phase 5.7: Added user info (username + role badge) and logout button.
+i18n:       Added language switcher (zh-CN / en-US, persistent).
 -->
 
 <template>
@@ -39,9 +40,16 @@ Phase 5.7: Added user info (username + role badge) and logout button.
               </template>
             </n-button>
           </template>
-          Logout
+          {{ t('header.logout') }}
         </n-tooltip>
       </template>
+
+      <!-- Language switcher -->
+      <n-dropdown :options="langOptions" @select="handleLangChange">
+        <n-button quaternary size="small" style="min-width: 48px; font-size: 13px;">
+          {{ currentLangLabel }}
+        </n-button>
+      </n-dropdown>
 
       <!-- Theme toggle -->
       <n-tooltip trigger="hover">
@@ -52,7 +60,7 @@ Phase 5.7: Added user info (username + role badge) and logout button.
             </template>
           </n-button>
         </template>
-        {{ appStore.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}
+        {{ appStore.theme === 'dark' ? t('header.switch_to_light') : t('header.switch_to_dark') }}
       </n-tooltip>
     </n-space>
   </n-layout-header>
@@ -61,10 +69,12 @@ Phase 5.7: Added user info (username + role badge) and logout button.
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { NLayoutHeader, NSpace, NText, NButton, NIcon, NTooltip, NFlex, NTag } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+import { NLayoutHeader, NSpace, NText, NButton, NIcon, NTooltip, NFlex, NTag, NDropdown } from 'naive-ui'
 import { MoonOutline, SunnyOutline, MenuOutline, LogOutOutline } from '@vicons/ionicons5'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
+import { setLocale, type SupportedLocale } from '@/i18n'
 
 defineProps<{ showMenuButton?: boolean }>()
 const emit = defineEmits<{
@@ -72,10 +82,25 @@ const emit = defineEmits<{
   (e: 'open-drawer'): void
 }>()
 
+const { t, locale } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const router = useRouter()
 const loggingOut = ref(false)
+
+// Language switcher options — add more entries here to support new languages
+const langOptions = [
+  { key: 'zh-CN', label: '中文' },
+  { key: 'en-US', label: 'English' },
+]
+
+const currentLangLabel = computed(() =>
+  langOptions.find(o => o.key === locale.value)?.label ?? locale.value
+)
+
+function handleLangChange(key: string) {
+  setLocale(key as SupportedLocale)
+}
 
 // Colour-code the role badge: admin=error(red), editor=warning(orange), viewer=default
 const roleTagType = computed(() => {
