@@ -11,7 +11,8 @@
 #   - Serves static content at :80
 
 # --- Stage 1: Build Vue 3 SPA ---
-FROM node:20-alpine AS builder
+# --platform ensures a single-arch manifest is requested (avoids EOF on unstable mirrors).
+FROM --platform=linux/amd64 node:20-alpine AS builder
 
 WORKDIR /app
 

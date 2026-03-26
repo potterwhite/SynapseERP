@@ -15,6 +15,6 @@ It provides shared metadata, utilities, and foundational components
 for all pluggable modules within the framework.
 """
 
-__version__ = "0.5.0-alpha"
-__version_date__ = "2025-09-05"
+__version__ = "0.9.0-alpha"
+__version_date__ = "2026-03-26"
 __author__ = "PotterWhite <themanuknowwhom@outlook.com>"

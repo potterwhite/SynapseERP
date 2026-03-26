@@ -4,7 +4,7 @@
 # Runtime: Gunicorn (WSGI)
 # Entry: docker/entrypoint.sh (waits for DB → migrate → collectstatic → start)
 
-FROM python:3.12-slim
+FROM --platform=linux/amd64 python:3.12-slim
 
 WORKDIR /app
 

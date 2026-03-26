@@ -318,10 +318,21 @@ fn_docker_up() {
         exit 1
     fi
     fn_log "🚀 Starting SynapseERP via Docker Compose (PostgreSQL + backend + nginx)..." "blue"
-    docker compose --env-file "$env_file" up -d --build
+    fn_log "   Building images — this may take a few minutes on first run..." "yellow"
+    if ! docker compose --env-file "$env_file" up -d --build; then
+        fn_log "" ""
+        fn_log "❌ Build failed. If you see an EOF or timeout error when pulling images:" "red"
+        fn_log "   This is usually caused by an unstable Docker registry mirror." "yellow"
+        fn_log "   Fix options:" "yellow"
+        fn_log "   1. Retry immediately: ./synapse docker:up  (mirrors are often transient)" "yellow"
+        fn_log "   2. Remove unstable mirrors from Docker Desktop → Settings → Docker Engine" "yellow"
+        fn_log "      (remove the 'registry-mirrors' key from daemon.json, then restart Docker)" "yellow"
+        fn_log "   3. Pull the base images manually first:" "yellow"
+        fn_log "      docker pull python:3.12-slim && docker pull node:20-alpine && docker pull postgres:16-alpine && docker pull nginx:alpine" "yellow"
+        exit 1
+    fi
     fn_log "✅ All services started. Visit http://localhost" "green"
-    fn_log "   To create an admin user run: ./synapse docker:shell" "yellow"
-    fn_log "   Then inside the container: python manage.py createsuperuser" "yellow"
+    fn_log "   To create an admin user: ./synapse docker:manage createsuperuser" "yellow"
 }
 
 fn_docker_down() {
