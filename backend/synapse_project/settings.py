@@ -93,12 +93,43 @@ TEMPLATES = [
         },
     },
 ]
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+def get_db_config() -> dict:
+    """
+    Build database configuration based on DB_ENGINE environment variable.
+
+    DB_ENGINE=django.db.backends.postgresql  → PostgreSQL (Docker / production)
+    DB_ENGINE=django.db.backends.sqlite3     → SQLite (default, local dev)
+
+    PostgreSQL env vars: DB_NAME, DB_USER, DB_PASSWORD (required), DB_HOST, DB_PORT
+    """
+    engine = get_env_variable("DB_ENGINE", "django.db.backends.sqlite3")
+
+    if engine == "django.db.backends.postgresql":
+        return {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": get_env_variable("DB_NAME", "synapse_db"),
+                "USER": get_env_variable("DB_USER", "synapse_user"),
+                # DB_PASSWORD is required when using PostgreSQL
+                "PASSWORD": get_env_variable("DB_PASSWORD", is_required=True),
+                "HOST": get_env_variable("DB_HOST", "localhost"),
+                "PORT": get_env_variable("DB_PORT", "5432"),
+                # Keep connections alive for 10 min (matches Gunicorn worker lifespan)
+                "CONN_MAX_AGE": 600,
+                "OPTIONS": {"connect_timeout": 10},
+            }
+        }
+
+    # Default: SQLite for local development — no credentials required
+    return {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+
+
+DATABASES = get_db_config()
 LANGUAGE_CODE = "zh-hans"
 LANGUAGES = [
     ("en", "English"),
