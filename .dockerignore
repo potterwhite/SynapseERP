@@ -1,0 +1,39 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Python build artifacts
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Local development environments
+.venv/
+venv/
+
+# Local dev data (not included in Docker image)
+backend/db.sqlite3
+backend/.env
+backend/staticfiles/
+
+# Node build artifacts
+frontend/node_modules/
+frontend/dist/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Claude Code session data
+.claude/
+
+# Documentation (not needed in container)
+docs/
