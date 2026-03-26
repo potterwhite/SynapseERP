@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+# SynapseERP — Nginx + Vue frontend image (multi-stage build)
+#
+# Stage 1 (builder): Node 20 Alpine
+#   - Installs frontend dependencies
+#   - Runs `npm run build` (Vite) → outputs static files to /app/dist
+#
+# Stage 2 (final): Nginx Alpine
+#   - Copies built Vue SPA from builder stage
+#   - Applies our custom Nginx config (proxy to backend, SPA fallback)
+#   - Serves static content at :80
+
+# --- Stage 1: Build Vue 3 SPA ---
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files first for layer caching (re-runs only if package.json changes)
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copy full frontend source and build
+COPY frontend/ ./
+RUN npm run build
+# Vite output: /app/dist/index.html + /app/dist/assets/
+
+# --- Stage 2: Nginx runtime ---
+FROM nginx:alpine
+
+# Remove the default Nginx placeholder config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy the built Vue SPA from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy our custom Nginx config
+COPY docker/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
