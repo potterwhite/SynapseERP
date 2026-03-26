@@ -19,7 +19,7 @@ Phase 5.7: Added user info (username + role badge) and logout button.
     </n-flex>
 
     <n-space align="center">
-      <n-text depth="3" style="font-size: 13px;">v0.9.0-alpha</n-text>
+      <n-text depth="3" style="font-size: 13px;">{{ appStore.appVersion || 'loading...' }}</n-text>
 
       <!-- User info: role badge + username (hidden on very small screens) -->
       <template v-if="authStore.user">

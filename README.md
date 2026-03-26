@@ -4,13 +4,11 @@ All rights reserved.
 
 This source code is licensed under the MIT license found in the
 LICENSE file in the root directory of this source tree.
-
-T-HEAD-GR-V0.8.0-20250910 (English README for SynapseERP)
 -->
 
 <div align="center">
   <h1>SynapseERP</h1>
-  <p><i>A Modular Django Framework for Data Analysis Tools</i></p>
+  <p><i>A Modular ERP Framework — Django Backend · Vue 3 Frontend · Docker Ready</i></p>
 </div>
 
 <p align="center">
@@ -21,6 +19,7 @@ T-HEAD-GR-V0.8.0-20250910 (English README for SynapseERP)
   <a href="https://github.com/potterwhite/SynapseERP/releases"><img src="https://img.shields.io/github/v/release/potterwhite/SynapseERP?color=orange&label=version" alt="version"></a>
   <a href="#"><img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python Version"></a>
   <a href="#"><img src="https://img.shields.io/badge/framework-Django%205.x-green" alt="Framework"></a>
+  <a href="#"><img src="https://img.shields.io/badge/frontend-Vue%203%20%2B%20TypeScript-42b883" alt="Frontend"></a>
   <a href="https://github.com/potterwhite/SynapseERP/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
 </p>
 
@@ -29,180 +28,229 @@ T-HEAD-GR-V0.8.0-20250910 (English README for SynapseERP)
 </p>
 
 <p align="center">
-  <a href="#1-quick-start">🚀 Quick Start</a> •
-  <a href="#2-production-deployment">⚙️ Production Deployment</a> •
-  <a href="#3-appendix">📚 Appendix</a>
+  <a href="#1-quick-start-local-dev">🚀 Quick Start</a> •
+  <a href="#2-docker-deployment">🐳 Docker</a> •
+  <a href="#3-production-deployment">⚙️ Production</a> •
+  <a href="#4-appendix">📚 Appendix</a>
 </p>
 
 ---
 
-# 1. Quick Start
+## Overview
 
-This guide is designed to help you set up and run a local development environment as quickly as possible.
+SynapseERP is a modular internal tooling platform built on:
 
-**Prerequisites:**
-*   Python 3.8+
-*   Git (for cloning the repository)
+- **Backend** — Django 5.x + Django REST Framework + JWT authentication (SimpleJWT)
+- **Frontend** — Vue 3 (Composition API) + TypeScript + Vite 6 + Naive UI
+- **Database** — SQLite for local development, PostgreSQL for Docker / production
+- **Deployment** — Docker Compose (all-in-one) or Nginx + Gunicorn + Systemd (bare-metal)
 
-### Step 1.1: Get the Code
+### Included Modules
 
-Clone the repository and enter the project directory:
-```bash
-git clone git@github.com:potterwhite/SynapseERP.git
-cd SynapseERP
-```
-
-### Step 1.2: Prepare the Environment
-
-This project uses a fully automated preparation script.
-
-1.  **Give the script execution permissions:**
-    ```bash
-    chmod +x synapse
-    ```
-
-2.  **Run the script:**
-    ```bash
-    ./synapse prepare
-    ```
-    This single command handles everything: it will create a Python virtual environment, install all dependencies, generate a secure `.env` configuration file, and initialize the database.
-
-### Step 1.3: Run the Application
-
-After the preparation is complete:
-
-1.  **Create an administrator user:**
-    ```bash
-    ./synapse superuser
-    ```
-    Follow the prompts to create your admin account.
-
-2.  **Run the development server:**
-    ```bash
-    ./synapse run
-    ```
-    You can now access the application at **http://127.0.0.1:8000** and the admin panel at **http://127.0.0.1:8000/admin/**.
+| Module | Description |
+|--------|-------------|
+| **Project Management** | Kanban-style project & task tracker with optional Obsidian vault sync |
+| **Attendance Analyzer** | Excel attendance file parser driven by a TOML rules engine |
+| **BOM Analyzer** | Multi-file Bill-of-Materials aggregation tool |
+| **Dashboard** | Markdown notification board visible to all users |
 
 ---
 
-# 2. Production Deployment
+# 1. Quick Start (Local Dev)
 
-The `./synapse run` command is **for development use only**. For a real production environment, this project provides a fully automated deployment command that will run your application using Gunicorn and Nginx.
+**Prerequisites:** Python 3.10+, Node.js 18+, Git
 
-### Execute Automated Deployment
+### Step 1.1 — Get the Code
 
-On your production server, run the following command with `sudo` privileges:
+```bash
+git clone git@github.com:potterwhite/SynapseERP.git
+cd SynapseERP
+chmod +x synapse
+```
+
+### Step 1.2 — Prepare the Environment
+
+```bash
+./synapse prepare
+```
+
+This single command:
+- Creates a Python virtual environment (`.venv/`)
+- Installs all Python dependencies
+- Generates a secure `backend/.env` with a random `SECRET_KEY`
+- Runs database migrations (SQLite by default)
+- Compiles i18n translation files
+- Installs frontend npm dependencies
+
+### Step 1.3 — Create an Admin User
+
+```bash
+./synapse superuser
+```
+
+### Step 1.4 — Start the Application
+
+```bash
+# Backend only (http://127.0.0.1:8000)
+./synapse run
+
+# Frontend only (http://localhost:5173, proxies /api to :8000)
+./synapse frontend:run
+
+# Both at once
+./synapse run:all
+```
+
+Log in at **http://localhost:5173** with the superuser account you just created.
+
+---
+
+# 2. Docker Deployment
+
+Docker Compose runs a production-like stack with three services:
+- **postgres** — PostgreSQL 16 (data persisted in a named volume)
+- **backend** — Django + Gunicorn on port 8000 (internal only)
+- **nginx** — serves the pre-built Vue SPA and proxies `/api/` to the backend (port 80)
+
+### Step 2.1 — Configure Environment
+
+```bash
+cp .env.docker.example .env.docker
+# Open .env.docker and set:
+#   DJANGO_SECRET_KEY  (required — any long random string)
+#   DB_PASSWORD        (required — PostgreSQL password)
+```
+
+### Step 2.2 — Start the Stack
+
+```bash
+./synapse docker:up
+```
+
+The first run builds both Docker images and starts all services. Visit **http://localhost**.
+
+### Step 2.3 — Create an Admin User
+
+```bash
+./synapse docker:manage createsuperuser
+```
+
+### Common Docker Commands
+
+```bash
+./synapse docker:up              # Build + start all services
+./synapse docker:down            # Stop and remove containers (data volumes preserved)
+./synapse docker:clean           # ⚠️  Destroy containers + volumes + images (data loss!)
+./synapse docker:logs            # Tail logs from all services
+./synapse docker:logs backend    # Tail backend logs only
+./synapse docker:shell           # Open a shell in the backend container
+./synapse docker:manage <cmd>    # Run a Django management command in the backend container
+```
+
+> **`docker:down` vs `docker:clean`**
+> - `docker:down` — stops and removes containers but **keeps** the PostgreSQL data volume. Safe to use between restarts.
+> - `docker:clean` — removes containers, **all named volumes** (database data will be lost), and locally-built images. Use this to start completely fresh.
+
+### Optional: Obsidian Vault Sync in Docker
+
+Set `OBSIDIAN_VAULT_PATH` in `.env.docker` to the absolute path of your Obsidian vault on the **host machine**. The directory is automatically bind-mounted read-only into the backend container. No other changes are needed.
+
+```bash
+# In .env.docker:
+OBSIDIAN_VAULT_PATH=/home/youruser/Documents/MyVault
+```
+
+Restart the stack after changing this value: `./synapse docker:down && ./synapse docker:up`
+
+---
+
+# 3. Production Deployment (Bare-metal)
+
+For a server without Docker, SynapseERP can be deployed using Nginx + Gunicorn managed by Systemd.
 
 ```bash
 sudo ./synapse deploy
 ```
-This command is **interactive** and **fully automated**. It will guide you through all the necessary steps:
 
-1.  It will **check** your system environment (e.g., if Nginx is installed) and provide guidance.
-2.  It will **ask** for your server's domain (or IP) and the username that will run the service.
-3.  It will **automatically handle** all configuration, service installation, and startup.
-4.  Finally, it will automatically configure your `.env` file with the necessary settings for a production environment.
+This interactive command:
+1. Checks that Nginx and `gettext` are installed
+2. Asks for your server domain/IP and the Linux user to run the service
+3. Builds the Vue frontend
+4. Collects Django static files
+5. Installs and enables Systemd socket + service units and an Nginx site config
+6. Updates `backend/.env` with production settings
 
-After the deployment is complete, the script will display the final access address for your application.
+After deployment, the application is live at the domain you provided.
 
 ---
 
-# 3. Appendix
+# 4. Appendix
 
-### 3.1 Attendance Analyzer Rules
+### 4.1 All `./synapse` Commands
 
-The Attendance Analyzer is controlled by a TOML rules file. The system uses a three-tier priority strategy to decide which rules file to load:
+```
+Setup & Run
+  prepare             One-time setup (venv, deps, migrate, npm install)
+  clean               Destructive local reset (removes .venv, DB, node_modules)
+  run                 Start Django backend dev server (:8000)
+  frontend:run        Start Vue frontend dev server (:5173)
+  run:all             Start backend + frontend + vault watcher in parallel
+  superuser           Create a Django admin superuser
 
-**`Remote URL > Local Custom File > Default File`**
+Development
+  dev:migrate         Run makemigrations + migrate
+  dev:test            Run the Django test suite
+  dev:makemessages    Update .po translation source files (zh_Hans)
+  dev:compilemessages Compile .mo translation files
 
-This provides maximum flexibility.
+Docker Compose
+  docker:up [env]           Build + start (postgres + backend + nginx)
+  docker:down [env]         Stop containers (volumes preserved)
+  docker:clean [env]        ⚠️  Destroy containers + volumes + images
+  docker:logs [service]     Tail logs (omit service for all)
+  docker:shell [service]    Open shell in container (default: backend)
+  docker:manage <cmd>       Run Django management command in backend container
 
-#### Method A (Recommended for Production): Using a Remote URL
-This is the ideal method when you need to provide users with a specific set of rules without modifying the code.
+Production
+  deploy              Automated Nginx + Gunicorn + Systemd deployment (requires sudo)
+```
 
-*   **Set a remote rules URL:**
-    ```bash
-    # Replace this URL with your own Gist or raw file URL
-    ./synapse set-rule "https://your-url/path/to/rules.toml"
-    ```
-    This command will securely save the URL to your local `.env` file.
+### 4.2 Authentication
 
-*   **Clear the remote rules URL** (to revert to using local or default rules):
-    ```bash
-    ./synapse set-rule
-    ```
+SynapseERP uses JWT authentication via `djangorestframework-simplejwt`.
 
-#### Method B (For Local Development): Using a Local File
-This is very useful for offline development or quickly testing rule changes.
+- **`POST /api/auth/login/`** — returns `{access, refresh, user}`
+- **`POST /api/auth/refresh/`** — rotates the refresh token
+- **`POST /api/auth/logout/`** — blacklists the refresh token
 
-1.  Create a file named `local_rules.toml` in the `src/synapse_attendance/engine/rules/` directory.
-2.  You can copy the contents of `default_rules.toml` as a starting point.
+Three roles are supported: `admin`, `editor`, `viewer`. Admins can manage users at **Settings → User Management** in the sidebar.
 
-If no remote URL is set in the `.env` file, the application will automatically detect and use this file. This file is ignored by Git.
+### 4.3 Attendance Analyzer Rules
 
-#### Method C (Default): Out-of-the-Box Rules
-If neither a remote URL nor a local file is found, the system will fall back to using `src/synapse_attendance/engine/rules/default_rules.toml`.
+The Attendance Analyzer uses a TOML rules file. Priority order:
 
-### 3.2 Developer Commands
+**Remote URL > Local custom file > Built-in default**
 
-These commands are intended for contributors or developers who **wish to modify the application's source code or database structure**. Regular users **do not need** to use these commands in daily operation.
+```bash
+# Set a remote rules URL
+./synapse set-rule "https://your-url/path/to/rules.toml"
 
-*   **`./synapse dev:migrate`**
-    *   **Purpose:** Creates and applies database migrations.
-    *   **When to use:** Use this command after you have **modified a `models.py` file** to update the database schema.
+# Clear the remote URL (fall back to local/default)
+./synapse set-rule
+```
 
-*   **`./synapse dev:makemessages`**
-    *   **Purpose:** Scans all source code and templates for translatable strings and updates the `.po` translation source files.
-    *   **When to use:** Use this after you have **added or changed user-facing text that needs to be translated**.
+For local development, place a `local_rules.toml` in `backend/src/synapse_attendance/engine/rules/` — it is automatically detected and ignored by Git.
 
-*   **`./synapse dev:compilemessages`**
-    *   **Purpose:** Compiles the text-based `.po` files into binary `.mo` files that Django uses.
-    *   **When to use:** Use this after running `dev:makemessages` or after pulling translation updates from the repository.
+### 4.4 Publishing a Dashboard Notification
 
-*   **`./synapse dev:test`**
-    *   **Purpose:** Runs the project's automated test suite.
-    *   **When to use:** Use frequently during **the development of new features** to ensure your changes have not broken existing functionality.
+1. Open the Django admin panel: **http://127.0.0.1:8000/admin/**
+2. Under **SYNAPSE DASHBOARD**, click **Add** next to **Notifications**.
+3. Enter Markdown content and click **Save**.
 
-### 3.3 Publishing Your First Notification
+The dashboard always displays the most recently updated notification.
 
-The Dashboard page features a notification panel that can display important information to all users. The following will guide you on how to publish your first notification through the admin panel.
+### 4.5 Developer Notes
 
-#### Step 3.3.1: Access the Admin Panel
-
-1.  Ensure your development server is running (`./synapse run`).
-2.  Open the admin login page in your browser: **http://127.0.0.1:8000/admin/**
-3.  Log in with the administrator account you created in `Step 1.3` using the `./synapse superuser` command.
-
-#### Step 3.3.2: Create a New Notification
-
-1.  After logging in, you will see the "Site administration" page. Under the **SYNAPSE DASHBOARD** section, find and click the "Add" link next to **Notifications**.
-
-    <p align="center">
-      <img src="./docs/assets/readme_admin_dashboard_en.png" alt="Admin Dashboard" width="75%"/>
-    </p>
-
-2.  You will be taken to the "Add Notification" page. There is only one field you need to fill in: **Content**.
-
-3.  This input field supports **Markdown syntax**. You can enter some simple text or try some Markdown formatting, for example:
-    ```markdown
-    # System Maintenance Notice
-
-    We plan to perform a system upgrade **tonight at 10 PM**. The service may be briefly interrupted.
-
-    *   Upgrade Content: `v0.8.1`
-    *   Estimated Duration: `15 minutes`
-
-    Thank you for your understanding!
-    ```
-
-4.  After filling it out, click the **SAVE** button in the bottom right corner of the page.
-
-#### Step 3.3.3: Check the Result
-
-Now, return to the application's main page at **http://127.0.0.1:8000**. You will see that the notification you just published is displayed at the top of the page in a formatted style, like this:
-
-<p align="center">
-  <img src="./docs/assets/readme_dashboard_notification_en.png" alt="Dashboard Notification" width="75%"/>
-</p>
-
-The system will always automatically display the most **recently updated** notification. You can return to the admin panel at any time to edit old notifications or add new ones, and the content on the main page will update automatically.
+- API contracts: `docs/architecture/plan/10_api_spec.md`
+- Architecture decisions: `docs/architecture/background/`
+- Codebase map (start here for AI agents): `docs/architecture/plan/13_codebase_map.md`

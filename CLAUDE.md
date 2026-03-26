@@ -42,7 +42,8 @@ cp .env.docker.example .env.docker
 # Edit .env.docker: set DJANGO_SECRET_KEY and DB_PASSWORD
 
 ./synapse docker:up              # Build images + start all services (postgres + backend + nginx)
-./synapse docker:down            # Stop all services (volumes preserved)
+./synapse docker:down            # Stop and remove containers (volumes preserved)
+./synapse docker:clean           # ⚠️  Destroy containers + volumes + images (data loss!)
 ./synapse docker:logs            # Tail all service logs
 ./synapse docker:logs backend    # Tail backend logs only
 ./synapse docker:shell           # Open shell in backend container
@@ -67,7 +68,7 @@ cp .env.docker.example .env.docker
 | `DB_USER` | — | `synapse_user` | |
 | `NGINX_PORT` | — | `80` | Change if port 80 is taken |
 | `GUNICORN_WORKERS` | — | `3` | |
-| `OBSIDIAN_VAULT_PATH` | — | — | Optional vault sync |
+| `OBSIDIAN_VAULT_PATH` | — | — | Optional: set to host path; auto-mounted at `/vault` in container |
 
 ### Production
 ```bash

@@ -326,9 +326,30 @@ fn_docker_up() {
 
 fn_docker_down() {
     local env_file="${1:-.env.docker}"
-    fn_log "🛑 Stopping Docker services (data volumes preserved)..." "blue"
+    fn_log "🛑 Stopping and removing Docker containers (data volumes preserved)..." "blue"
+    fn_log "   Note: PostgreSQL data and static files are kept in named volumes." "yellow"
+    fn_log "   To also remove containers + volumes + images, run: ./synapse docker:clean" "yellow"
     docker compose --env-file "$env_file" down
-    fn_log "✅ Services stopped." "green"
+    fn_log "✅ Containers stopped and removed." "green"
+}
+
+fn_docker_clean() {
+    local env_file="${1:-.env.docker}"
+    fn_log "🧨 This will DESTROY all Docker containers, volumes, and images for this project." "red"
+    fn_log "   The following will be DELETED:" "red"
+    fn_log "   - All SynapseERP containers (postgres, backend, nginx)" "red"
+    fn_log "   - Named volumes: postgres_data (DATABASE), static_volume" "red"
+    fn_log "   - Built Docker images for backend and nginx" "red"
+    fn_log "   ⚠️  All database data will be lost permanently!" "red"
+    read -p "   Are you sure? [y/N] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        fn_log "   Cancelled." "yellow"
+        return 0
+    fi
+    docker compose --env-file "$env_file" down --volumes --rmi local 2>/dev/null || true
+    fn_log "✅ All containers, volumes, and locally-built images removed." "green"
+    fn_log "   Run './synapse docker:up' to rebuild and start fresh." "yellow"
 }
 
 fn_docker_logs() {
@@ -551,7 +572,8 @@ fn_show_help() {
     echo "━━━ Docker Compose (Phase 5.9) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  docker:build [env]        Build Docker images (default env file: .env.docker)"
     echo "  docker:up [env]           Build + start all services (postgres + backend + nginx)"
-    echo "  docker:down [env]         Stop all services (volumes are preserved)"
+    echo "  docker:down [env]         Stop and remove containers (volumes are preserved)"
+    echo "  docker:clean [env]        ⚠️  Destroy containers + volumes + images (data loss!)"
     echo "  docker:logs [svc]         Tail logs (all services, or one: backend/nginx/postgres)"
     echo "  docker:shell [svc]        Open shell in a container (default: backend, workdir: /app/backend)"
     echo "  docker:manage <cmd>       Run Django management command in backend container"
@@ -588,6 +610,7 @@ main() {
                 docker:build)           fn_docker_build "$2" ;;
                 docker:up)              fn_docker_up "$2" ;;
                 docker:down)            fn_docker_down "$2" ;;
+                docker:clean)           fn_docker_clean "$2" ;;
                 docker:logs)            fn_docker_logs "$2" ;;
                 docker:shell)           fn_docker_shell "$2" ;;
                 docker:manage)          fn_docker_manage "${@:2}" ;;

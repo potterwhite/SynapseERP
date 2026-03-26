@@ -42,6 +42,7 @@ export const useAppStore = defineStore('app', () => {
   // Mirrors backend SYNAPSE_PM_BACKEND setting; fetched from /api/health/
   const pmBackend = ref<'vault' | 'database'>('database')
   const vaultConnected = ref(false)
+  const appVersion = ref<string>('')
 
   function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value
@@ -58,13 +59,14 @@ export const useAppStore = defineStore('app', () => {
       const { data } = await client.get<HealthResponse>('/health/')
       pmBackend.value = data.pm_backend ?? 'database'
       vaultConnected.value = data.vault_connected ?? false
+      if (data.version) appVersion.value = `v${data.version}`
     } catch {
       // Non-critical; defaults remain
     }
   }
 
   return {
-    sidebarCollapsed, theme, pmBackend, vaultConnected,
+    sidebarCollapsed, theme, pmBackend, vaultConnected, appVersion,
     toggleSidebar, toggleTheme, fetchHealth,
   }
 })

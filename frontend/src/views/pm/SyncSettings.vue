@@ -22,7 +22,7 @@ SOFTWARE.
 
 <template>
   <div class="sync-settings">
-    <n-page-header title="Obsidian Sync" subtitle="Phase 5.3–5.5 — DB-Primary + Obsidian-Mirror">
+    <n-page-header title="Obsidian Sync" subtitle="Bidirectional sync between the database and your Obsidian vault">
       <template #extra>
         <n-space>
           <n-button
