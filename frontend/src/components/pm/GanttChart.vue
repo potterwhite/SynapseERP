@@ -148,7 +148,10 @@ function buildGantt() {
 
 function setView(mode: ViewMode) {
   currentView.value = mode
-  ganttInstance?.change_view_mode(mode)
+  // Rebuild the entire Gantt instance so that scroll_to:'today' re-applies.
+  // change_view_mode() alone does NOT re-scroll, leaving the chart stuck at
+  // whatever date range was visible at initial construction.
+  nextTick(buildGantt)
 }
 
 onMounted(() => nextTick(buildGantt))
