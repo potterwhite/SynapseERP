@@ -99,6 +99,17 @@ SOFTWARE.
           <template #icon><n-icon :component="AddIcon" /></template>
           New Project
         </n-button>
+
+        <!-- Bulk delete button — appears only when rows are checked -->
+        <n-button
+          v-if="checkedRowKeys.length > 0"
+          type="error"
+          :loading="bulkDeleting"
+          @click="confirmBulkDelete"
+        >
+          <template #icon><n-icon :component="DeleteIcon" /></template>
+          Delete ({{ checkedRowKeys.length }})
+        </n-button>
       </n-flex>
     </n-flex>
 
@@ -136,6 +147,8 @@ SOFTWARE.
       :pagination="pagination"
       :row-props="rowProps"
       :row-class-name="rowClassName"
+      :row-key="(row: Project) => row.id"
+      v-model:checked-row-keys="checkedRowKeys"
       striped
       style="cursor: pointer;"
     />
@@ -170,7 +183,7 @@ import {
   NTag, NProgress, NTooltip,
   useMessage, useDialog,
 } from 'naive-ui'
-import type { DataTableColumns } from 'naive-ui'
+import type { DataTableColumns, DataTableRowKey } from 'naive-ui'
 import {
   SearchOutline as SearchIcon,
   RefreshOutline as SyncIcon,
@@ -196,6 +209,10 @@ const searchQuery = ref('')
 const statusFilter = ref<'active' | 'archived' | 'on_hold' | 'all'>('active')
 const tagFilter = ref<string[]>([])
 const drawerOpen = ref(false)
+
+// Checkbox row selection for bulk delete
+const checkedRowKeys = ref<DataTableRowKey[]>([])
+const bulkDeleting = ref(false)
 
 // Project CRUD modal state
 const formModalOpen = ref(false)
@@ -234,6 +251,30 @@ async function confirmDelete(row: Project) {
   })
 }
 
+async function confirmBulkDelete() {
+  const count = checkedRowKeys.value.length
+  if (!count) return
+  dialog.warning({
+    title: `Delete ${count} Project${count > 1 ? 's' : ''}`,
+    content: `Are you sure you want to delete ${count} selected project${count > 1 ? 's' : ''}? This action cannot be undone.`,
+    positiveText: `Delete ${count}`,
+    negativeText: 'Cancel',
+    onPositiveClick: async () => {
+      bulkDeleting.value = true
+      try {
+        await store.bulkDeleteProjects(checkedRowKeys.value as number[])
+        message.success(`${count} project${count > 1 ? 's' : ''} deleted`)
+        checkedRowKeys.value = []
+        store.fetchStats()
+      } catch (err: unknown) {
+        message.error(err instanceof Error ? err.message : 'Bulk delete failed')
+      } finally {
+        bulkDeleting.value = false
+      }
+    },
+  })
+}
+
 const pmBackend = computed(() => appStore.pmBackend)
 
 const statusOptions = [
@@ -256,6 +297,7 @@ const pagination = computed(() => ({
 
 // --- Table columns ---
 const columns: DataTableColumns<Project> = [
+  { type: 'selection' },
   {
     title: 'Project',
     key: 'name',

@@ -202,6 +202,31 @@ export const usePmStore = defineStore('pm', () => {
     if (selectedProject.value?.id === id) selectedProject.value = null
   }
 
+  async function deleteTask(uuid: string): Promise<void> {
+    await pmApi.deleteTask(uuid)
+    tasks.value = tasks.value.filter(t => t.uuid !== uuid)
+    tasksTotal.value = Math.max(0, tasksTotal.value - 1)
+    if (selectedTask.value?.uuid === uuid) selectedTask.value = null
+  }
+
+  async function bulkDeleteProjects(ids: number[]): Promise<void> {
+    await Promise.all(ids.map(id => pmApi.deleteProject(id)))
+    projects.value = projects.value.filter(p => !ids.includes(p.id))
+    projectsTotal.value = Math.max(0, projectsTotal.value - ids.length)
+    if (selectedProject.value && ids.includes(selectedProject.value.id)) {
+      selectedProject.value = null
+    }
+  }
+
+  async function bulkDeleteTasks(uuids: string[]): Promise<void> {
+    await Promise.all(uuids.map(uuid => pmApi.deleteTask(uuid)))
+    tasks.value = tasks.value.filter(t => !uuids.includes(t.uuid))
+    tasksTotal.value = Math.max(0, tasksTotal.value - uuids.length)
+    if (selectedTask.value && uuids.includes(selectedTask.value.uuid)) {
+      selectedTask.value = null
+    }
+  }
+
   async function updateTaskInStore(uuid: string, data: TaskUpdatePayload): Promise<Task | null> {
     const { data: updated } = await pmApi.updateTask(uuid, data)
     // Update in flat task list
@@ -227,5 +252,6 @@ export const usePmStore = defineStore('pm', () => {
     fetchStats, fetchTags, toggleMeetingMode, syncVault, clearSelectedTask,
     createTask, updateTaskInStore,
     createProject, updateProject, deleteProject,
+    deleteTask, bulkDeleteProjects, bulkDeleteTasks,
   }
 })

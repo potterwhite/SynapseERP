@@ -90,6 +90,16 @@ SOFTWARE.
         />
         <!-- Spacer -->
         <div style="flex: 1;" />
+        <!-- Bulk delete — visible when rows are selected -->
+        <n-button
+          v-if="checkedTaskKeys.length > 0"
+          type="error"
+          :loading="bulkTaskDeleting"
+          @click="confirmBulkDeleteTasks"
+        >
+          <template #icon><n-icon :component="DeleteIcon" /></template>
+          Delete ({{ checkedTaskKeys.length }})
+        </n-button>
         <n-button type="primary" @click="openCreateModal">
           <template #icon><n-icon :component="AddIcon" /></template>
           New Task
@@ -102,6 +112,8 @@ SOFTWARE.
         :data="filteredTasks"
         :loading="store.tasksLoading"
         :pagination="{ pageSize: 20 }"
+        :row-key="(row: Task) => row.uuid"
+        v-model:checked-row-keys="checkedTaskKeys"
         striped
         style="cursor: pointer;"
       />
@@ -206,14 +218,14 @@ SOFTWARE.
 <script setup lang="ts">
 import { ref, computed, h, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useMessage } from 'naive-ui'
+import { useMessage, useDialog } from 'naive-ui'
 import {
   NButton, NCard, NDataTable, NDatePicker, NDrawer, NDrawerContent, NFlex, NForm,
   NFormItem, NH3, NIcon, NInput, NInputNumber, NModal, NProgress, NResult,
   NSelect, NSpin, NStatistic, NTag, NText,
 } from 'naive-ui'
-import type { DataTableColumns, FormInst, FormRules } from 'naive-ui'
-import { ArrowBackOutline as BackIcon, AddOutline as AddIcon, CreateOutline as EditIcon } from '@vicons/ionicons5'
+import type { DataTableColumns, DataTableRowKey, FormInst, FormRules } from 'naive-ui'
+import { ArrowBackOutline as BackIcon, AddOutline as AddIcon, CreateOutline as EditIcon, TrashOutline as DeleteIcon } from '@vicons/ionicons5'
 import { usePmStore } from '@/stores/pm'
 import type { Task } from '@/types/pm'
 import TaskDetail from './TaskDetail.vue'
@@ -222,6 +234,7 @@ const store = usePmStore()
 const router = useRouter()
 const route = useRoute()
 const message = useMessage()
+const dialog = useDialog()
 
 // --- Drawer state ---
 const drawerOpen = ref(false)
@@ -230,6 +243,10 @@ const drawerOpen = ref(false)
 const taskStatusFilter = ref<string>('all')
 const taskPriorityFilter = ref<string>('all')
 const taskSearch = ref('')
+
+// --- Checkbox selection for bulk delete ---
+const checkedTaskKeys = ref<DataTableRowKey[]>([])
+const bulkTaskDeleting = ref(false)
 
 // --- Modal state ---
 const taskModalOpen = ref(false)
@@ -294,6 +311,7 @@ const filteredTasks = computed(() => {
 
 // --- Columns ---
 const taskColumns: DataTableColumns<Task> = [
+  { type: 'selection' },
   {
     title: 'Task',
     key: 'name',
@@ -356,6 +374,29 @@ const taskColumns: DataTableColumns<Task> = [
       return h('span', { style: over ? 'color: #d03050;' : '' }, `${est} / ${actual}`)
     },
   },
+  {
+    title: '',
+    key: 'actions',
+    width: 80,
+    render(row) {
+      return h('div', {
+        style: 'display:flex;gap:4px;justify-content:flex-end;',
+        onClick: (e: MouseEvent) => e.stopPropagation(),
+      }, [
+        h(NButton, {
+          size: 'small',
+          quaternary: true,
+          onClick: () => openEditModal(row),
+        }, { icon: () => h(NIcon, { component: EditIcon }) }),
+        h(NButton, {
+          size: 'small',
+          quaternary: true,
+          type: 'error',
+          onClick: () => confirmDeleteTask(row),
+        }, { icon: () => h(NIcon, { component: DeleteIcon }) }),
+      ])
+    },
+  },
 ]
 
 // --- Actions ---
@@ -368,6 +409,51 @@ async function openTask(uuid: string) {
 
 function onTaskFilter() {
   // Filtering is done client-side via filteredTasks computed
+}
+
+function confirmDeleteTask(task: Task) {
+  dialog.warning({
+    title: 'Delete Task',
+    content: `Delete "${task.name}"? This sets the task status to cancelled and cannot be undone.`,
+    positiveText: 'Delete',
+    negativeText: 'Cancel',
+    onPositiveClick: async () => {
+      try {
+        await store.deleteTask(task.uuid)
+        if (drawerOpen.value && store.selectedTask?.uuid === task.uuid) {
+          drawerOpen.value = false
+        }
+        message.success(`Task "${task.name}" deleted`)
+        await load()
+      } catch (err: unknown) {
+        message.error(err instanceof Error ? err.message : 'Delete failed')
+      }
+    },
+  })
+}
+
+async function confirmBulkDeleteTasks() {
+  const count = checkedTaskKeys.value.length
+  if (!count) return
+  dialog.warning({
+    title: `Delete ${count} Task${count > 1 ? 's' : ''}`,
+    content: `Delete ${count} selected task${count > 1 ? 's' : ''}? This cannot be undone.`,
+    positiveText: `Delete ${count}`,
+    negativeText: 'Cancel',
+    onPositiveClick: async () => {
+      bulkTaskDeleting.value = true
+      try {
+        await store.bulkDeleteTasks(checkedTaskKeys.value as string[])
+        checkedTaskKeys.value = []
+        message.success(`${count} task${count > 1 ? 's' : ''} deleted`)
+        await load()
+      } catch (err: unknown) {
+        message.error(err instanceof Error ? err.message : 'Bulk delete failed')
+      } finally {
+        bulkTaskDeleting.value = false
+      }
+    },
+  })
 }
 
 function openCreateModal() {

@@ -121,6 +121,10 @@ export const pmApi = {
     return client.patch<Task>(`/pm/tasks/${uuid}/`, data)
   },
 
+  deleteTask(uuid: string) {
+    return client.delete(`/pm/tasks/${uuid}/`)
+  },
+
   // Gantt
   listGanttTasks(projectId?: number) {
     return client.get<{ tasks: GanttTask[] }>('/pm/gantt/', {
