@@ -33,12 +33,16 @@ SOFTWARE.
     </n-flex>
     <n-space align="center">
       <n-text depth="3" style="font-size: 13px;">v0.9.0-alpha</n-text>
-      <n-tooltip :content="appStore.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
-        <n-button quaternary circle @click="appStore.toggleTheme">
-          <template #icon>
-            <n-icon><component :is="appStore.theme === 'dark' ? SunnyOutline : MoonOutline" /></n-icon>
-          </template>
-        </n-button>
+      <!-- NTooltip requires the trigger element in the #trigger slot -->
+      <n-tooltip trigger="hover">
+        <template #trigger>
+          <n-button quaternary circle @click="appStore.toggleTheme">
+            <template #icon>
+              <n-icon><component :is="appStore.theme === 'dark' ? SunnyOutline : MoonOutline" /></n-icon>
+            </template>
+          </n-button>
+        </template>
+        {{ appStore.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }}
       </n-tooltip>
     </n-space>
   </n-layout-header>

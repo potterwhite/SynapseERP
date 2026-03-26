@@ -119,38 +119,22 @@ Key architectural decision docs are in `docs/architecture/background/`. The API 
 
 ## Current Development Status
 
-**Current Phase: 5.5 ✅ Complete → Working on Phase 5.6**
+**Current Phase: 5.6 ✅ Complete → Working on Phase 5.7**
 
-### Phase 5.5 — Vault Auto-Sync (COMPLETE)
+### Phase 5.6 — UI/UX Overhaul (COMPLETE)
 
-All Phase 5.5 deliverables are implemented and working:
+All Phase 5.6 deliverables are implemented and working:
 
-- `backend/src/synapse_pm/vault/vault_watcher.py` — VaultWatcher core (watchdog + 5s debounce)
-- `backend/src/synapse_pm/management/commands/vault_watch.py` — `vault_watch` management command
-- `frontend/src/views/pm/SyncSettings.vue` — Frontend Auto-Sync info card
-- `GET /api/pm/sync/watcher/` — API returns watchdog availability status
+- **Dark mode**: `NConfigProvider` wired to Pinia `theme` store; moon/sun toggle in Header; preference persisted to `localStorage` (key: `synapse_theme`)
+- **Responsive layout**: mobile breakpoint (768px) in `AppLayout`; desktop shows `NLayoutSider`, mobile uses `NDrawer` + hamburger icon; `Sidebar` emits `navigate` to close drawer
+- **Dashboard redesign**: PM quick-stats row (total projects, active, total tasks, hours logged); module cards with icons and color accents; loads stats in parallel with dashboard data
+- **Project CRUD**: `ProjectFormModal.vue` (name/status/deadline/tags); "New Project" button + edit/delete action column in `ProjectList`; backend `DELETE /api/pm/projects/{id}/` added; store methods `createProject`, `updateProject`, `deleteProject`
 
-**Vault watcher is working.** `watchdog` 6.0.0 installed. `vault_watch --once` imports correctly.
+**Bug fixed**: `NTooltip` in `Header.vue` was using `content` prop + default slot instead of `#trigger` named slot, causing `[vueuc/follower]: slot[default] should have exactly one child` crash and full white screen on load.
 
-**Key constraint**: Tasks must be placed in `<project_dir>/tasks/*.md` with a valid
-YAML frontmatter block containing `task_uuid`. Files placed elsewhere or without
-`task_uuid` are silently ignored by `VaultReader.scan_tasks()`.
+### Next: Phase 5.7 — Permission System + Multi-user
 
-### Run auto-sync watcher
-
-```bash
-./synapse vault:watch        # debounce 5s
-./synapse vault:watch 3      # debounce 3s
-./synapse run:all            # starts backend + frontend + vault watcher together
-```
-
-Manual one-shot import:
-```bash
-cd backend && ../.venv/bin/python manage.py vault_watch --once
-```
-
-### Next: Phase 5.6 — UI/UX Overhaul
-
-- Dashboard redesign (beautiful + performant)
-- Responsive layout (mobile/tablet)
-- Frontend Project/Task CRUD forms (Create / Edit / Delete)
+- JWT auth replacing Django Session
+- User roles (admin / editor / viewer)
+- Custom login/register pages
+- Tag-based project access control

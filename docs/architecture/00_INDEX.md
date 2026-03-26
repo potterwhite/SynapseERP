@@ -1,6 +1,6 @@
 # SynapseERP — 架构文档索引 / Architecture Document Index
 
-> 最后更新 / Last updated: 2026-03-25 (Phase 5.5 ✅ 完成并验证，5.6 UI/UX 规划中)
+> 最后更新 / Last updated: 2026-03-26 (Phase 5.6 ✅ 完成并验证，5.7 权限系统规划中)
 > 当前分支 / Branch: `main`
 
 ---
@@ -112,11 +112,12 @@
 |         | `GET /api/pm/sync/watcher/` 返回 watchdog 安装状态 / API returns watchdog availability | |
 |         | 前端 SyncSettings 新增 Auto-Sync 卡片 + 使用说明 / Frontend watcher info card | |
 |         | ⚠️ 关键约束：task 文件必须在 `<project_dir>/tasks/*.md`，且 frontmatter 含 `task_uuid` / Tasks must be in project tasks/ subdir with task_uuid frontmatter | ✅ 已文档化 |
-| **5.6** | **UI/UX 全面升级 / UI/UX overhaul** | ⏳ |
+| **5.6** | **UI/UX 全面升级 / UI/UX overhaul** | ✅ 完成 Done |
 |         | Dashboard 重新设计（美观 + 性能）/ Dashboard redesign (beautiful + performant) | |
 |         | 响应式布局（手机/平板友好）/ Responsive layout (mobile/tablet friendly) | |
-|         | 长时间后台运行优化 / Long-running background optimization | |
-|         | 🆕 前端 Project/Task CRUD 表单页（新建 / 编辑 / 删除）/ Frontend Create-Edit-Delete forms for Project & Task | |
+|         | 深色模式 + 主题持久化 / Dark mode + theme persistence (localStorage) | |
+|         | 前端 Project CRUD 表单（新建 / 编辑 / 删除）/ Frontend Project Create-Edit-Delete modal | |
+|         | ⚠️ Bug 修复：NTooltip trigger slot 用法错误导致白屏 / Fix: NTooltip trigger slot crash (white screen) | ✅ 已修复 |
 | **5.7** | **权限系统 + 多用户 / Permission system + multi-user** | ⏳ |
 |         | JWT 认证替代 Django Session / JWT auth replacing Django Session | |
 |         | 用户角色（admin / editor / viewer）/ User roles (admin / editor / viewer) | |
